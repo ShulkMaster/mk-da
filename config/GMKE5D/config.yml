@@ -1,0 +1,11 @@
+# Mortal Kombat: Deadly Alliance (USA), revision 1.
+# Original symbols imported from the matching files/mk5gc_release.elf on disc.
+object_base: orig/GMKE5D
+object: sys/main.dol
+hash: 3560bd0c0814d2f1ceaa819946d71dad4e488d2e
+symbols: config/GMKE5D/symbols.txt
+splits: config/GMKE5D/splits.txt
+# Initial linker choice; compiler versions and flags remain to be researched.
+mw_comment_version: 10
+# Keep generated disassembly in ignored build artifacts only.
+write_asm: false

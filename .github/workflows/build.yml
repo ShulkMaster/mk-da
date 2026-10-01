@@ -1,0 +1,56 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/shulkmaster/mk-da-build:main
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [GMKE5D]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Git config
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Prepare game files
+        run: cp -a /orig .
+
+      - name: Build and verify retail match
+        run: |
+          python3 configure.py --map --version ${{ matrix.version }} \
+            --binutils /binutils --compilers /compilers
+          ninja all_source progress build/${{ matrix.version }}/report.json
+
+      - name: Upload maps
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.version }}_maps
+          path: build/${{ matrix.version }}/**/*.MAP
+          if-no-files-found: error
+
+      - name: Upload progress report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.version }}_report
+          path: build/${{ matrix.version }}/report.json
+          if-no-files-found: error
