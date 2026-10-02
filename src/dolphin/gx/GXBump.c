@@ -7,6 +7,7 @@
 #include <dolphin/gx.h>
 #include <dolphin/gx/GXPriv.h>
 
+
 void GXSetTevIndirect(GXTevStageID tev_stage, GXIndTexStageID ind_stage, GXIndTexFormat format,
                       GXIndTexBiasSel bias_sel, GXIndTexMtxID matrix_sel, GXIndTexWrap wrap_s,
                       GXIndTexWrap wrap_t, GXBool add_prev, GXBool utc_lod,
@@ -40,6 +41,7 @@ void GXSetTevIndirect(GXTevStageID tev_stage, GXIndTexStageID ind_stage, GXIndTe
 
 void GXSetIndTexCoordScale(GXIndTexStageID ind_state, GXIndTexScale scale_s,
                            GXIndTexScale scale_t) {
+
   switch (ind_state) {
   case GX_INDTEXSTAGE0:
     SET_REG_FIELD(__GXData->IndTexScale0, 4, 0, scale_s);
@@ -79,4 +81,42 @@ void GXSetNumIndStages(u8 nIndStages) {
 void GXSetTevDirect(GXTevStageID tev_stage) {
   GXSetTevIndirect(tev_stage, GX_INDTEXSTAGE0, GX_ITF_8, GX_ITB_NONE, GX_ITM_OFF, GX_ITW_OFF,
                    GX_ITW_OFF, 0U, 0, 0);
+}
+
+void __GXUpdateBPMask(void) {
+  u32 nIndStages;
+  u32 i;
+  u32 tmap;
+  u32 new_imask;
+
+  new_imask = 0;
+  nIndStages = GET_REG_FIELD(__GXData->genMode, 3, 16);
+  for (i = 0; i < nIndStages; i++) {
+    switch (i) {
+    case 0:
+      tmap = GET_REG_FIELD(__GXData->iref, 3, 0);
+      break;
+    case 1:
+      tmap = GET_REG_FIELD(__GXData->iref, 3, 6);
+      break;
+    case 2:
+      tmap = GET_REG_FIELD(__GXData->iref, 3, 12);
+      break;
+    case 3:
+      tmap = GET_REG_FIELD(__GXData->iref, 3, 18);
+      break;
+    }
+    new_imask |= 1 << tmap;
+  }
+
+  if ((u8)__GXData->bpMask != new_imask) {
+    SET_REG_FIELD(__GXData->bpMask, 8, 0, new_imask);
+    GX_WRITE_RAS_REG(__GXData->bpMask);
+    __GXData->bpSentNot = 0;
+  }
+}
+
+void __GXFlushTextureState(void) {
+  GX_WRITE_RAS_REG(__GXData->bpMask);
+  __GXData->bpSentNot = 0;
 }

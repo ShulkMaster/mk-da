@@ -323,14 +323,16 @@ config.libs = [
     DolphinLib(
         "gx",
         [
-            Object(Matching, "dolphin/gx/GXGeometry.c"),
-            Object(Matching, "dolphin/gx/GXBump.c"),
+            Object(Matching, "dolphin/gx/GXFrameBuf.c"),
+            Object(NonMatching, "dolphin/gx/GXTransform.c", extra_cflags=["-opt nopeephole", "-fp_contract off"]),
+            Object(NonMatching, "dolphin/gx/GXGeometry.c"),
+            Object(NonMatching, "dolphin/gx/GXBump.c"),
             Object(Matching, "dolphin/gx/GXTev.c"),
             Object(Matching, "dolphin/gx/GXPixel.c"),
             Object(Matching, "dolphin/gx/GXMisc.c"),
-            Object(Matching, "dolphin/gx/GXLight.c"),
-            Object(Matching, "dolphin/gx/GXAttr.c"),
-            Object(Matching, "dolphin/gx/GXTexture.c"),
+            Object(NonMatching, "dolphin/gx/GXLight.c"),
+            Object(NonMatching, "dolphin/gx/GXAttr.c"),
+            Object(NonMatching, "dolphin/gx/GXTexture.c"),
             Object(Matching, "dolphin/gx/GXPerf.c"),
         ],
     ),
@@ -339,11 +341,11 @@ config.libs = [
     DolphinLib(
         "ar",
         [
-            Object(Matching, "dolphin/ar/ar.c"),
-            Object(Matching, "dolphin/ar/arq.c"),
+            Object(NonMatching, "dolphin/ar/ar.c"),
+            Object(NonMatching, "dolphin/ar/arq.c"),
         ],
     ),
-    DolphinLib("ai", [Object(Matching, "dolphin/ai.c")]),
+    DolphinLib("ai", [Object(NonMatching, "dolphin/ai.c")]),
     DolphinLib(
         "db",
         [
@@ -362,9 +364,10 @@ config.libs = [
     DolphinLib(
         "dvd",
         [
-            Object(Matching, "dolphin/dvd/dvdlow.c"),
-            Object(Matching, "dolphin/dvd/dvdfs.c"),
-            Object(Matching, "dolphin/dvd/dvd.c"),
+            Object(NonMatching, "dolphin/dvd/dvdlow.c"),
+            Object(NonMatching, "dolphin/dvd/dvdfs.c"),
+            # Tail code/data match; its partial .data split still gains linker alignment padding.
+            Object(NonMatching, "dolphin/dvd/dvd.c"),
             Object(Matching, "dolphin/dvd/dvdqueue.c"),
             Object(Matching, "dolphin/dvd/dvderror.c"),
         ],
