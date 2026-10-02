@@ -58,6 +58,7 @@ void GXSetProjectionv(const f32 *proj) {
   __GXData->bpSentNot = 1;
 }
 
+/* TODO: [near miss] 99.83%; conversion constant precedes the viewport half-value. */
 void GXGetProjectionv(f32 *ptr) {
   ptr[0] = __GXData->projType;
   ptr[1] = __GXData->projMtx[0];
@@ -70,13 +71,37 @@ void GXGetProjectionv(f32 *ptr) {
 
 #pragma pop
 
-asm void WriteMTXPS4x3(const f32 mtx[3][4], volatile f32* dest) { SEQ_WriteMTXPS4x3(); }
+static asm void WriteMTXPS4x3(const f32 mtx[3][4], volatile f32* dest) { SEQ_WriteMTXPS4x3(); }
 
-asm void WriteMTXPS3x3from3x4(const f32 mtx[3][4], volatile f32* dest) {
-  SEQ_WriteMTXPS3x3from3x4()
+static asm void WriteMTXPS3x3from3x4(const f32 mtx[3][4], volatile f32* dest) {
+  SEQ_WriteMTXPS3x3from3x4();
 }
 
-asm void WriteMTXPS4x2(const f32 mtx[2][4], volatile f32* dest) { SEQ_WriteMTXPS4x2() }
+static asm void WriteMTXPS4x2(const f32 mtx[2][4], volatile f32* dest) { SEQ_WriteMTXPS4x2(); }
+
+void GXLoadPosMtxImm(const f32 mtx[3][4], u32 id) {
+  u32 reg;
+  u32 addr;
+
+  addr = id * 4;
+  reg = addr | 0xB0000;
+
+  GX_WRITE_U8(0x10);
+  GX_WRITE_U32(reg);
+  WriteMTXPS4x3(mtx, &__GXWGFifo.f32);
+}
+
+void GXLoadNrmMtxImm(const f32 mtx[3][4], u32 id) {
+  u32 reg;
+  u32 addr;
+
+  addr = id * 3 + 0x400;
+  reg = addr | 0x80000;
+
+  GX_WRITE_U8(0x10);
+  GX_WRITE_U32(reg);
+  WriteMTXPS3x3from3x4(mtx, &__GXWGFifo.f32);
+}
 
 void GXSetCurrentMtx(u32 id) {
 
@@ -84,6 +109,29 @@ void GXSetCurrentMtx(u32 id) {
   __GXSetMatrixIndex(GX_VA_PNMTXIDX);
 }
 
+void GXLoadTexMtxImm(const f32 mtx[][4], u32 id, GXTexMtxType type) {
+  u32 reg;
+  u32 addr;
+  u32 count;
+
+  if (id >= GX_PTTEXMTX0) {
+    addr = (id - GX_PTTEXMTX0) * 4 + 0x500;
+  } else {
+    addr = id * 4;
+  }
+  count = (type == GX_MTX2x4) ? 8 : 12;
+  reg = addr | ((count - 1) << 16);
+
+  GX_WRITE_U8(0x10);
+  GX_WRITE_U32(reg);
+  if (type == GX_MTX3x4) {
+    WriteMTXPS4x3(mtx, &__GXWGFifo.f32);
+  } else {
+    WriteMTXPS4x2(mtx, &__GXWGFifo.f32);
+  }
+}
+
+/* TODO: [near miss] 99.72%; constant-pool offsets differ from retail. */
 void GXSetViewportJitter(f32 left, f32 top, f32 wd, f32 ht, f32 nearz, f32 farz, u32 field) {
   f32 sx;
   f32 sy;

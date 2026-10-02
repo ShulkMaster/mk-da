@@ -38,30 +38,30 @@ void GXBeginDisplayList(void *list, u32 size) {
 }
 
 u32 GXEndDisplayList(void) {
-  u32 overflow[1];
+  u32 ov;
+  u32 reg;
   BOOL enabled;
-  u32 cpEnable;
+  u32 cpenable;
+  u8 unused[4];
 
   if (__GXData->dirtyState != 0) {
     __GXSetDirtyState();
   }
-  overflow[0] = (GX_GET_PI_REG(5) >> 26) & 1;
+  reg = GX_GET_PI_REG(5);
+  ov = (reg >> 26) & 1;
   __GXSaveCPUFifoAux(&DisplayListFifo);
   GXSetCPUFifo((GXFifoObj *)OldCPUFifo);
-
   if (__GXData->dlSaveContext != 0) {
     enabled = OSDisableInterrupts();
-    cpEnable = __GXData->cpEnable;
+    cpenable = __GXData->cpEnable;
     memcpy(__GXData, &__savedGXdata, sizeof(*__GXData));
-    __GXData->cpEnable = cpEnable;
+    __GXData->cpEnable = cpenable;
     OSRestoreInterrupts(enabled);
   }
-
-  __GXData->inDispList = FALSE;
-  if (!overflow[0]) {
+  __GXData->inDispList = 0;
+  if (!ov) {
     return DisplayListFifo.count;
   }
-
   return 0;
 }
 
