@@ -8,6 +8,11 @@
 extern "C" {
 #endif
 
+#define __OS_EXCEPTION_DSI 2
+#define __OS_EXCEPTION_ISI 3
+#define __OS_EXCEPTION_ALIGNMENT 5
+#define __OS_EXCEPTION_PROGRAM 6
+
 typedef u8 __OSException;
 typedef void (*__OSExceptionHandler)(__OSException exception, OSContext* context);
 
