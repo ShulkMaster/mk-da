@@ -40,18 +40,24 @@ static void EraseCallback(s32 chan, s32 result) {
   CARDControl* card;
   CARDCallback callback;
   CARDDir* dir;
-  u32 addr[1];
+  u32 tmp[2];
+  u32 addr;
 
   card = &__CARDBlock[chan];
-  if (result >= 0) {
-    dir = __CARDGetDirBlock(card);
-    addr[0] = ((u32)dir - (u32)card->workArea) / 0x2000 * card->sectorSize;
-    result = __CARDWrite(chan, addr[0], 0x2000, dir, WriteCallback);
-    if (result >= 0) {
-      return;
-    }
+  if (result < 0) {
+    goto error;
   }
 
+  dir = __CARDGetDirBlock(card);
+  addr = ((u32)dir - (u32)card->workArea) / 0x2000 * card->sectorSize;
+  result = __CARDWrite(chan, addr, 0x2000, dir, WriteCallback);
+  if (result < 0) {
+    goto error;
+  }
+
+  return;
+
+error:
   if (card->apiCallback == 0) {
     __CARDPutControlBlock(card, result);
   }
@@ -65,21 +71,22 @@ static void EraseCallback(s32 chan, s32 result) {
 s32 __CARDUpdateDir(s32 chan, CARDCallback callback) {
   CARDControl* card;
   CARDDirCheck* check;
+  u32 tmp[2];
   u32 addr;
-  CARDDir* directory[1];
+  CARDDir* dir;
 
   card = &__CARDBlock[chan];
   if (!card->attached) {
     return CARD_RESULT_NOCARD;
   }
 
-  directory[0] = __CARDGetDirBlock(card);
-  check = __CARDGetDirCheck(directory[0]);
+  dir = __CARDGetDirBlock(card);
+  check = __CARDGetDirCheck(dir);
   ++check->checkCode;
-  __CARDCheckSum(directory[0], 0x2000 - sizeof(u32), &check->checkSum, &check->checkSumInv);
-  DCStoreRange(directory[0], 0x2000);
+  __CARDCheckSum(dir, 0x2000 - sizeof(u32), &check->checkSum, &check->checkSumInv);
+  DCStoreRange(dir, 0x2000);
 
   card->eraseCallback = callback;
-  addr = ((u32)directory[0] - (u32)card->workArea) / 0x2000 * card->sectorSize;
+  addr = ((u32)dir - (u32)card->workArea) / 0x2000 * card->sectorSize;
   return __CARDEraseSector(chan, addr, EraseCallback);
 }

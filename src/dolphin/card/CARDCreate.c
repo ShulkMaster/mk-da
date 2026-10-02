@@ -25,38 +25,37 @@ static void CreateCallbackFat(s32 chan, s32 result) {
   card = &__CARDBlock[chan];
   callback = card->apiCallback;
   card->apiCallback = 0;
-  do {
-    if (result < 0) {
-      break;
-    }
+  if (result < 0) {
+    goto error;
+  }
 
-    dir = __CARDGetDirBlock(card);
-    ent = &dir[card->freeNo];
-    memcpy(ent->gameName, card->diskID->gameName, sizeof(ent->gameName));
-    memcpy(ent->company, card->diskID->company, sizeof(ent->company));
-    ent->permission = CARD_ATTR_PUBLIC;
-    ent->copyTimes = 0;
-    ent->startBlock = card->startBlock;
+  dir = __CARDGetDirBlock(card);
+  ent = &dir[card->freeNo];
+  memcpy(ent->gameName, card->diskID->gameName, sizeof(ent->gameName));
+  memcpy(ent->company, card->diskID->company, sizeof(ent->company));
+  ent->permission = CARD_ATTR_PUBLIC;
+  ent->copyTimes = 0;
+  ent->startBlock = card->startBlock;
 
-    ent->bannerFormat = 0;
-    ent->iconAddr = 0xffffffff;
-    ent->iconFormat = 0;
-    ent->iconSpeed = 0;
-    ent->commentAddr = 0xffffffff;
+  ent->bannerFormat = 0;
+  ent->iconAddr = 0xffffffff;
+  ent->iconFormat = 0;
+  ent->iconSpeed = 0;
+  ent->commentAddr = 0xffffffff;
 
-    CARDSetIconSpeed(ent, 0, CARD_STAT_SPEED_FAST);
+  CARDSetIconSpeed(ent, 0, CARD_STAT_SPEED_FAST);
 
-    card->fileInfo->offset = 0;
-    card->fileInfo->iBlock = ent->startBlock;
+  card->fileInfo->offset = 0;
+  card->fileInfo->iBlock = ent->startBlock;
 
-    ent->time = (u32)OSTicksToSeconds(OSGetTime());
-    result = __CARDUpdateDir(chan, callback);
-    if (result < 0) {
-      break;
-    }
-    return;
-  } while (0);
+  ent->time = (u32)OSTicksToSeconds(OSGetTime());
+  result = __CARDUpdateDir(chan, callback);
+  if (result < 0) {
+    goto error;
+  }
+  return;
 
+error:
   __CARDPutControlBlock(card, result);
   if (callback) {
     callback(chan, result);

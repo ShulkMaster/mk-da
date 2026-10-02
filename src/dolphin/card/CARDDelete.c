@@ -21,18 +21,17 @@ static void DeleteCallback(s32 chan, s32 result) {
   callback = card->apiCallback;
   card->apiCallback = 0;
 
-  do {
-    if (result < 0) {
-      break;
-    }
+  if (result < 0) {
+    goto error;
+  }
 
-    result = __CARDFreeBlock(chan, card->startBlock, callback);
-    if (result < 0) {
-      break;
-    }
-    return;
-  } while (0);
+  result = __CARDFreeBlock(chan, card->startBlock, callback);
+  if (result < 0) {
+    goto error;
+  }
+  return;
 
+error:
   __CARDPutControlBlock(card, result);
   if (callback) {
     callback(chan, result);

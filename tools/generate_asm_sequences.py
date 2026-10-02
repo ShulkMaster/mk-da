@@ -13,12 +13,19 @@ from pathlib import Path
 
 FUNCTION_RE = re.compile(r"^\.fn\s+([A-Za-z_][A-Za-z0-9_]*)\s*,")
 END_FUNCTION_RE = re.compile(r"^\.endfn\s+([A-Za-z_][A-Za-z0-9_]*)\s*$")
+LABEL_RE = re.compile(r"^\.sym\s+([A-Za-z_][A-Za-z0-9_]*)\s*,\s*global\s*$")
 INSTRUCTION_RE = re.compile(
     r"^/\*\s*([0-9A-Fa-f]{8})\s+[0-9A-Fa-f]{8}\s+"
     r"((?:[0-9A-Fa-f]{2}\s+){3}[0-9A-Fa-f]{2})\s*\*/\s*(.+?)\s*$"
 )
 SYMBOL_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 EXTERNAL_BRANCH_RE = re.compile(r"^(?:b|bl)\s+[A-Za-z_][A-Za-z0-9_]*$")
+BRANCH_TARGET_RE = re.compile(r"^b[a-z]*[+-]?\s+(?:cr[0-7],\s*)?(?P<target>\S+)$")
+# Address halves are emitted as source so the compiler regenerates the relocation.
+SYMBOL_HA_L_RE = re.compile(
+    r"^(?:lis\s+r[0-9]+,\s*[A-Za-z_][A-Za-z0-9_]*@(?:ha|h)"
+    r"|(?:addi|ori)\s+r[0-9]+,\s*r[0-9]+,\s*[A-Za-z_][A-Za-z0-9_]*@l)$"
+)
 SDA21_BASE_RE = re.compile(
     r"(?P<symbol>[A-Za-z_][A-Za-z0-9_]*)@sda21\((?P<base>r(?:0|13))\)"
 )
@@ -73,6 +80,27 @@ def read_functions(path: Path) -> dict[str, tuple[int, tuple[tuple[int, str], ..
     return functions
 
 
+def read_labels(path: Path) -> dict[str, tuple[tuple[int, str], ...]]:
+    """Global labels inside each function, keyed by instruction index."""
+    labels: dict[str, list[tuple[int, str]]] = {}
+    name: str | None = None
+    count = 0
+    for line in path.read_text(encoding="utf-8").splitlines():
+        start = FUNCTION_RE.match(line)
+        if start:
+            name, count = start.group(1), 0
+            labels[name] = []
+        elif END_FUNCTION_RE.match(line):
+            name = None
+        elif name is not None:
+            label = LABEL_RE.match(line)
+            if label:
+                labels[name].append((count, label.group(1)))
+            elif INSTRUCTION_RE.match(line):
+                count += 1
+    return {key: tuple(value) for key, value in labels.items()}
+
+
 def generate(manifest: Path, version: str, build_root: Path) -> tuple[Path, str]:
     data = json.loads(manifest.read_text(encoding="utf-8"))
     if data.get("version") != version:
@@ -85,6 +113,7 @@ def generate(manifest: Path, version: str, build_root: Path) -> tuple[Path, str]
     if not isinstance(entries, list) or not entries:
         raise ValueError(f"{manifest}: functions must be a non-empty list")
     assemblies: dict[str, dict[str, tuple[int, tuple[tuple[int, str], ...]]]] = {}
+    label_sets: dict[str, dict[str, tuple[tuple[int, str], ...]]] = {}
     lines = ["/* Generated from version-specific retail assembly. Do not edit. */", ""]
     seen: set[str] = set()
     for entry in entries:
@@ -98,16 +127,42 @@ def generate(manifest: Path, version: str, build_root: Path) -> tuple[Path, str]
         assembly_path = build_root / version / "asm" / source
         if source not in assemblies:
             assemblies[source] = read_functions(assembly_path)
+            label_sets[source] = read_labels(assembly_path)
         available = assemblies[source]
-        if name not in available:
-            raise ValueError(f"{assembly_path}: allowlisted function {name} not found")
-        address, instructions = available[name]
+        # A "function" entry is an inline block inside that C function, not a whole function.
+        function = entry.get("function", name)
+        if not isinstance(function, str) or function not in available:
+            raise ValueError(f"{assembly_path}: allowlisted function {function!r} not found")
+        address, instructions = available[function]
+        first = 0
         expected_address = parse_int(entry.get("address"), f"{name}.address")
         expected_size = parse_int(entry.get("size"), f"{name}.size")
-        if address != expected_address or len(instructions) * 4 != expected_size:
-            raise ValueError(f"{name}: retail address or size does not match manifest")
-        lines.extend([f"#define SEQ_{name}() \\", "    nofralloc; \\"])
+        if function == name:
+            if address != expected_address or len(instructions) * 4 != expected_size:
+                raise ValueError(f"{name}: retail address or size does not match manifest")
+            lines.extend([f"#define SEQ_{name}() \\", "    nofralloc; \\"])
+        else:
+            start = expected_address - address
+            if (
+                start <= 0
+                or start % 4
+                or expected_size <= 0
+                or expected_size % 4
+                or start + expected_size > len(instructions) * 4
+            ):
+                raise ValueError(f"{name}: block is not inside {function}")
+            first = start // 4
+            instructions = instructions[first : (start + expected_size) // 4]
+            lines.append(f"#define SEQ_{name}() \\")
+        # Exported labels inside the range become entry points at the same offset.
+        entry_labels = {
+            index - first: label
+            for index, label in label_sets[source].get(function, ())
+            if first <= index < first + len(instructions)
+        }
         for index, (word, assembly) in enumerate(instructions):
+            if index in entry_labels:
+                lines.append(f"    entry {entry_labels[index]}; \\")
             suffix = " \\" if index + 1 < len(instructions) else ""
             if "@sda21" in assembly:
                 address_load = SDA21_LI_RE.fullmatch(assembly)
@@ -122,9 +177,19 @@ def generate(manifest: Path, version: str, build_root: Path) -> tuple[Path, str]
                 if "@sda21" in assembly:
                     raise ValueError(f"{name}: unsupported SDA21 syntax: {assembly}")
                 lines.append(f"    {assembly};{suffix}")
-            elif EXTERNAL_BRANCH_RE.fullmatch(assembly):
+            elif EXTERNAL_BRANCH_RE.fullmatch(assembly) or SYMBOL_HA_L_RE.fullmatch(assembly):
                 lines.append(f"    {assembly};{suffix}")
             else:
+                # Raw words carry retail-resolved fields; refuse any relocation.
+                branch = BRANCH_TARGET_RE.fullmatch(assembly)
+                if "@" in assembly or (
+                    branch
+                    and not branch.group("target").startswith(".L_")
+                    and branch.group("target") != function
+                    # Absolute branches (ba/bla) to a literal address carry no relocation.
+                    and not re.fullmatch(r"b[a-z]*a[+-]?\s+(?:cr[0-7],\s*)?0x[0-9A-Fa-f]+", assembly)
+                ):
+                    raise ValueError(f"{name}: unsupported relocation: {assembly}")
                 lines.append(f"    opword 0x{word:08X};{suffix}")
         lines.append("")
     return build_root / version / "include" / output, "\n".join(lines)

@@ -43,19 +43,25 @@ static void WriteCallback(s32 chan, s32 result) {
 static void EraseCallback(s32 chan, s32 result) {
   CARDControl* card;
   CARDCallback callback;
+  u32 temp[2];
   u16* fat;
-  u32 addr[1];
+  u32 addr;
 
   card = &__CARDBlock[chan];
-  if (result >= 0) {
-    fat = __CARDGetFatBlock(card);
-    addr[0] = ((u32)fat - (u32)card->workArea) / CARD_SYSTEM_BLOCK_SIZE * card->sectorSize;
-    result = __CARDWrite(chan, addr[0], CARD_SYSTEM_BLOCK_SIZE, fat, WriteCallback);
-    if (result >= 0) {
-      return;
-    }
+  if (result < 0) {
+    goto error;
   }
 
+  fat = __CARDGetFatBlock(card);
+  addr = ((u32)fat - (u32)card->workArea) / CARD_SYSTEM_BLOCK_SIZE * card->sectorSize;
+  result = __CARDWrite(chan, addr, CARD_SYSTEM_BLOCK_SIZE, fat, WriteCallback);
+  if (result < 0) {
+    goto error;
+  }
+
+  return;
+
+error:
   if (card->apiCallback == NULL) {
     __CARDPutControlBlock(card, result);
   }
@@ -116,16 +122,18 @@ s32 __CARDAllocBlock(s32 chan, u32 cBlock, CARDCallback callback) {
 }
 
 s32 __CARDFreeBlock(s32 chan, u16 nBlock, CARDCallback callback) {
+  CARDControl* card;
   u16* fat;
   u16 nextBlock;
 
-  if (!__CARDBlock[chan].attached) {
+  card = card = &__CARDBlock[chan];
+  if (!card->attached) {
     return CARD_RESULT_NOCARD;
   }
 
-  fat = __CARDGetFatBlock(&__CARDBlock[chan]);
+  fat = __CARDGetFatBlock(card);
   while (nBlock != 0xFFFF) {
-    if (!CARDIsValidBlockNo(&__CARDBlock[chan], nBlock)) {
+    if (!CARDIsValidBlockNo(card, nBlock)) {
       return CARD_RESULT_BROKEN;
     }
 
