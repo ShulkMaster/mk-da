@@ -33,9 +33,15 @@ directly, as well as ISO and other disc formats. Alternatively, place the
 extracted executable at `orig/GMKE5D/sys/main.dol`.
 
 ```sh
+git clone --recursive https://github.com/ShulkMaster/mk-da.git
+cd mk-da
 python3 configure.py
 ninja
 ```
+
+MusyX builds from the `extern/musyx` submodule (the `mkda` branch of
+`ShulkMaster/musyx`). `configure.py` fetches it when missing; an existing clone
+can also run `git submodule update --init --recursive`.
 
 The build verifies `build/GMKE5D/main.dol` against SHA-1
 `3560bd0c0814d2f1ceaa819946d71dad4e488d2e`.

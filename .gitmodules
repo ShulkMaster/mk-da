@@ -1,0 +1,4 @@
+[submodule "extern/musyx"]
+	path = extern/musyx
+	url = https://github.com/ShulkMaster/musyx.git
+	branch = main

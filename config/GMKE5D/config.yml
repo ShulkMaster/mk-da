@@ -9,6 +9,9 @@ splits: config/GMKE5D/splits.txt
 mw_comment_version: 10
 # Keep generated disassembly in ignored build artifacts only.
 write_asm: true
+# fstyle_table holds the plain value 0x80410000 here; retail .rela.data has no relocation.
+block_relocations:
+  - source: .data:0x8028065C
 # TRK exception vector table (__exception.s): symbolic references in retail code.
 add_relocations:
   - source: .init:0x8000338C

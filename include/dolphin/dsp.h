@@ -48,6 +48,7 @@ typedef struct STRUCT_DSP_TASK {
 
 u32 DSPCheckMailToDSP(void);
 u32 DSPCheckMailFromDSP(void);
+u32 DSPGetDMAStatus(void);
 u32 DSPReadMailFromDSP(void);
 void DSPSendMailToDSP(u32 mail);
 

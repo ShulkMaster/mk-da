@@ -14,6 +14,7 @@
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Dict, List
@@ -134,6 +135,13 @@ parser.add_argument(
     help="disable progress calculation",
 )
 args = parser.parse_args()
+
+# Fetch git submodules (extern/musyx) when the checkout was not cloned recursively.
+if not Path("extern/musyx/include").is_dir():
+    try:
+        subprocess.run(["git", "submodule", "update", "--init", "--recursive"], check=True)
+    except (OSError, subprocess.CalledProcessError) as e:
+        sys.exit(f"Failed to fetch git submodules ({e}); run `git submodule update --init --recursive`.")
 
 config = ProjectConfig()
 config.version = str(args.version)
@@ -301,6 +309,24 @@ cflags_rel = [
     "-sdata2 0",
 ]
 
+# MusyX flags, shared with Prime through extern/musyx (mkda branch)
+cflags_musyx = [
+    "-proc gekko",
+    "-nodefaults",
+    "-nosyspath",
+    "-i include",
+    "-i extern/musyx/include",
+    "-inline auto,depth=4",
+    "-O4,p",
+    "-fp hard",
+    "-enum int",
+    "-sym on",
+    "-Cpp_exceptions off",
+    "-str reuse,pool,readonly",
+    "-fp_contract off",
+    "-DMUSY_TARGET=MUSY_TARGET_DOLPHIN",
+]
+
 # This linker reproduces the retail DOL; the game compiler remains unconfirmed.
 config.linker_version = "GC/1.3.2"
 
@@ -323,6 +349,23 @@ def Rel(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
         "mw_version": "GC/1.3.2",
         "cflags": cflags_rel,
         "progress_category": "game",
+        "objects": objects,
+    }
+
+
+# Helper function for MusyX objects
+def MusyX(objects: List[Object], major: int = 2, minor: int = 0, patch: int = 0) -> Dict[str, Any]:
+    return {
+        "lib": "musyx",
+        "mw_version": "GC/1.3.2",
+        "src_dir": "extern/musyx/src",
+        "cflags": [
+            *cflags_musyx,
+            f"-DMUSY_VERSION_MAJOR={major}",
+            f"-DMUSY_VERSION_MINOR={minor}",
+            f"-DMUSY_VERSION_PATCH={patch}",
+        ],
+        "progress_category": "third_party",
         "objects": objects,
     }
 
@@ -511,6 +554,28 @@ config.libs = [
             Object(Matching, "dolphin/os/__start.c"),
         ],
     ),
+    MusyX(
+        [
+            Object(Matching, "musyx/runtime/seq_api.c"),
+            Object(Matching, "musyx/runtime/snd_synthapi.c"),
+            Object(Matching, "musyx/runtime/synthvoice.c"),
+            Object(Matching, "musyx/runtime/synth_ac.c"),
+            Object(Matching, "musyx/runtime/synth_adsr.c"),
+            Object(Matching, "musyx/runtime/synth_dbtab.c"),
+            Object(Matching, "musyx/runtime/synth_vsamples.c"),
+            Object(Matching, "musyx/runtime/s_data.c"),
+            Object(Matching, "musyx/runtime/hw_volconv.c"),
+            Object(Matching, "musyx/runtime/snd3d.c"),
+            Object(Matching, "musyx/runtime/snd_init.c"),
+            Object(Matching, "musyx/runtime/snd_math.c"),
+            Object(Matching, "musyx/runtime/snd_service.c"),
+            Object(Matching, "musyx/runtime/hardware.c"),
+            Object(Matching, "musyx/runtime/hw_aramdma.c"),
+            Object(Matching, "musyx/runtime/hw_dolphin.c"),
+            Object(Matching, "musyx/runtime/hw_memory.c"),
+            Object(Matching, "musyx/runtime/dsp_import.c"),
+        ]
+    ),
 ]
 
 
@@ -531,7 +596,10 @@ def link_order_callback(module_id: int, objects: List[str]) -> List[str]:
 
 # Optional extra categories for progress tracking
 # Adjust as desired for your project
-config.progress_categories = [ProgressCategory("sdk", "Dolphin SDK")]
+config.progress_categories = [
+    ProgressCategory("sdk", "Dolphin SDK"),
+    ProgressCategory("third_party", "Third Party"),
+]
 config.progress_each_module = args.verbose
 # Optional extra arguments to `objdiff-cli report generate`
 config.progress_report_args = [
