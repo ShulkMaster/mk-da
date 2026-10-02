@@ -9,6 +9,9 @@ extern "C" {
 #endif
 
 typedef u8 __OSException;
+typedef void (*__OSExceptionHandler)(__OSException exception, OSContext* context);
+
+__OSExceptionHandler __OSGetExceptionHandler(__OSException exception);
 
 void __OSUnhandledException(__OSException exception, OSContext* context, u32 dsisr, u32 dar);
 

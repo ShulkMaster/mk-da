@@ -50,6 +50,15 @@ dolphin/dsp/dsp_task.c:
 	.data       start:0x8029A290 end:0x8029A3A0
 	.sbss       start:0x8041CC08 end:0x8041CC20
 
+dolphin/dvd/dvdlow.c:
+	.text       start:0x8019A914 end:0x8019A958
+
+dolphin/dvd/dvdfs.c:
+	.text       start:0x8019AD4C end:0x8019AD70
+
+dolphin/dvd/dvd.c:
+	.text       start:0x8019CDA4 end:0x8019CE34
+
 dolphin/dvd/dvdqueue.c:
 	.text       start:0x8019D438 end:0x8019D630
 	.bss        start:0x803EADF8 end:0x803EAE18
@@ -58,6 +67,24 @@ dolphin/dvd/dvderror.c:
 	.text       start:0x8019D630 end:0x8019D7C8
 	.data       start:0x8029A620 end:0x8029A668
 
+dolphin/gx/GXAttr.c:
+	.text       start:0x801A1B3C end:0x801A1B4C
+
+dolphin/gx/GXMisc.c:
+	.text       start:0x801A211C end:0x801A2160
+
+dolphin/gx/GXLight.c:
+	.text       start:0x801A3398 end:0x801A33C4
+
+dolphin/gx/GXTexture.c:
+	.text       start:0x801A41C8 end:0x801A41D0
+
+dolphin/gx/GXPerf.c:
+	.text       start:0x801A7228 end:0x801A7238
+
+dolphin/os/OS.c:
+	.text       start:0x801A7D28 end:0x801A7D3C
+
 dolphin/os/OSArena.c:
 	.text       start:0x801A8C0C end:0x801A8C2C
 	.sdata      start:0x8041B738 end:0x8041B740
@@ -65,6 +92,9 @@ dolphin/os/OSArena.c:
 
 dolphin/os/OSAudioSystem.c:
 	.text       start:0x801A8DE8 end:0x801A8EC0
+
+dolphin/os/OSContext.c:
+	.text       start:0x801A9780 end:0x801A97A4
 
 dolphin/os/OSError.c:
 	.text       start:0x801A9BD4 end:0x801A9C54

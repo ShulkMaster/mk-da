@@ -9,6 +9,7 @@ extern "C" {
 
 typedef struct DVDDiskID DVDDiskID;
 typedef struct DVDCommandBlock DVDCommandBlock;
+typedef struct DVDFileInfo DVDFileInfo;
 typedef void (*DVDCBCallback)(s32 result, DVDCommandBlock* block);
 
 struct DVDCommandBlock {
@@ -25,6 +26,21 @@ struct DVDCommandBlock {
   DVDCBCallback callback;
   void* userData;
 };
+
+typedef void (*DVDCallback)(s32 result, DVDFileInfo* fileInfo);
+
+struct DVDFileInfo {
+  DVDCommandBlock cb;
+  u32 startAddr;
+  u32 length;
+  DVDCallback callback;
+};
+
+BOOL DVDClose(DVDFileInfo* fileInfo);
+s32 DVDCancel(DVDCommandBlock* block);
+void DVDReset(void);
+s32 DVDGetCommandBlockStatus(const DVDCommandBlock* block);
+void __DVDLowSetWAType(u32 type, u32 location);
 
 #ifdef __cplusplus
 }

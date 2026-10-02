@@ -320,6 +320,16 @@ config.warn_missing_config = False
 config.warn_missing_source = False
 # The remaining objects continue to link from the original binary.
 config.libs = [
+    DolphinLib(
+        "gx",
+        [
+            Object(Matching, "dolphin/gx/GXMisc.c"),
+            Object(Matching, "dolphin/gx/GXLight.c"),
+            Object(Matching, "dolphin/gx/GXAttr.c"),
+            Object(Matching, "dolphin/gx/GXTexture.c"),
+            Object(Matching, "dolphin/gx/GXPerf.c"),
+        ],
+    ),
     DolphinLib("card", [Object(Matching, "dolphin/card/CARDOpen.c")]),
     DolphinLib("si", [Object(Matching, "dolphin/si/SISamplingRate.c")]),
     DolphinLib(
@@ -348,6 +358,9 @@ config.libs = [
     DolphinLib(
         "dvd",
         [
+            Object(Matching, "dolphin/dvd/dvdlow.c"),
+            Object(Matching, "dolphin/dvd/dvdfs.c"),
+            Object(Matching, "dolphin/dvd/dvd.c"),
             Object(Matching, "dolphin/dvd/dvdqueue.c"),
             Object(Matching, "dolphin/dvd/dvderror.c"),
         ],
@@ -355,8 +368,14 @@ config.libs = [
     DolphinLib(
         "os",
         [
+            Object(Matching, "dolphin/os/OS.c", extra_cflags=["-opt nopeephole"]),
             Object(Matching, "dolphin/os/OSArena.c"),
             Object(Matching, "dolphin/os/OSAudioSystem.c"),
+            Object(
+                Matching,
+                "dolphin/os/OSContext.c",
+                extra_cflags=["-opt nopeephole"],
+            ),
             Object(Matching, "dolphin/os/OSError.c"),
             Object(Matching, "dolphin/os/OSInterrupt.c"),
             Object(Matching, "dolphin/os/OSLink.c"),
