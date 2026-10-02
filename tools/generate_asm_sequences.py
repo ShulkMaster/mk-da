@@ -31,6 +31,7 @@ SYMBOL_HA_L_RE = re.compile(
 SDA21_BASE_RE = re.compile(
     r"(?P<symbol>[A-Za-z_][A-Za-z0-9_]*)@sda21\((?P<base>r(?:0|13))\)"
 )
+ANONYMOUS_SDA21_RE = re.compile(r'"(?P<label>@[0-9]+)"@sda21')
 SDA21_IMMEDIATE_RE = re.compile(r"(?P<symbol>[A-Za-z_][A-Za-z0-9_]*)@sda21\b")
 SDA21_LI_RE = re.compile(
     r"^li\s+(?P<dest>r[0-9]+),\s*(?P<symbol>[A-Za-z_][A-Za-z0-9_]*)@sda21$"
@@ -115,6 +116,13 @@ def read_labels(path: Path) -> dict[str, tuple[tuple[int, str], ...]]:
     return {key: tuple(value) for key, value in labels.items()}
 
 
+def sda_name(name: str, sda_symbols: dict[str, str], label: str) -> str:
+    """The C symbol that a retail anonymous pool label maps to."""
+    if label not in sda_symbols:
+        raise ValueError(f"{name}: unmapped anonymous SDA21 label {label}")
+    return sda_symbols[label]
+
+
 def generate(manifest: Path, version: str, build_root: Path) -> tuple[Path, str]:
     data = json.loads(manifest.read_text(encoding="utf-8"))
     if data.get("version") != version:
@@ -168,6 +176,12 @@ def generate(manifest: Path, version: str, build_root: Path) -> tuple[Path, str]
             first = start // 4
             instructions = instructions[first : (start + expected_size) // 4]
             lines.append(f"#define SEQ_{name}() \\")
+        sda_symbols = entry.get("sda_symbols", {})
+        if not isinstance(sda_symbols, dict) or not all(
+            re.fullmatch(r"@[0-9]+", label) and SYMBOL_RE.fullmatch(str(symbol))
+            for label, symbol in sda_symbols.items()
+        ):
+            raise ValueError(f"{name}.sda_symbols: expected @N labels mapped to symbols")
         # Exported labels inside the range become entry points at the same offset.
         entry_labels = {
             index - first: label
@@ -179,6 +193,11 @@ def generate(manifest: Path, version: str, build_root: Path) -> tuple[Path, str]
                 lines.append(f"    entry {entry_labels[index]}; \\")
             suffix = " \\" if index + 1 < len(instructions) else ""
             if "@sda21" in assembly:
+                # Retail pool labels are anonymous; the manifest names the C symbol.
+                assembly = ANONYMOUS_SDA21_RE.sub(
+                    lambda m: sda_name(name, sda_symbols, m.group("label")) + "@sda21",
+                    assembly,
+                )
                 address_load = SDA21_LI_RE.fullmatch(assembly)
                 if address_load:
                     assembly = (

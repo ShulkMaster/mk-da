@@ -441,6 +441,67 @@
       "assembly": "dolphin/mtx/vec.s"
     },
     {
+      "name": "PSVECScale",
+      "address": "0x801A7438",
+      "size": "0x1C",
+      "assembly": "dolphin/mtx/vec.s"
+    },
+    {
+      "name": "PSQUATMultiply",
+      "address": "0x801A7530",
+      "size": "0x5C",
+      "assembly": "dolphin/mtx/quat.s"
+    },
+    {
+      "name": "PSMTXScale",
+      "address": "0x801A7238",
+      "size": "0x28",
+      "assembly": "dolphin/mtx/mtx.s",
+      "sda_symbols": {
+        "@95": "c_zero"
+      }
+    },
+    {
+      "name": "PSMTXQuat",
+      "address": "0x801A7260",
+      "size": "0xA4",
+      "assembly": "dolphin/mtx/mtx.s",
+      "sda_symbols": {
+        "@94": "c_one"
+      }
+    },
+    {
+      "name": "PSVECNormalize",
+      "address": "0x801A7454",
+      "size": "0x44",
+      "assembly": "dolphin/mtx/vec.s",
+      "sda_symbols": {
+        "@116": "c_half",
+        "@117": "c_three"
+      }
+    },
+    {
+      "name": "PSVECMag",
+      "address": "0x801A7498",
+      "size": "0x3C",
+      "assembly": "dolphin/mtx/vec.s",
+      "sda_symbols": {
+        "@116": "c_half",
+        "@117": "c_three"
+      }
+    },
+    {
+      "name": "PSQUATNormalize",
+      "address": "0x801A758C",
+      "size": "0x54",
+      "assembly": "dolphin/mtx/quat.s",
+      "sda_symbols": {
+        "@127": "epsilon",
+        "@133": "c_half",
+        "@134": "c_three"
+      }
+    },
+    {
       "name": "TRKSaveExtended1Block",
       "address": "0x8018F410",
       "size": "0x1B8",

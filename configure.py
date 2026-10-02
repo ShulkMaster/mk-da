@@ -191,6 +191,9 @@ config.reconfig_deps = []
 asm_sequence_manifest = Path("config") / config.version / "asm_sequences.json"
 asm_sequence_config = json.loads(asm_sequence_manifest.read_text(encoding="utf-8"))
 asm_sequence_root = config.build_dir / config.version
+# Whole retail `.s` units are generated here and assembled by their Objects.
+asm_unit_root = asm_sequence_root / "units"
+asm_units = asm_sequence_config.get("units", [])
 config.reconfig_deps.append(asm_sequence_manifest)
 config.custom_build_rules = [
     {
@@ -206,14 +209,25 @@ config.custom_build_rules = [
 config.custom_build_steps = {
     "pre-compile": [
         {
-            "outputs": asm_sequence_root / "include" / asm_sequence_config["output"],
+            "outputs": [
+                asm_sequence_root / "include" / asm_sequence_config["output"],
+                *(asm_unit_root / unit["name"] for unit in asm_units),
+            ],
             "rule": "asm_sequences",
             "inputs": list(
                 dict.fromkeys(
-                    asm_sequence_root
-                    / "asm"
-                    / entry.get("assembly", asm_sequence_config["assembly"])
-                    for entry in asm_sequence_config["functions"]
+                    [
+                        *(
+                            asm_sequence_root
+                            / "asm"
+                            / entry.get("assembly", asm_sequence_config["assembly"])
+                            for entry in asm_sequence_config["functions"]
+                        ),
+                        *(
+                            asm_sequence_root / "asm" / unit.get("assembly", unit["name"])
+                            for unit in asm_units
+                        ),
+                    ]
                 )
             ),
             "implicit": [Path("tools/generate_asm_sequences.py"), asm_sequence_manifest],
@@ -350,8 +364,21 @@ config.libs = [
             Object(Matching, "dolphin/trk_minnow_dolphin/targcont.c"),
             Object(Matching, "dolphin/trk_minnow_dolphin/main_TRK.c"),
             Object(Matching, "dolphin/trk_minnow_dolphin/nubinit.c", cflags=[*cflags_runtime, "-sdata 0", "-sdata2 0", "-enum min"]),
+            Object(Matching, "dolphin/trk_minnow_dolphin/msg.c"),
+            Object(Matching, "dolphin/trk_minnow_dolphin/msgbuf.c", cflags=[*cflags_runtime, "-sdata 0", "-sdata2 0", "-enum min", "-inline auto,deferred"]),
+            Object(Matching, "dolphin/trk_minnow_dolphin/serpoll.c", cflags=[*cflags_runtime, "-sdata 0", "-sdata2 0", "-enum min", "-inline auto,deferred"]),
             Object(Matching, "dolphin/trk_minnow_dolphin/dispatch.c"),
             Object(Matching, "dolphin/trk_minnow_dolphin/usr_put.c"),
+            Object(Matching, "dolphin/trk_minnow_dolphin/msghndlr.c", cflags=[*cflags_runtime, "-sdata 0", "-sdata2 0", "-inline auto,deferred"]),
+            Object(Matching, "dolphin/trk_minnow_dolphin/support.c", cflags=[*cflags_runtime, "-sdata 0", "-sdata2 0", "-inline auto,deferred"]),
+            Object(Matching, "dolphin/trk_minnow_dolphin/flush_cache.c"),
+            Object(Matching, "dolphin/trk_minnow_dolphin/mem_TRK.c", mw_version="GC/1.3", cflags=[*cflags_runtime, "-sdata 0", "-sdata2 0", "-enum min", "-inline auto,deferred"]),
+            Object(Matching, "dolphin/trk_minnow_dolphin/__exception.s", src_dir=asm_unit_root, generated=True),
+            Object(Matching, "dolphin/trk_minnow_dolphin/targimpl.c", mw_version="GC/1.3", cflags=[*cflags_runtime, "-sdata 0", "-sdata2 0", "-enum min", "-inline auto,deferred"]),
+            Object(Matching, "dolphin/trk_minnow_dolphin/dolphin_trk.c", mw_version="GC/1.3", cflags=[*cflags_runtime, "-sdata 0", "-sdata2 0", "-enum min", "-inline auto,deferred"]),
+            Object(Matching, "dolphin/trk_minnow_dolphin/dolphin_trk_glue.c", mw_version="GC/1.3", cflags=[*cflags_runtime, "-sdata 0", "-sdata2 0", "-enum min", "-inline auto,deferred", "-str reuse,nopool,readonly"]),
+            Object(Matching, "dolphin/trk_minnow_dolphin/targsupp.s", src_dir=asm_unit_root, generated=True),
+            Object(Matching, "dolphin/trk_minnow_dolphin/mpc_7xx_603e.c"),
         ],
     },
     DolphinLib(
@@ -368,7 +395,7 @@ config.libs = [
             Object(Matching, "dolphin/gx/GXFifo.c"),
             Object(Matching, "dolphin/gx/GXDisplayList.c"),
             Object(Matching, "dolphin/gx/GXFrameBuf.c"),
-            Object(NonMatching, "dolphin/gx/GXTransform.c", extra_cflags=["-opt nopeephole", "-fp_contract off"]),
+            Object(Matching, "dolphin/gx/GXTransform.c", extra_cflags=["-fp_contract off"]),
             Object(Matching, "dolphin/gx/GXGeometry.c"),
             Object(Matching, "dolphin/gx/GXBump.c"),
             Object(Matching, "dolphin/gx/GXTev.c"),
@@ -381,6 +408,7 @@ config.libs = [
             Object(Matching, "dolphin/gx/GXPerf.c"),
         ],
     ),
+    DolphinLib("base", [Object(Matching, "dolphin/base/PPCArch.c")]),
     DolphinLib(
         "card",
         [
@@ -443,7 +471,16 @@ config.libs = [
             Object(Matching, "dolphin/dvd/fstload.c"),
         ],
     ),
-    DolphinLib("mtx", [Object(Matching, "dolphin/mtx/mtx44.c")]),
+    DolphinLib(
+        "mtx",
+        [
+            Object(Matching, "dolphin/mtx/mtx.c"),
+            Object(Matching, "dolphin/mtx/mtxvec.c"),
+            Object(Matching, "dolphin/mtx/mtx44.c"),
+            Object(Matching, "dolphin/mtx/vec.c"),
+            Object(Matching, "dolphin/mtx/quat.c"),
+        ],
+    ),
     DolphinLib("amcstubs", [Object(Matching, "dolphin/amcstubs/AmcExi2Stubs.c")]),
     DolphinLib("odenotstub", [Object(Matching, "dolphin/odenotstub/odenotstub.c")]),
     DolphinLib(
