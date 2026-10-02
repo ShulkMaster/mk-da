@@ -61,6 +61,7 @@ class Object:
             "extra_asflags": [],
             "extra_cflags": [],
             "extra_clang_flags": [],
+            "generated": False,
             "lib": None,
             "mw_version": None,
             "progress_category": None,
@@ -1180,8 +1181,12 @@ def generate_build_ninja(
                 source_inputs.append(aliased_target)
                 obj_path = aliased_target
             built_obj_path: Optional[Path] = None
-            if obj.src_path is not None and obj.src_path.exists():
-                check_path_case(obj.src_path)
+            # A generated source is written by a build step after configure.
+            if obj.src_path is not None and (
+                obj.options["generated"] or obj.src_path.exists()
+            ):
+                if not obj.options["generated"]:
+                    check_path_case(obj.src_path)
                 if file_is_c_cpp(obj.src_path):
                     # Add C/C++ build rule
                     built_obj_path = c_build(obj, obj.src_path)
@@ -1706,7 +1711,9 @@ def generate_objdiff_config(
             objdiff_config["units"].append(unit_config)
             return
 
-        src_exists = obj.src_path is not None and obj.src_path.exists()
+        src_exists = obj.src_path is not None and (
+            obj.options["generated"] or obj.src_path.exists()
+        )
         if obj.options["symbol_aliases"] and obj_path is not None:
             unit_config["target_path"] = Path(obj_path).with_suffix(".aliased.o")
         if src_exists:
