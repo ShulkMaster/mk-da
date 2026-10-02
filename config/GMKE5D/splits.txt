@@ -19,5 +19,10 @@ Runtime.PPCEABI.H/__init_cpp_exceptions.cpp:
 	.dtors      start:0x8022E660 end:0x8022E668
 	.sdata      start:0x8041B688 end:0x8041B690
 
+dolphin/os/OSArena.c:
+	.text       start:0x801A8C0C end:0x801A8C2C
+	.sdata      start:0x8041B738 end:0x8041B740
+	.sbss       start:0x8041CD78 end:0x8041CD80
+
 dolphin/os/OSMutex.c:
 	.text       start:0x801AB7E0 end:0x801ABA2C
