@@ -20,13 +20,13 @@ Runtime.PPCEABI.H/__init_cpp_exceptions.cpp:
 	.sdata      start:0x8041B688 end:0x8041B690
 
 dolphin/ai.c:
-	.text       start:0x801910A4 end:0x8019110C
+	.text       start:0x80190CF8 end:0x8019110C
 
 dolphin/ar/ar.c:
-	.text       start:0x801915B8 end:0x801916EC
+	.text       start:0x801915B8 end:0x80192144
 
 dolphin/ar/arq.c:
-	.text       start:0x80192144 end:0x80192314
+	.text       start:0x80192144 end:0x801924D8
 
 dolphin/card/CARDOpen.c:
 	.text       start:0x80197934 end:0x8019793C
@@ -51,13 +51,19 @@ dolphin/dsp/dsp_task.c:
 	.sbss       start:0x8041CC08 end:0x8041CC20
 
 dolphin/dvd/dvdlow.c:
-	.text       start:0x8019A914 end:0x8019A958
+	.text       start:0x80199B04 end:0x8019A958
+	.bss        start:0x803EAC40 end:0x803EAD10
+	.sdata      start:0x8041B6B0 end:0x8041B6B4
+	.sbss       start:0x8041CC20 end:0x8041CC68
 
 dolphin/dvd/dvdfs.c:
-	.text       start:0x8019AD4C end:0x8019AD70
+	.text       start:0x8019A958 end:0x8019B084
+	.data       start:0x8029A3D0 end:0x8029A504
+	.sdata      start:0x8041B6B8 end:0x8041B6C0
 
 dolphin/dvd/dvd.c:
-	.text       start:0x8019CDA4 end:0x8019CE34
+	.text       start:0x8019CB24 end:0x8019D438
+	.data       start:0x8029A5B4 end:0x8029A61C align:4
 
 dolphin/dvd/dvdqueue.c:
 	.text       start:0x8019D438 end:0x8019D630
@@ -68,22 +74,33 @@ dolphin/dvd/dvderror.c:
 	.data       start:0x8029A620 end:0x8029A668
 
 dolphin/gx/GXAttr.c:
-	.text       start:0x801A1B3C end:0x801A1B4C
+	.text       start:0x801A104C end:0x801A1E64
+	.data       start:0x8029A6D8 end:0x8029A7F4
+	.sdata      start:0x8041B6E0 end:0x8041B6EC
 
 dolphin/gx/GXMisc.c:
-	.text       start:0x801A211C end:0x801A2160
+	.text       start:0x801A211C end:0x801A225C
 
 dolphin/gx/GXGeometry.c:
-	.text       start:0x801A2594 end:0x801A27E4
+	.text       start:0x801A242C end:0x801A27E4
+
+dolphin/gx/GXFrameBuf.c:
+	.text       start:0x801A27E4 end:0x801A3398
+	.sdata2     start:0x80420348 end:0x8042034C
 
 dolphin/gx/GXLight.c:
-	.text       start:0x801A3398 end:0x801A33C4
+	.text       start:0x801A3398 end:0x801A3CB0
+	.data       start:0x8029A9A0 end:0x8029A9BC
+	.sdata2     start:0x80420350 end:0x80420384
 
 dolphin/gx/GXTexture.c:
-	.text       start:0x801A41C8 end:0x801A41D0
+	.text       start:0x801A3CB0 end:0x801A4B10
+	.data       start:0x8029A9C0 end:0x8029AAF0
+	.sdata      start:0x8041B6F0 end:0x8041B730
+	.sdata2     start:0x80420388 end:0x804203B0
 
 dolphin/gx/GXBump.c:
-	.text       start:0x801A4B10 end:0x801A4DF4
+	.text       start:0x801A4B10 end:0x801A4EE4
 
 dolphin/gx/GXTev.c:
 	.text       start:0x801A5088 end:0x801A591C
@@ -93,8 +110,13 @@ dolphin/gx/GXPixel.c:
 	.text       start:0x801A5ACC end:0x801A6064
 	.data       start:0x8029AB18 end:0x8029AB38
 
+dolphin/gx/GXTransform.c:
+	.text       start:0x801A6274 end:0x801A6990
+	.sdata2     start:0x804203E0 end:0x804203F8
+
 dolphin/gx/GXPerf.c:
-	.text       start:0x801A7228 end:0x801A7238
+	.text       start:0x801A6990 end:0x801A7238
+	.data       start:0x8029AB38 end:0x8029AC24
 
 dolphin/os/OS.c:
 	.text       start:0x801A7D28 end:0x801A7D3C
