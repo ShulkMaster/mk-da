@@ -19,6 +19,18 @@ Runtime.PPCEABI.H/__init_cpp_exceptions.cpp:
 	.dtors      start:0x8022E660 end:0x8022E668
 	.sdata      start:0x8041B688 end:0x8041B690
 
+dolphin/ai.c:
+	.text       start:0x801910A4 end:0x8019110C
+
+dolphin/ar/ar.c:
+	.text       start:0x801915B8 end:0x801916EC
+
+dolphin/ar/arq.c:
+	.text       start:0x80192144 end:0x80192314
+
+dolphin/card/CARDOpen.c:
+	.text       start:0x80197934 end:0x8019793C
+
 dolphin/db_init.c:
 	.text       start:0x80198F38 end:0x80198FA8
 	.data       start:0x8029A240 end:0x8029A258
@@ -54,11 +66,31 @@ dolphin/os/OSArena.c:
 dolphin/os/OSAudioSystem.c:
 	.text       start:0x801A8DE8 end:0x801A8EC0
 
+dolphin/os/OSError.c:
+	.text       start:0x801A9BD4 end:0x801A9C54
+
+dolphin/os/OSInterrupt.c:
+	.text       start:0x801AACCC end:0x801AACFC
+
 dolphin/os/OSLink.c:
 	.text       start:0x801AB4E8 end:0x801AB500
+
+dolphin/os/OSMemory.c:
+	.text       start:0x801AB500 end:0x801AB5A8
 
 dolphin/os/OSMutex.c:
 	.text       start:0x801AB7E0 end:0x801ABA2C
 
+dolphin/os/OSReset.c:
+	.text       start:0x801ABC44 end:0x801ABCC8
+
+dolphin/os/OSThread.c:
+	.text       start:0x801ACEE8 end:0x801ACF04
+
 dolphin/os/OSTime.c:
 	.text       start:0x801ADFC0 end:0x801AE09C
+
+dolphin/si/SISamplingRate.c:
+	.text       start:0x801B1344 end:0x801B144C
+	.data       start:0x8029C558 end:0x8029C5EC
+	.sbss       start:0x8041CE28 end:0x8041CE2C

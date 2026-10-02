@@ -5,8 +5,14 @@
 
 #ifdef __MWERKS__
 volatile u16 __DSPRegs[] : 0xCC005000;
+volatile u32 __AIRegs[] : 0xCC006C00;
+volatile u16 __MEMRegs[] : 0xCC004000;
+volatile u16 __VIRegs[] : 0xCC002000;
 #else
 #define __DSPRegs ((volatile u16*)0xCC005000)
+#define __AIRegs ((volatile u32*)0xCC006C00)
+#define __MEMRegs ((volatile u16*)0xCC004000)
+#define __VIRegs ((volatile u16*)0xCC002000)
 #endif
 
 #endif

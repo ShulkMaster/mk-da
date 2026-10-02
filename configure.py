@@ -320,6 +320,16 @@ config.warn_missing_config = False
 config.warn_missing_source = False
 # The remaining objects continue to link from the original binary.
 config.libs = [
+    DolphinLib("card", [Object(Matching, "dolphin/card/CARDOpen.c")]),
+    DolphinLib("si", [Object(Matching, "dolphin/si/SISamplingRate.c")]),
+    DolphinLib(
+        "ar",
+        [
+            Object(Matching, "dolphin/ar/ar.c"),
+            Object(Matching, "dolphin/ar/arq.c"),
+        ],
+    ),
+    DolphinLib("ai", [Object(Matching, "dolphin/ai.c")]),
     DolphinLib(
         "db",
         [
@@ -347,8 +357,13 @@ config.libs = [
         [
             Object(Matching, "dolphin/os/OSArena.c"),
             Object(Matching, "dolphin/os/OSAudioSystem.c"),
+            Object(Matching, "dolphin/os/OSError.c"),
+            Object(Matching, "dolphin/os/OSInterrupt.c"),
             Object(Matching, "dolphin/os/OSLink.c"),
+            Object(Matching, "dolphin/os/OSMemory.c"),
             Object(Matching, "dolphin/os/OSMutex.c"),
+            Object(Matching, "dolphin/os/OSReset.c"),
+            Object(Matching, "dolphin/os/OSThread.c"),
             Object(Matching, "dolphin/os/OSTime.c"),
         ],
     ),
