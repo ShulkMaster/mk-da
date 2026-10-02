@@ -4,6 +4,60 @@
   "output": "dolphin/asm_sequences.inc",
   "functions": [
     {
+      "name": "__TRK_get_MSR",
+      "address": "0x8018DA20",
+      "size": "0x8",
+      "assembly": "dolphin/trk_minnow_dolphin/targimpl.s"
+    },
+    {
+      "name": "__TRK_set_MSR",
+      "address": "0x8018DA28",
+      "size": "0x8",
+      "assembly": "dolphin/trk_minnow_dolphin/targimpl.s"
+    },
+    {
+      "name": "TRK_ppc_memcpy",
+      "address": "0x8018DA30",
+      "size": "0x3C",
+      "assembly": "dolphin/trk_minnow_dolphin/targimpl.s"
+    },
+    {
+      "name": "TRKInterruptHandler",
+      "address": "0x8018DA6C",
+      "size": "0x194",
+      "assembly": "dolphin/trk_minnow_dolphin/targimpl.s"
+    },
+    {
+      "name": "TRKExceptionHandler",
+      "address": "0x8018DC00",
+      "size": "0x9C",
+      "assembly": "dolphin/trk_minnow_dolphin/targimpl.s"
+    },
+    {
+      "name": "TRKSwapAndGo",
+      "address": "0x8018DC9C",
+      "size": "0xC4",
+      "assembly": "dolphin/trk_minnow_dolphin/targimpl.s"
+    },
+    {
+      "name": "TRKInterruptHandlerEnableInterrupts",
+      "address": "0x8018DD60",
+      "size": "0x54",
+      "assembly": "dolphin/trk_minnow_dolphin/targimpl.s"
+    },
+    {
+      "name": "InitMetroTRK",
+      "address": "0x8018F2D0",
+      "size": "0x94",
+      "assembly": "dolphin/trk_minnow_dolphin/dolphin_trk.s"
+    },
+    {
+      "name": "TRKLoadContext",
+      "address": "0x8018F7CC",
+      "size": "0x88",
+      "assembly": "dolphin/trk_minnow_dolphin/dolphin_trk_glue.s"
+    },
+    {
       "name": "OSGetTime",
       "address": "0x801ADFC0",
       "size": "0x18"
@@ -277,6 +331,201 @@
       "address": "0x801A7DD8",
       "size": "0x54",
       "assembly": "dolphin/os/OS.s"
+    },
+    {
+      "name": "TRK_flush_cache",
+      "address": "0x8018D92C",
+      "size": "0x38",
+      "assembly": "dolphin/trk_minnow_dolphin/flush_cache.s"
+    },
+    {
+      "name": "PPCMfmsr",
+      "address": "0x801924D8",
+      "size": "0x8",
+      "assembly": "dolphin/base/PPCArch.s"
+    },
+    {
+      "name": "PPCMtmsr",
+      "address": "0x801924E0",
+      "size": "0x8",
+      "assembly": "dolphin/base/PPCArch.s"
+    },
+    {
+      "name": "PPCMfhid0",
+      "address": "0x801924E8",
+      "size": "0x8",
+      "assembly": "dolphin/base/PPCArch.s"
+    },
+    {
+      "name": "PPCMfl2cr",
+      "address": "0x801924F0",
+      "size": "0x8",
+      "assembly": "dolphin/base/PPCArch.s"
+    },
+    {
+      "name": "PPCMtl2cr",
+      "address": "0x801924F8",
+      "size": "0x8",
+      "assembly": "dolphin/base/PPCArch.s"
+    },
+    {
+      "name": "PPCMtdec",
+      "address": "0x80192500",
+      "size": "0x8",
+      "assembly": "dolphin/base/PPCArch.s"
+    },
+    {
+      "name": "PPCSync",
+      "address": "0x80192508",
+      "size": "0x8",
+      "assembly": "dolphin/base/PPCArch.s"
+    },
+    {
+      "name": "PPCHalt",
+      "address": "0x80192510",
+      "size": "0x14",
+      "assembly": "dolphin/base/PPCArch.s"
+    },
+    {
+      "name": "PPCMfhid2",
+      "address": "0x80192524",
+      "size": "0x8",
+      "assembly": "dolphin/base/PPCArch.s"
+    },
+    {
+      "name": "PPCMthid2",
+      "address": "0x8019252C",
+      "size": "0x8",
+      "assembly": "dolphin/base/PPCArch.s"
+    },
+    {
+      "name": "PPCMfwpar",
+      "address": "0x80192534",
+      "size": "0xC",
+      "assembly": "dolphin/base/PPCArch.s"
+    },
+    {
+      "name": "PPCMtwpar",
+      "address": "0x80192540",
+      "size": "0x8",
+      "assembly": "dolphin/base/PPCArch.s"
+    },
+    {
+      "name": "PSMTXMultVec",
+      "address": "0x801A7304",
+      "size": "0x54",
+      "assembly": "dolphin/mtx/mtxvec.s"
+    },
+    {
+      "name": "PSVECAdd",
+      "address": "0x801A73F0",
+      "size": "0x24",
+      "assembly": "dolphin/mtx/vec.s"
+    },
+    {
+      "name": "PSVECSubtract",
+      "address": "0x801A7414",
+      "size": "0x24",
+      "assembly": "dolphin/mtx/vec.s"
+    },
+    {
+      "name": "PSVECDotProduct",
+      "address": "0x801A74D4",
+      "size": "0x20",
+      "assembly": "dolphin/mtx/vec.s"
+    },
+    {
+      "name": "PSVECCrossProduct",
+      "address": "0x801A74F4",
+      "size": "0x3C",
+      "assembly": "dolphin/mtx/vec.s"
+    },
+    {
+      "name": "PSVECScale",
+      "address": "0x801A7438",
+      "size": "0x1C",
+      "assembly": "dolphin/mtx/vec.s"
+    },
+    {
+      "name": "PSQUATMultiply",
+      "address": "0x801A7530",
+      "size": "0x5C",
+      "assembly": "dolphin/mtx/quat.s"
+    },
+    {
+      "name": "PSMTXScale",
+      "address": "0x801A7238",
+      "size": "0x28",
+      "assembly": "dolphin/mtx/mtx.s",
+      "sda_symbols": {
+        "@95": "c_zero"
+      }
+    },
+    {
+      "name": "PSMTXQuat",
+      "address": "0x801A7260",
+      "size": "0xA4",
+      "assembly": "dolphin/mtx/mtx.s",
+      "sda_symbols": {
+        "@94": "c_one"
+      }
+    },
+    {
+      "name": "PSVECNormalize",
+      "address": "0x801A7454",
+      "size": "0x44",
+      "assembly": "dolphin/mtx/vec.s",
+      "sda_symbols": {
+        "@116": "c_half",
+        "@117": "c_three"
+      }
+    },
+    {
+      "name": "PSVECMag",
+      "address": "0x801A7498",
+      "size": "0x3C",
+      "assembly": "dolphin/mtx/vec.s",
+      "sda_symbols": {
+        "@116": "c_half",
+        "@117": "c_three"
+      }
+    },
+    {
+      "name": "PSQUATNormalize",
+      "address": "0x801A758C",
+      "size": "0x54",
+      "assembly": "dolphin/mtx/quat.s",
+      "sda_symbols": {
+        "@127": "epsilon",
+        "@133": "c_half",
+        "@134": "c_three"
+      }
+    },
+    {
+      "name": "TRKSaveExtended1Block",
+      "address": "0x8018F410",
+      "size": "0x1B8",
+      "assembly": "dolphin/trk_minnow_dolphin/mpc_7xx_603e.s"
+    },
+    {
+      "name": "TRKRestoreExtended1Block",
+      "address": "0x8018F5C8",
+      "size": "0x1B8",
+      "assembly": "dolphin/trk_minnow_dolphin/mpc_7xx_603e.s"
+    }
+  ],
+  "units": [
+    {
+      "name": "dolphin/trk_minnow_dolphin/__exception.s",
+      "section": ".init",
+      "address": "0x8000328C",
+      "size": "0x1F34"
+    },
+    {
+      "name": "dolphin/trk_minnow_dolphin/targsupp.s",
+      "section": ".text",
+      "address": "0x8018F2B0",
+      "size": "0x20"
     }
   ]
 }

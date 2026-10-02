@@ -31,11 +31,20 @@ dolphin/trk_minnow_dolphin/nubinit.c:
 	.rodata     start:0x80246120 end:0x8024613C
 	.bss        start:0x803E6860 end:0x803E6864
 
-auto_08_803E6864_bss:
-	.bss        start:0x803E6864 end:0x803E6868 align:4 skip
+dolphin/trk_minnow_dolphin/msg.c:
+	.text       start:0x80189620 end:0x801897FC
 
-auto_06_8024613C_rodata:
-	.rodata     start:0x8024613C end:0x80246140 align:4 skip
+dolphin/trk_minnow_dolphin/msgbuf.c:
+	.text       start:0x801897FC end:0x8018A228
+	.rodata     start:0x80246140 end:0x8024615D
+	.bss        start:0x803E6868 end:0x803E8218
+
+auto_06_8024615D_rodata:
+	.rodata     start:0x8024615D end:0x80246160 align:1 skip
+
+dolphin/trk_minnow_dolphin/serpoll.c:
+	.text       start:0x8018A228 end:0x8018A5F4
+	.bss        start:0x803E8218 end:0x803E8230
 
 dolphin/trk_minnow_dolphin/usr_put.c:
 	.text       start:0x8018A5F4 end:0x8018A680
@@ -45,11 +54,13 @@ dolphin/trk_minnow_dolphin/dispatch.c:
 	.data       start:0x80299F28 end:0x80299FAC
 	.bss        start:0x803E8230 end:0x803E8234
 
-auto_08_803E8234_bss:
-	.bss        start:0x803E8234 end:0x803E8238 align:4 skip
+dolphin/trk_minnow_dolphin/msghndlr.c:
+	.text       start:0x8018A71C end:0x8018CF7C
+	.data       start:0x80299FB0 end:0x80299FE8
+	.bss        start:0x803E8238 end:0x803E8240
 
-auto_07_80299FAC_data:
-	.data       start:0x80299FAC end:0x80299FB0 align:4 skip
+dolphin/trk_minnow_dolphin/support.c:
+	.text       start:0x8018CF7C end:0x8018D83C
 
 dolphin/trk_minnow_dolphin/mutex_TRK.c:
 	.text       start:0x8018D83C end:0x8018D854
@@ -57,12 +68,64 @@ dolphin/trk_minnow_dolphin/mutex_TRK.c:
 dolphin/trk_minnow_dolphin/notify.c:
 	.text       start:0x8018D854 end:0x8018D92C
 
+dolphin/trk_minnow_dolphin/flush_cache.c:
+	.text       start:0x8018D92C end:0x8018D964
+
+Runtime.PPCEABI.H/__mem.c:
+	.init       start:0x80003100 end:0x80003238
+
+dolphin/trk_minnow_dolphin/mem_TRK.c:
+	.init       start:0x80003238 end:0x8000328C
+	.text       start:0x8018D964 end:0x8018DA20
+
+dolphin/trk_minnow_dolphin/targimpl.c:
+	.text       start:0x8018DA20 end:0x8018F2B0
+	.rodata     start:0x80246160 end:0x802461E8
+	.data       start:0x80299FE8 end:0x8029A018
+	.bss        start:0x803E8240 end:0x803E87BC
+
+auto_08_803E87BC_bss:
+	.bss        start:0x803E87BC end:0x803E87C0 align:4 skip
+
+dolphin/trk_minnow_dolphin/targsupp.s:
+	.text       start:0x8018F2B0 end:0x8018F2D0
+
+dolphin/trk_minnow_dolphin/__exception.s:
+	.init       start:0x8000328C end:0x800051C0
+
+dolphin/trk_minnow_dolphin/dolphin_trk.c:
+	.init       start:0x800051C0 end:0x800052C4
+	.text       start:0x8018F2D0 end:0x8018F410
+	.data       start:0x8029A018 end:0x8029A054
+	.bss        start:0x803E87C0 end:0x803E87C4
+
+auto_08_803E87C4_bss:
+	.bss        start:0x803E87C4 end:0x803E87C8 align:4 skip
+
+auto_07_8029A054_data:
+	.data       start:0x8029A054 end:0x8029A058 align:4 skip
+
+dolphin/trk_minnow_dolphin/mpc_7xx_603e.c:
+	.text       start:0x8018F410 end:0x8018F788
+
 dolphin/trk_minnow_dolphin/main_TRK.c:
 	.text       start:0x8018F788 end:0x8018F7CC
 	.bss        start:0x803E87C8 end:0x803E87CC
 
 auto_08_803E87CC_bss:
 	.bss        start:0x803E87CC end:0x803E87D0 align:4 skip
+
+dolphin/trk_minnow_dolphin/dolphin_trk_glue.c:
+	.text       start:0x8018F7CC end:0x8018FC78
+	.rodata     start:0x802461E8 end:0x80246230
+	.data       start:0x8029A058 end:0x8029A074
+	.bss        start:0x803E87D0 end:0x803EA9F6
+
+auto_08_803EA9F6_bss:
+	.bss        start:0x803EA9F6 end:0x803EA9F8 align:2 skip
+
+auto_07_8029A074_data:
+	.data       start:0x8029A074 end:0x8029A078 align:4 skip
 
 dolphin/trk_minnow_dolphin/targcont.c:
 	.text       start:0x8018FC78 end:0x8018FCAC
@@ -99,6 +162,9 @@ dolphin/ar/ar.c:
 dolphin/ar/arq.c:
 	.text       start:0x80192144 end:0x801924D8
 	.sbss       start:0x8041CBD0 end:0x8041CBF8
+
+dolphin/base/PPCArch.c:
+	.text       start:0x801924D8 end:0x80192548
 
 dolphin/card/CARDBios.c:
 	.text       start:0x80192548 end:0x801937E4
@@ -283,9 +349,24 @@ dolphin/gx/GXPerf.c:
 	.text       start:0x801A6990 end:0x801A7238
 	.data       start:0x8029AB38 end:0x8029AC24
 
+dolphin/mtx/mtx.c:
+	.text       start:0x801A7238 end:0x801A7304
+	.sdata2     start:0x804203F8 end:0x80420400
+
+dolphin/mtx/mtxvec.c:
+	.text       start:0x801A7304 end:0x801A7358
+
 dolphin/mtx/mtx44.c:
 	.text       start:0x801A7358 end:0x801A73F0
 	.sdata2     start:0x80420400 end:0x80420410
+
+dolphin/mtx/vec.c:
+	.text       start:0x801A73F0 end:0x801A7530
+	.sdata2     start:0x80420410 end:0x80420418
+
+dolphin/mtx/quat.c:
+	.text       start:0x801A7530 end:0x801A75E0
+	.sdata2     start:0x80420418 end:0x80420424
 
 dolphin/os/OS.c:
 	.text       start:0x801A75E0 end:0x801A7E78
@@ -374,9 +455,6 @@ dolphin/os/OSThread.c:
 
 dolphin/os/OSTime.c:
 	.text       start:0x801ADFC0 end:0x801AE09C
-
-Runtime.PPCEABI.H/__mem.c:
-	.init       start:0x80003100 end:0x80003238
 
 dolphin/os/__start.c:
 	.init       start:0x800052C4 end:0x800054F4

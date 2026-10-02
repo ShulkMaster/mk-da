@@ -1,5 +1,13 @@
 # Mortal Kombat: Deadly Alliance
 
+[![Build Status]][actions] [![Code Progress]][progress] [![Data Progress]][progress]
+
+[Build Status]: https://github.com/ShulkMaster/mk-da/actions/workflows/build.yml/badge.svg
+[actions]: https://github.com/ShulkMaster/mk-da/actions/workflows/build.yml
+[Code Progress]: https://decomp.dev/ShulkMaster/mk-da.svg?mode=shield&measure=code&label=Code
+[Data Progress]: https://decomp.dev/ShulkMaster/mk-da.svg?mode=shield&measure=data&label=Data
+[progress]: https://decomp.dev/ShulkMaster/mk-da
+
 GameCube decompilation project initialized from
 [encounter/dtk-template](https://github.com/encounter/dtk-template)
 (template revision `95a941f755919ebe50c1725a4ce73524470e7a02`).

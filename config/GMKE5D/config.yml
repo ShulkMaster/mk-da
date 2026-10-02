@@ -9,3 +9,201 @@ splits: config/GMKE5D/splits.txt
 mw_comment_version: 10
 # Keep generated disassembly in ignored build artifacts only.
 write_asm: true
+# TRK exception vector table (__exception.s): symbolic references in retail code.
+add_relocations:
+  - source: .init:0x8000338C
+    type: rel24
+    target: __TRK_reset
+    addend: 0
+  - source: .init:0x800034C4
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800034C8
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800035AC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800035B0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800036AC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800036B0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800037AC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800037B0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800038AC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800038B0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800039AC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800039B0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x80003AAC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x80003AB0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x80003BAC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x80003BB0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x80003EAC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x80003EB0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x80003FAC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x80003FB0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800040AC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800040B0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800041CC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800041D0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x80004200
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x80004204
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800042E8
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800042EC
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800043E8
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800043EC
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800044E8
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800044EC
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800045AC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800045B0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800046AC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800046B0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800048AC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800048B0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800049AC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800049B0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x80004EAC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x80004EB0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x80004FAC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x80004FB0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800050AC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800050B0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800051AC
+    type: hi
+    target: TRKInterruptHandler
+    addend: 0
+  - source: .init:0x800051B0
+    type: l
+    target: TRKInterruptHandler
+    addend: 0
