@@ -73,11 +73,25 @@ dolphin/gx/GXAttr.c:
 dolphin/gx/GXMisc.c:
 	.text       start:0x801A211C end:0x801A2160
 
+dolphin/gx/GXGeometry.c:
+	.text       start:0x801A2594 end:0x801A27E4
+
 dolphin/gx/GXLight.c:
 	.text       start:0x801A3398 end:0x801A33C4
 
 dolphin/gx/GXTexture.c:
 	.text       start:0x801A41C8 end:0x801A41D0
+
+dolphin/gx/GXBump.c:
+	.text       start:0x801A4B10 end:0x801A4DF4
+
+dolphin/gx/GXTev.c:
+	.text       start:0x801A5088 end:0x801A591C
+	.data       start:0x8029AAF0 end:0x8029AB14
+
+dolphin/gx/GXPixel.c:
+	.text       start:0x801A5ACC end:0x801A6064
+	.data       start:0x8029AB18 end:0x8029AB38
 
 dolphin/gx/GXPerf.c:
 	.text       start:0x801A7228 end:0x801A7238
