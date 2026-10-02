@@ -143,4 +143,22 @@ void __GXSetVCD(void);
 void __GXSetVAT(void);
 void __GXSetRange(f32 nearz, f32 sidex);
 
+typedef struct __GXFifoObj {
+  u8* base;
+  u8* top;
+  u32 size;
+  u32 hiWatermark;
+  u32 loWatermark;
+  void* rdPtr;
+  void* wrPtr;
+  s32 count;
+  u8 bind_cpu;
+  u8 bind_gp;
+} __GXFifoObj;
+
+extern void* __piReg;
+#define GX_GET_PI_REG(offset) (((volatile u32*)__piReg)[offset])
+#define GX_SET_PI_REG(offset, value) (GX_GET_PI_REG(offset) = (value))
+void __GXSaveCPUFifoAux(__GXFifoObj* fifo);
+
 #endif

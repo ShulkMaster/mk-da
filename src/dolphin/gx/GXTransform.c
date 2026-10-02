@@ -43,7 +43,8 @@ void GXSetProjection(const Mtx44 proj, GXProjectionType type) {
   __GXData->bpSentNot = 1;
 }
 
-/* TODO: [near miss] 99.91%; input register selection remains after 15 passes. */
+#pragma push
+#pragma peephole on
 void GXSetProjectionv(const f32 *proj) {
   __GXData->projType = proj[0];
   __GXData->projMtx[0] = proj[1];
@@ -57,11 +58,7 @@ void GXSetProjectionv(const f32 *proj) {
   __GXData->bpSentNot = 1;
 }
 
-/* TODO: [near miss] 93.33%; prologue load scheduling remains after 15 passes. */
-void GXGetProjectionv(f32 *ptr)
-{
-
-
+void GXGetProjectionv(f32 *ptr) {
   ptr[0] = __GXData->projType;
   ptr[1] = __GXData->projMtx[0];
   ptr[2] = __GXData->projMtx[1];
@@ -71,7 +68,9 @@ void GXGetProjectionv(f32 *ptr)
   ptr[6] = __GXData->projMtx[5];
 }
 
-asm void WriteMTXPS4x3(const f32 mtx[3][4], volatile f32* dest) { SEQ_WriteMTXPS4x3() }
+#pragma pop
+
+asm void WriteMTXPS4x3(const f32 mtx[3][4], volatile f32* dest) { SEQ_WriteMTXPS4x3(); }
 
 asm void WriteMTXPS3x3from3x4(const f32 mtx[3][4], volatile f32* dest) {
   SEQ_WriteMTXPS3x3from3x4()
