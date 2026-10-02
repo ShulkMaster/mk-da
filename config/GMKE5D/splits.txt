@@ -19,6 +19,10 @@ Runtime.PPCEABI.H/__init_cpp_exceptions.cpp:
 	.dtors      start:0x8022E660 end:0x8022E668
 	.sdata      start:0x8041B688 end:0x8041B690
 
+dolphin/db_init.c:
+	.text       start:0x80198F38 end:0x80198FA8
+	.data       start:0x8029A240 end:0x8029A258
+
 dolphin/db.c:
 	.text       start:0x80198FB8 end:0x80199024
 	.sbss       start:0x8041CBF8 end:0x8041CC00
@@ -28,6 +32,11 @@ dolphin/dsp/dsp.c:
 
 dolphin/dsp/dsp_debug.c:
 	.text       start:0x80199230 end:0x80199280
+
+dolphin/dsp/dsp_task.c:
+	.text       start:0x80199280 end:0x80199B04
+	.data       start:0x8029A290 end:0x8029A3A0
+	.sbss       start:0x8041CC08 end:0x8041CC20
 
 dolphin/dvd/dvdqueue.c:
 	.text       start:0x8019D438 end:0x8019D630
@@ -41,6 +50,9 @@ dolphin/os/OSArena.c:
 	.text       start:0x801A8C0C end:0x801A8C2C
 	.sdata      start:0x8041B738 end:0x8041B740
 	.sbss       start:0x8041CD78 end:0x8041CD80
+
+dolphin/os/OSAudioSystem.c:
+	.text       start:0x801A8DE8 end:0x801A8EC0
 
 dolphin/os/OSLink.c:
 	.text       start:0x801AB4E8 end:0x801AB500
