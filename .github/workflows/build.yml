@@ -30,6 +30,7 @@ jobs:
         with:
           ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/head', github.event.pull_request.number) || github.sha }}
           fetch-depth: 0
+          submodules: recursive
 
       - name: Git config
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -60,6 +61,7 @@ jobs:
           echo "Comparing PR progress against ${base_sha} (${BASE_REF} merge base)"
           baseline_dir="${RUNNER_TEMP}/mkda-base-${{ matrix.version }}"
           git worktree add --detach "${baseline_dir}" "${base_sha}"
+          git -C "${baseline_dir}" submodule update --init --recursive
           cp -a /orig "${baseline_dir}/"
           cd "${baseline_dir}"
           python3 configure.py --version ${{ matrix.version }} \

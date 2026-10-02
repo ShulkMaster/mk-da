@@ -14,6 +14,7 @@
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Dict, List
@@ -134,6 +135,13 @@ parser.add_argument(
     help="disable progress calculation",
 )
 args = parser.parse_args()
+
+# Fetch git submodules (extern/musyx) when the checkout was not cloned recursively.
+if not Path("extern/musyx/include").is_dir():
+    try:
+        subprocess.run(["git", "submodule", "update", "--init", "--recursive"], check=True)
+    except (OSError, subprocess.CalledProcessError) as e:
+        sys.exit(f"Failed to fetch git submodules ({e}); run `git submodule update --init --recursive`.")
 
 config = ProjectConfig()
 config.version = str(args.version)
