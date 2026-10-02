@@ -1,23 +1,9 @@
-#include "dolphin/trk.h"
+#include "dolphin/trk_msgbuf.h"
 
 extern void TRKTargetAddStopInfo(MessageBuffer* buffer);
 extern void TRKTargetAddExceptionInfo(MessageBuffer* buffer);
 extern DSError TRKRequestSend(MessageBuffer* buffer, int* request_id, int retries,
                             int timeout, int blocking);
-
-static inline DSError TRKAppendBuffer1_ui8(MessageBuffer* buffer, u8 value) {
-  DSError err;
-
-  if (buffer->position >= 0x880) {
-    err = 0x301;
-  } else {
-    buffer->data[buffer->position++] = value;
-    buffer->length += 1;
-    err = 0;
-  }
-
-  return err;
-}
 
 DSError TRKDoNotifyStopped(MessageCommandID cmd) {
   DSError err;

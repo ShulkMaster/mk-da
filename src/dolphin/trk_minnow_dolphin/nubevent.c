@@ -15,7 +15,7 @@ void TRKDestructEvent(TRKEvent* event)
   TRKReleaseBuffer(event->message_buffer_id);
 }
 
-void TRKConstructEvent(TRKEvent* event, u8 event_type)
+void TRKConstructEvent(TRKEvent* event, int event_type)
 {
   event->event_type = event_type;
   event->event_id = 0;
