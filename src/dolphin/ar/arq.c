@@ -8,69 +8,68 @@
 #include <dolphin/arq.h>
 #include <dolphin/os.h>
 
-extern ARQRequest *__ARQRequestQueueHi_8041CBD0;
-extern ARQRequest *__ARQRequestQueueLo_8041CBD8;
-extern ARQRequest *__ARQRequestPendingHi_8041CBE0;
-extern ARQRequest *__ARQRequestPendingLo_8041CBE4;
-extern ARQCallback __ARQCallbackHi_8041CBE8;
-extern ARQCallback __ARQCallbackLo_8041CBEC;
-extern u32 __ARQChunkSize_8041CBF0;
-
-extern ARQRequest *__ARQRequestTailHi_8041CBD4;
-extern ARQRequest *__ARQRequestTailLo_8041CBDC;
-extern BOOL __ARQ_init_flag_8041CBF4;
+static ARQRequest *__ARQRequestQueueHi;
+static ARQRequest *__ARQRequestTailHi;
+static ARQRequest *__ARQRequestQueueLo;
+static ARQRequest *__ARQRequestTailLo;
+static ARQRequest *__ARQRequestPendingHi;
+static ARQRequest *__ARQRequestPendingLo;
+static ARQCallback __ARQCallbackHi;
+static ARQCallback __ARQCallbackLo;
+static u32 __ARQChunkSize;
+static BOOL __ARQ_init_flag;
 
 void __ARQServiceQueueLo(void);
 
 static inline void __ARQPopTaskQueueHi(void) {
 
-  if (__ARQRequestQueueHi_8041CBD0) {
-    if (__ARQRequestQueueHi_8041CBD0->type == ARQ_TYPE_MRAM_TO_ARAM) {
-      ARStartDMA(__ARQRequestQueueHi_8041CBD0->type, __ARQRequestQueueHi_8041CBD0->source,
-                 __ARQRequestQueueHi_8041CBD0->dest, __ARQRequestQueueHi_8041CBD0->length);
+  if (__ARQRequestQueueHi) {
+    if (__ARQRequestQueueHi->type == ARQ_TYPE_MRAM_TO_ARAM) {
+      ARStartDMA(__ARQRequestQueueHi->type, __ARQRequestQueueHi->source,
+                 __ARQRequestQueueHi->dest, __ARQRequestQueueHi->length);
     } else {
-      ARStartDMA(__ARQRequestQueueHi_8041CBD0->type, __ARQRequestQueueHi_8041CBD0->dest,
-                 __ARQRequestQueueHi_8041CBD0->source, __ARQRequestQueueHi_8041CBD0->length);
+      ARStartDMA(__ARQRequestQueueHi->type, __ARQRequestQueueHi->dest,
+                 __ARQRequestQueueHi->source, __ARQRequestQueueHi->length);
     }
 
-    __ARQCallbackHi_8041CBE8 = __ARQRequestQueueHi_8041CBD0->callback;
+    __ARQCallbackHi = __ARQRequestQueueHi->callback;
 
-    __ARQRequestPendingHi_8041CBE0 = __ARQRequestQueueHi_8041CBD0;
+    __ARQRequestPendingHi = __ARQRequestQueueHi;
 
-    __ARQRequestQueueHi_8041CBD0 = __ARQRequestQueueHi_8041CBD0->next;
+    __ARQRequestQueueHi = __ARQRequestQueueHi->next;
   }
 }
 
 void __ARQServiceQueueLo(void) {
 
-  if ((__ARQRequestPendingLo_8041CBE4 == NULL) && (__ARQRequestQueueLo_8041CBD8)) {
-    __ARQRequestPendingLo_8041CBE4 = __ARQRequestQueueLo_8041CBD8;
+  if ((__ARQRequestPendingLo == NULL) && (__ARQRequestQueueLo)) {
+    __ARQRequestPendingLo = __ARQRequestQueueLo;
 
-    __ARQRequestQueueLo_8041CBD8 = __ARQRequestQueueLo_8041CBD8->next;
+    __ARQRequestQueueLo = __ARQRequestQueueLo->next;
   }
 
-  if (__ARQRequestPendingLo_8041CBE4) {
-    if (__ARQRequestPendingLo_8041CBE4->length <= __ARQChunkSize_8041CBF0) {
-      if (__ARQRequestPendingLo_8041CBE4->type == ARQ_TYPE_MRAM_TO_ARAM)
-        ARStartDMA(__ARQRequestPendingLo_8041CBE4->type, __ARQRequestPendingLo_8041CBE4->source,
-                   __ARQRequestPendingLo_8041CBE4->dest, __ARQRequestPendingLo_8041CBE4->length);
+  if (__ARQRequestPendingLo) {
+    if (__ARQRequestPendingLo->length <= __ARQChunkSize) {
+      if (__ARQRequestPendingLo->type == ARQ_TYPE_MRAM_TO_ARAM)
+        ARStartDMA(__ARQRequestPendingLo->type, __ARQRequestPendingLo->source,
+                   __ARQRequestPendingLo->dest, __ARQRequestPendingLo->length);
       else
-        ARStartDMA(__ARQRequestPendingLo_8041CBE4->type, __ARQRequestPendingLo_8041CBE4->dest,
-                   __ARQRequestPendingLo_8041CBE4->source, __ARQRequestPendingLo_8041CBE4->length);
+        ARStartDMA(__ARQRequestPendingLo->type, __ARQRequestPendingLo->dest,
+                   __ARQRequestPendingLo->source, __ARQRequestPendingLo->length);
 
-      __ARQCallbackLo_8041CBEC = __ARQRequestPendingLo_8041CBE4->callback;
+      __ARQCallbackLo = __ARQRequestPendingLo->callback;
     } else {
-      if (__ARQRequestPendingLo_8041CBE4->type == ARQ_TYPE_MRAM_TO_ARAM)
-        ARStartDMA(__ARQRequestPendingLo_8041CBE4->type, __ARQRequestPendingLo_8041CBE4->source,
-                   __ARQRequestPendingLo_8041CBE4->dest, __ARQChunkSize_8041CBF0);
+      if (__ARQRequestPendingLo->type == ARQ_TYPE_MRAM_TO_ARAM)
+        ARStartDMA(__ARQRequestPendingLo->type, __ARQRequestPendingLo->source,
+                   __ARQRequestPendingLo->dest, __ARQChunkSize);
       else
-        ARStartDMA(__ARQRequestPendingLo_8041CBE4->type, __ARQRequestPendingLo_8041CBE4->dest,
-                   __ARQRequestPendingLo_8041CBE4->source, __ARQChunkSize_8041CBF0);
+        ARStartDMA(__ARQRequestPendingLo->type, __ARQRequestPendingLo->dest,
+                   __ARQRequestPendingLo->source, __ARQChunkSize);
     }
 
-    __ARQRequestPendingLo_8041CBE4->length -= __ARQChunkSize_8041CBF0;
-    __ARQRequestPendingLo_8041CBE4->source += __ARQChunkSize_8041CBF0;
-    __ARQRequestPendingLo_8041CBE4->dest += __ARQChunkSize_8041CBF0;
+    __ARQRequestPendingLo->length -= __ARQChunkSize;
+    __ARQRequestPendingLo->source += __ARQChunkSize;
+    __ARQRequestPendingLo->dest += __ARQChunkSize;
   }
 }
 
@@ -78,38 +77,38 @@ void __ARQCallbackHack(u32 pointerToARQRequest) { return; }
 
 void __ARQInterruptServiceRoutine(void) {
 
-  if (__ARQCallbackHi_8041CBE8) {
-    (*__ARQCallbackHi_8041CBE8)((u32)__ARQRequestPendingHi_8041CBE0);
-    __ARQRequestPendingHi_8041CBE0 = NULL;
-    __ARQCallbackHi_8041CBE8 = NULL;
+  if (__ARQCallbackHi) {
+    (*__ARQCallbackHi)((u32)__ARQRequestPendingHi);
+    __ARQRequestPendingHi = NULL;
+    __ARQCallbackHi = NULL;
   }
 
-  else if (__ARQCallbackLo_8041CBEC) {
-    (*__ARQCallbackLo_8041CBEC)((u32)__ARQRequestPendingLo_8041CBE4);
-    __ARQRequestPendingLo_8041CBE4 = NULL;
-    __ARQCallbackLo_8041CBEC = NULL;
+  else if (__ARQCallbackLo) {
+    (*__ARQCallbackLo)((u32)__ARQRequestPendingLo);
+    __ARQRequestPendingLo = NULL;
+    __ARQCallbackLo = NULL;
   }
 
   __ARQPopTaskQueueHi();
 
-  if (__ARQRequestPendingHi_8041CBE0 == NULL)
+  if (__ARQRequestPendingHi == NULL)
     __ARQServiceQueueLo();
 }
 
 void ARQInit(void) {
 
-  if (__ARQ_init_flag_8041CBF4 == TRUE) {
+  if (__ARQ_init_flag == TRUE) {
     return;
   }
 
-  __ARQRequestQueueHi_8041CBD0 = __ARQRequestQueueLo_8041CBD8 = NULL;
-  __ARQChunkSize_8041CBF0 = 4096;
+  __ARQRequestQueueHi = __ARQRequestQueueLo = NULL;
+  __ARQChunkSize = 4096;
   ARRegisterDMACallback(&__ARQInterruptServiceRoutine);
-  __ARQRequestPendingHi_8041CBE0 = NULL;
-  __ARQRequestPendingLo_8041CBE4 = NULL;
-  __ARQCallbackHi_8041CBE8 = NULL;
-  __ARQCallbackLo_8041CBEC = NULL;
-  __ARQ_init_flag_8041CBF4 = TRUE;
+  __ARQRequestPendingHi = NULL;
+  __ARQRequestPendingLo = NULL;
+  __ARQCallbackHi = NULL;
+  __ARQCallbackLo = NULL;
+  __ARQ_init_flag = TRUE;
 }
 
 void ARQPostRequest(ARQRequest *request, u32 owner, u32 type, u32 priority, u32 source, u32 dest,
@@ -135,32 +134,32 @@ void ARQPostRequest(ARQRequest *request, u32 owner, u32 type, u32 priority, u32 
   switch (priority) {
   case ARQ_PRIORITY_LOW:
 
-    if (__ARQRequestQueueLo_8041CBD8) {
-      __ARQRequestTailLo_8041CBDC->next = request;
+    if (__ARQRequestQueueLo) {
+      __ARQRequestTailLo->next = request;
     } else {
-      __ARQRequestQueueLo_8041CBD8 = request;
+      __ARQRequestQueueLo = request;
     }
-    __ARQRequestTailLo_8041CBDC = request;
+    __ARQRequestTailLo = request;
 
     break;
 
   case ARQ_PRIORITY_HIGH:
 
-    if (__ARQRequestQueueHi_8041CBD0) {
-      __ARQRequestTailHi_8041CBD4->next = request;
+    if (__ARQRequestQueueHi) {
+      __ARQRequestTailHi->next = request;
     } else {
-      __ARQRequestQueueHi_8041CBD0 = request;
+      __ARQRequestQueueHi = request;
     }
 
-    __ARQRequestTailHi_8041CBD4 = request;
+    __ARQRequestTailHi = request;
 
     break;
   }
 
-  if ((__ARQRequestPendingHi_8041CBE0 == NULL) && (__ARQRequestPendingLo_8041CBE4 == NULL)) {
+  if ((__ARQRequestPendingHi == NULL) && (__ARQRequestPendingLo == NULL)) {
     __ARQPopTaskQueueHi();
 
-    if (__ARQRequestPendingHi_8041CBE0 == NULL) {
+    if (__ARQRequestPendingHi == NULL) {
       __ARQServiceQueueLo();
     }
   }

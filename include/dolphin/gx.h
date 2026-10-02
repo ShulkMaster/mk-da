@@ -1052,6 +1052,22 @@ typedef enum _GXClipMode {
 
 typedef f32 Mtx44[4][4];
 
+typedef enum _GXTexMtxType {
+  GX_MTX3x4,
+  GX_MTX2x4,
+} GXTexMtxType;
+
+#define GX_DISABLE ((GXBool)0)
+#define GX_ENABLE ((GXBool)1)
+
+#define GX_MAX_Z24 0x00FFFFFF
+
+enum { GX_PNMTX0 = 0, GX_IDENTITY = 60, GX_PTTEXMTX0 = 64, GX_PTIDENTITY = 125 };
+
+void GXLoadPosMtxImm(const f32 mtx[3][4], u32 id);
+void GXLoadNrmMtxImm(const f32 mtx[3][4], u32 id);
+void GXLoadTexMtxImm(const f32 mtx[][4], u32 id, GXTexMtxType type);
+
 void GXSetProjection(const Mtx44 proj, GXProjectionType type);
 
 void GXSetProjectionv(const f32 *proj);

@@ -3,8 +3,16 @@
   "assembly": "dolphin/os/OSTime.s",
   "output": "dolphin/asm_sequences.inc",
   "functions": [
-    { "name": "OSGetTime", "address": "0x801ADFC0", "size": "0x18" },
-    { "name": "OSGetTick", "address": "0x801ADFD8", "size": "0x8" },
+    {
+      "name": "OSGetTime",
+      "address": "0x801ADFC0",
+      "size": "0x18"
+    },
+    {
+      "name": "OSGetTick",
+      "address": "0x801ADFD8",
+      "size": "0x8"
+    },
     {
       "name": "WriteMTXPS4x3",
       "address": "0x801A649C",
@@ -22,6 +30,253 @@
       "address": "0x801A6504",
       "size": "0x24",
       "assembly": "dolphin/gx/GXTransform.s"
+    },
+    {
+      "name": "__OSLoadFPUContext",
+      "address": "0x801A933C",
+      "size": "0x124",
+      "assembly": "dolphin/os/OSContext.s"
+    },
+    {
+      "name": "__OSSaveFPUContext",
+      "address": "0x801A9460",
+      "size": "0x128",
+      "assembly": "dolphin/os/OSContext.s"
+    },
+    {
+      "name": "OSSetCurrentContext",
+      "address": "0x801A9588",
+      "size": "0x5C",
+      "assembly": "dolphin/os/OSContext.s"
+    },
+    {
+      "name": "OSSaveContext",
+      "address": "0x801A95F0",
+      "size": "0x80",
+      "assembly": "dolphin/os/OSContext.s"
+    },
+    {
+      "name": "OSLoadContext",
+      "address": "0x801A9670",
+      "size": "0xD8",
+      "assembly": "dolphin/os/OSContext.s"
+    },
+    {
+      "name": "OSGetStackPointer",
+      "address": "0x801A9748",
+      "size": "0x8",
+      "assembly": "dolphin/os/OSContext.s"
+    },
+    {
+      "name": "OSSwitchFiber",
+      "address": "0x801A9750",
+      "size": "0x30",
+      "assembly": "dolphin/os/OSContext.s"
+    },
+    {
+      "name": "OSInitContext",
+      "address": "0x801A97A4",
+      "size": "0xBC",
+      "assembly": "dolphin/os/OSContext.s"
+    },
+    {
+      "name": "OSSwitchFPUContext",
+      "address": "0x801A9B08",
+      "size": "0x84",
+      "assembly": "dolphin/os/OSContext.s"
+    },
+    {
+      "name": "__AICallbackStackSwitch",
+      "address": "0x8019137C",
+      "size": "0x58",
+      "assembly": "dolphin/ai.s"
+    },
+    {
+      "name": "Run",
+      "address": "0x801ABA2C",
+      "size": "0x40",
+      "assembly": "dolphin/os/OSReboot.s"
+    },
+    {
+      "name": "__OSPSInitGQR",
+      "function": "__OSPSInit",
+      "address": "0x801A7E4C",
+      "size": "0x8",
+      "assembly": "dolphin/os/OS.s"
+    },
+    {
+      "name": "__DBExceptionDestination",
+      "address": "0x80198FA8",
+      "size": "0x10",
+      "assembly": "dolphin/db.s"
+    },
+    {
+      "name": "Reset",
+      "address": "0x801ABCC8",
+      "size": "0x70",
+      "assembly": "dolphin/os/OSReset.s"
+    },
+    {
+      "name": "Config24MB",
+      "address": "0x801AB5A8",
+      "size": "0x80",
+      "assembly": "dolphin/os/OSMemory.s"
+    },
+    {
+      "name": "Config48MB",
+      "address": "0x801AB628",
+      "size": "0x80",
+      "assembly": "dolphin/os/OSMemory.s"
+    },
+    {
+      "name": "RealMode",
+      "address": "0x801AB6A8",
+      "size": "0x18",
+      "assembly": "dolphin/os/OSMemory.s"
+    },
+    {
+      "name": "SystemCallVector",
+      "address": "0x801ACD3C",
+      "size": "0x20",
+      "assembly": "dolphin/os/OSSync.s"
+    },
+    {
+      "name": "DecrementerExceptionHandler",
+      "address": "0x801A8550",
+      "size": "0x4C",
+      "assembly": "dolphin/os/OSAlarm.s"
+    },
+    {
+      "name": "OSDisableInterrupts",
+      "address": "0x801AAC80",
+      "size": "0x14",
+      "assembly": "dolphin/os/OSInterrupt.s"
+    },
+    {
+      "name": "OSEnableInterrupts",
+      "address": "0x801AAC94",
+      "size": "0x14",
+      "assembly": "dolphin/os/OSInterrupt.s"
+    },
+    {
+      "name": "OSRestoreInterrupts",
+      "address": "0x801AACA8",
+      "size": "0x24",
+      "assembly": "dolphin/os/OSInterrupt.s"
+    },
+    {
+      "name": "ExternalInterruptHandler",
+      "address": "0x801AB49C",
+      "size": "0x4C",
+      "assembly": "dolphin/os/OSInterrupt.s"
+    },
+    {
+      "name": "DCEnable",
+      "address": "0x801A8EC0",
+      "size": "0x14",
+      "assembly": "dolphin/os/OSCache.s"
+    },
+    {
+      "name": "DCInvalidateRange",
+      "address": "0x801A8ED4",
+      "size": "0x30",
+      "assembly": "dolphin/os/OSCache.s"
+    },
+    {
+      "name": "DCFlushRange",
+      "address": "0x801A8F04",
+      "size": "0x34",
+      "assembly": "dolphin/os/OSCache.s"
+    },
+    {
+      "name": "DCStoreRange",
+      "address": "0x801A8F38",
+      "size": "0x34",
+      "assembly": "dolphin/os/OSCache.s"
+    },
+    {
+      "name": "DCFlushRangeNoSync",
+      "address": "0x801A8F6C",
+      "size": "0x30",
+      "assembly": "dolphin/os/OSCache.s"
+    },
+    {
+      "name": "DCStoreRangeNoSync",
+      "address": "0x801A8F9C",
+      "size": "0x30",
+      "assembly": "dolphin/os/OSCache.s"
+    },
+    {
+      "name": "ICInvalidateRange",
+      "address": "0x801A8FCC",
+      "size": "0x38",
+      "assembly": "dolphin/os/OSCache.s"
+    },
+    {
+      "name": "ICFlashInvalidate",
+      "address": "0x801A9004",
+      "size": "0x10",
+      "assembly": "dolphin/os/OSCache.s"
+    },
+    {
+      "name": "ICEnable",
+      "address": "0x801A9014",
+      "size": "0x14",
+      "assembly": "dolphin/os/OSCache.s"
+    },
+    {
+      "name": "LCDisable",
+      "address": "0x801A9028",
+      "size": "0x28",
+      "assembly": "dolphin/os/OSCache.s"
+    },
+    {
+      "name": "__init_hardware",
+      "address": "0x800054F4",
+      "size": "0x20",
+      "assembly": "dolphin/os/__ppc_eabi_init.s"
+    },
+    {
+      "name": "__flush_cache",
+      "address": "0x80005514",
+      "size": "0x34",
+      "assembly": "dolphin/os/__ppc_eabi_init.s"
+    },
+    {
+      "name": "__start",
+      "address": "0x80005304",
+      "size": "0x114",
+      "assembly": "dolphin/os/__start.s"
+    },
+    {
+      "name": "__init_registers",
+      "address": "0x80005418",
+      "size": "0x1C",
+      "assembly": "dolphin/os/__start.s"
+    },
+    {
+      "name": "__OSDBIntegrator",
+      "address": "0x801A7CE4",
+      "size": "0x24",
+      "assembly": "dolphin/os/OS.s"
+    },
+    {
+      "name": "__OSDBJump",
+      "address": "0x801A7D08",
+      "size": "0x4",
+      "assembly": "dolphin/os/OS.s"
+    },
+    {
+      "name": "OSExceptionVector",
+      "address": "0x801A7D3C",
+      "size": "0x9C",
+      "assembly": "dolphin/os/OS.s"
+    },
+    {
+      "name": "OSDefaultExceptionHandler",
+      "address": "0x801A7DD8",
+      "size": "0x54",
+      "assembly": "dolphin/os/OS.s"
     }
   ]
 }

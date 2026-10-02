@@ -49,8 +49,8 @@ typedef struct CARDControl {
   s32 latency;
   u8 id[12];
   int mountStep;
-  int formatStep;
   u32 scramble;
+  int formatStep;
   DSPTaskInfo task;
   void* workArea;
   CARDDir* currentDir;

@@ -10,14 +10,14 @@
 #include <dolphin/os/OSContext.h>
 #include <dolphin/os/OSInterrupt.h>
 
-extern ARCallback __AR_Callback_8041CBB0;
-extern u32 __AR_Size_8041CBB4;
-extern u32 __AR_InternalSize_8041CBB8;
-extern u32 __AR_ExpansionSize_8041CBBC;
-extern u32 __AR_StackPointer_8041CBC0;
-extern u32 __AR_FreeBlocks_8041CBC4;
-extern u32 *__AR_BlockLength_8041CBC8;
-extern BOOL __AR_init_flag_8041CBCC;
+static ARCallback __AR_Callback;
+static u32 __AR_Size;
+static u32 __AR_InternalSize;
+static u32 __AR_ExpansionSize;
+static u32 __AR_StackPointer;
+static u32 __AR_FreeBlocks;
+static u32 *__AR_BlockLength;
+static BOOL __AR_init_flag;
 
 static void __ARHandler(__OSInterrupt interrupt, OSContext *context);
 static void __ARChecksize(void);
@@ -30,9 +30,9 @@ extern void *memset(void *address, int value, u32 length);
 ARCallback ARRegisterDMACallback(ARCallback callback) {
   ARCallback oldCb;
   BOOL enabled;
-  oldCb = __AR_Callback_8041CBB0;
+  oldCb = __AR_Callback;
   enabled = OSDisableInterrupts();
-  __AR_Callback_8041CBB0 = callback;
+  __AR_Callback = callback;
   OSRestoreInterrupts(enabled);
   return oldCb;
 }
@@ -57,20 +57,20 @@ u32 ARInit(u32 *stack_index_addr, u32 num_entries) {
   BOOL old;
   u16 refresh;
 
-  if (__AR_init_flag_8041CBCC == TRUE) {
+  if (__AR_init_flag == TRUE) {
     return 0x4000;
   }
 
   old = OSDisableInterrupts();
 
-  __AR_Callback_8041CBB0 = NULL;
+  __AR_Callback = NULL;
 
   __OSSetInterruptHandler(6, __ARHandler);
   __OSUnmaskInterrupts(0x02000000);
 
-  __AR_StackPointer_8041CBC0 = 0x4000;
-  __AR_FreeBlocks_8041CBC4 = num_entries;
-  __AR_BlockLength_8041CBC8 = stack_index_addr;
+  __AR_StackPointer = 0x4000;
+  __AR_FreeBlocks = num_entries;
+  __AR_BlockLength = stack_index_addr;
 
   refresh = (u16)(__DSPRegs[13] & 0x000000ff);
 
@@ -78,16 +78,16 @@ u32 ARInit(u32 *stack_index_addr, u32 num_entries) {
 
   __ARChecksize();
 
-  __AR_init_flag_8041CBCC = TRUE;
+  __AR_init_flag = TRUE;
 
   OSRestoreInterrupts(old);
 
-  return __AR_StackPointer_8041CBC0;
+  return __AR_StackPointer;
 }
 
 u32 ARGetBaseAddress(void) { return 0x4000; }
 
-u32 ARGetSize() { return __AR_Size_8041CBB4; }
+u32 ARGetSize() { return __AR_Size; }
 
 static void __ARHandler(__OSInterrupt interrupt, OSContext *context) {
 
@@ -101,8 +101,8 @@ static void __ARHandler(__OSInterrupt interrupt, OSContext *context) {
   OSClearContext(&exceptionContext);
   OSSetCurrentContext(&exceptionContext);
 
-  if (__AR_Callback_8041CBB0) {
-    (*__AR_Callback_8041CBB0)();
+  if (__AR_Callback) {
+    (*__AR_Callback)();
   }
 
   OSClearContext(&exceptionContext);
@@ -173,7 +173,7 @@ static void __ARChecksize(void) {
   while (!(__DSPRegs[11] & 1)) {
   }
   ARAM_mode = 3;
-  ARAM_size = __AR_InternalSize_8041CBB8 = 0x1000000;
+  ARAM_size = __AR_InternalSize = 0x1000000;
   __DSPRegs[9] = (u16)((__DSPRegs[9] & ~0x3F) | 0x23);
   test_data = (u32 *)RoundUP32(test_data_pad);
   dummy_data = (u32 *)RoundUP32(dummy_data_pad);
@@ -184,7 +184,7 @@ static void __ARChecksize(void) {
   }
   DCFlushRange(test_data, 0x20);
   DCFlushRange(dummy_data, 0x20);
-  __AR_ExpansionSize_8041CBBC = 0;
+  __AR_ExpansionSize = 0;
   __ARWriteDMA((u32)dummy_data, ARAM_size, 0x20U);
   __ARWriteDMA((u32)dummy_data, ARAM_size + 0x200000, 0x20U);
   __ARWriteDMA((u32)dummy_data, ARAM_size + 0x01000000, 0x20U);
@@ -203,7 +203,7 @@ static void __ARChecksize(void) {
     PPCSync();
     if (*buffer == *test_data) {
       ARAM_size += 0x200000;
-      __AR_ExpansionSize_8041CBBC = 0x200000;
+      __AR_ExpansionSize = 0x200000;
     } else {
       memset(buffer, 0, 0x20);
       DCFlushRange(buffer, 0x20);
@@ -212,7 +212,7 @@ static void __ARChecksize(void) {
       if (*buffer == *test_data) {
         ARAM_mode |= 8;
         ARAM_size += 0x400000;
-        __AR_ExpansionSize_8041CBBC = 0x400000;
+        __AR_ExpansionSize = 0x400000;
       } else {
         memset(buffer, 0, 0x20);
         DCFlushRange(buffer, 0x20);
@@ -221,7 +221,7 @@ static void __ARChecksize(void) {
         if (*buffer == *test_data) {
           ARAM_mode |= 0x10;
           ARAM_size += 0x800000;
-          __AR_ExpansionSize_8041CBBC = 0x800000;
+          __AR_ExpansionSize = 0x800000;
         } else {
           memset(buffer, 0, 0x20);
           DCFlushRange(buffer, 0x20);
@@ -230,11 +230,11 @@ static void __ARChecksize(void) {
           if (*buffer == *test_data) {
             ARAM_mode |= 0x18;
             ARAM_size += 0x01000000;
-            __AR_ExpansionSize_8041CBBC = 0x01000000;
+            __AR_ExpansionSize = 0x01000000;
           } else {
             ARAM_mode |= 0x20;
             ARAM_size += 0x02000000;
-            __AR_ExpansionSize_8041CBBC = 0x02000000;
+            __AR_ExpansionSize = 0x02000000;
           }
         }
       }
@@ -243,5 +243,5 @@ static void __ARChecksize(void) {
     __DSPRegs[9] = ((u16)(__DSPRegs[9] & 0xFFFFFFC0) | ARAM_mode);
   }
   *(u32 *)OSPhysicalToUncached(0xD0) = ARAM_size;
-  __AR_Size_8041CBB4 = ARAM_size;
+  __AR_Size = ARAM_size;
 }
