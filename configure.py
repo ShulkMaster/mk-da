@@ -208,7 +208,14 @@ config.custom_build_steps = {
         {
             "outputs": asm_sequence_root / "include" / asm_sequence_config["output"],
             "rule": "asm_sequences",
-            "inputs": asm_sequence_root / "asm" / asm_sequence_config["assembly"],
+            "inputs": list(
+                dict.fromkeys(
+                    asm_sequence_root
+                    / "asm"
+                    / entry.get("assembly", asm_sequence_config["assembly"])
+                    for entry in asm_sequence_config["functions"]
+                )
+            ),
             "implicit": [Path("tools/generate_asm_sequences.py"), asm_sequence_manifest],
             "variables": {
                 "manifest": asm_sequence_manifest,

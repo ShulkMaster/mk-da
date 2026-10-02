@@ -77,15 +77,14 @@ def generate(manifest: Path, version: str, build_root: Path) -> tuple[Path, str]
     data = json.loads(manifest.read_text(encoding="utf-8"))
     if data.get("version") != version:
         raise ValueError(f"{manifest}: manifest version does not match {version}")
-    assembly = data.get("assembly")
+    default_assembly = data.get("assembly")
     output = data.get("output")
     entries = data.get("functions")
-    if not isinstance(assembly, str) or not isinstance(output, str):
+    if not isinstance(default_assembly, str) or not isinstance(output, str):
         raise ValueError(f"{manifest}: assembly and output must be paths")
     if not isinstance(entries, list) or not entries:
         raise ValueError(f"{manifest}: functions must be a non-empty list")
-    assembly_path = build_root / version / "asm" / assembly
-    available = read_functions(assembly_path)
+    assemblies: dict[str, dict[str, tuple[int, tuple[tuple[int, str], ...]]]] = {}
     lines = ["/* Generated from version-specific retail assembly. Do not edit. */", ""]
     seen: set[str] = set()
     for entry in entries:
@@ -93,6 +92,13 @@ def generate(manifest: Path, version: str, build_root: Path) -> tuple[Path, str]
         if not isinstance(name, str) or not SYMBOL_RE.fullmatch(name) or name in seen:
             raise ValueError(f"{manifest}: invalid or duplicate function {name!r}")
         seen.add(name)
+        source = entry.get("assembly", default_assembly)
+        if not isinstance(source, str):
+            raise ValueError(f"{name}.assembly: expected a path")
+        assembly_path = build_root / version / "asm" / source
+        if source not in assemblies:
+            assemblies[source] = read_functions(assembly_path)
+        available = assemblies[source]
         if name not in available:
             raise ValueError(f"{assembly_path}: allowlisted function {name} not found")
         address, instructions = available[name]

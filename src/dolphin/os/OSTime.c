@@ -5,7 +5,7 @@
  */
 
 #include <dolphin/os.h>
-#include <dolphin/os/asm_sequences.inc>
+#include <dolphin/asm_sequences.inc>
 
 asm OSTime OSGetTime(void) { SEQ_OSGetTime() }
 

@@ -6,6 +6,7 @@
 
 #include <dolphin/gx.h>
 #include <dolphin/gx/GXPriv.h>
+#include <dolphin/asm_sequences.inc>
 
 inline void __GXSetProjection(void) {
   u32 reg = 0x00061020;
@@ -69,6 +70,14 @@ void GXGetProjectionv(f32 *ptr)
   ptr[5] = __GXData->projMtx[4];
   ptr[6] = __GXData->projMtx[5];
 }
+
+asm void WriteMTXPS4x3(const f32 mtx[3][4], volatile f32* dest) { SEQ_WriteMTXPS4x3() }
+
+asm void WriteMTXPS3x3from3x4(const f32 mtx[3][4], volatile f32* dest) {
+  SEQ_WriteMTXPS3x3from3x4()
+}
+
+asm void WriteMTXPS4x2(const f32 mtx[2][4], volatile f32* dest) { SEQ_WriteMTXPS4x2() }
 
 void GXSetCurrentMtx(u32 id) {
 
