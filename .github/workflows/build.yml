@@ -35,11 +35,45 @@ jobs:
       - name: Prepare game files
         run: cp -a /orig .
 
+      - name: Validate build helpers
+        run: python3 -m py_compile tools/generate_asm_sequences.py tools/github_report.py
+
       - name: Build and verify retail match
         run: |
           python3 configure.py --map --version ${{ matrix.version }} \
-            --binutils /binutils --compilers /compilers
+            --binutils /binutils --compilers /compilers \
+            --dtk /tools/dtk --objdiff /tools/objdiff-cli \
+            --wrapper /tools/wibo --sjiswrap /tools/sjiswrap.exe
           ninja all_source progress build/${{ matrix.version }}/report.json
+
+      - name: Checkout PR base
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: .baseline
+          persist-credentials: false
+
+      - name: Build PR base report
+        if: github.event_name == 'pull_request'
+        working-directory: .baseline
+        run: |
+          cp -a /orig .
+          python3 configure.py --version ${{ matrix.version }} \
+            --binutils /binutils --compilers /compilers \
+            --dtk /tools/dtk --objdiff /tools/objdiff-cli \
+            --wrapper /tools/wibo --sjiswrap /tools/sjiswrap.exe
+          ninja all_source build/${{ matrix.version }}/report.json
+
+      - name: PR progress table
+        if: github.event_name == 'pull_request'
+        run: |
+          /tools/objdiff-cli report changes --format json-pretty \
+            .baseline/build/${{ matrix.version }}/report.json \
+            build/${{ matrix.version }}/report.json \
+            -o build/${{ matrix.version }}/report_changes.json
+          python3 tools/github_report.py \
+            build/${{ matrix.version }}/report_changes.json >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload maps
         uses: actions/upload-artifact@v4
@@ -52,5 +86,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.version }}_report
-          path: build/${{ matrix.version }}/report.json
+          path: |
+            build/${{ matrix.version }}/report.json
+            build/${{ matrix.version }}/report_changes.json
           if-no-files-found: error

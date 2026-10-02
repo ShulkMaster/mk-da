@@ -1,0 +1,9 @@
+{
+  "version": "GMKE5D",
+  "assembly": "dolphin/os/OSTime.s",
+  "output": "dolphin/os/asm_sequences.inc",
+  "functions": [
+    { "name": "OSGetTime", "address": "0x801ADFC0", "size": "0x18" },
+    { "name": "OSGetTick", "address": "0x801ADFD8", "size": "0x8" }
+  ]
+}

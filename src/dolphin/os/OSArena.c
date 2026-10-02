@@ -3,6 +3,7 @@
  * Credit and thanks to the PrimeDecomp contributors.
  * https://github.com/PrimeDecomp/prime
  */
+
 #include <dolphin/os/OSArena.h>
 
 #define ROUND(n, a) (((u32)(n) + (a)-1) & ~((a)-1))

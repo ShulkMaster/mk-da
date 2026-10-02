@@ -26,3 +26,6 @@ dolphin/os/OSArena.c:
 
 dolphin/os/OSMutex.c:
 	.text       start:0x801AB7E0 end:0x801ABA2C
+
+dolphin/os/OSTime.c:
+	.text       start:0x801ADFC0 end:0x801AE09C

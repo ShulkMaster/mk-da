@@ -8,4 +8,4 @@ splits: config/GMKE5D/splits.txt
 # Initial linker choice; compiler versions and flags remain to be researched.
 mw_comment_version: 10
 # Keep generated disassembly in ignored build artifacts only.
-write_asm: false
+write_asm: true

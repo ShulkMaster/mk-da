@@ -13,6 +13,7 @@
 ###
 
 import argparse
+import json
 import sys
 from pathlib import Path
 from typing import Any, Dict, List
@@ -186,6 +187,38 @@ if args.map:
 # Use for any additional files that should cause a re-configure when modified
 config.reconfig_deps = []
 
+# Generate approved handwritten assembly from this version's retail split.
+asm_sequence_manifest = Path("config") / config.version / "asm_sequences.json"
+asm_sequence_config = json.loads(asm_sequence_manifest.read_text(encoding="utf-8"))
+asm_sequence_root = config.build_dir / config.version
+config.reconfig_deps.append(asm_sequence_manifest)
+config.custom_build_rules = [
+    {
+        "name": "asm_sequences",
+        "command": (
+            "$python tools/generate_asm_sequences.py "
+            '--manifest "$manifest" --version "$version" --build-root "$build_root"'
+        ),
+        "description": "RETAIL ASM SEQUENCES $out",
+        "restat": True,
+    },
+]
+config.custom_build_steps = {
+    "pre-compile": [
+        {
+            "outputs": asm_sequence_root / "include" / asm_sequence_config["output"],
+            "rule": "asm_sequences",
+            "inputs": asm_sequence_root / "asm" / asm_sequence_config["assembly"],
+            "implicit": [Path("tools/generate_asm_sequences.py"), asm_sequence_manifest],
+            "variables": {
+                "manifest": asm_sequence_manifest,
+                "version": config.version,
+                "build_root": config.build_dir,
+            },
+        },
+    ],
+}
+
 # Optional numeric ID for decomp.me preset
 # Can be overridden in libraries or objects
 config.scratch_preset_id = None
@@ -210,7 +243,7 @@ cflags_base = [
     "-str reuse",
     "-multibyte",  # For Wii compilers, replace with `-enc SJIS`
     "-i include",
-    f"-i build/{config.version}/include",
+    f"-i {config.build_dir}/{config.version}/include",
     f"-DBUILD_VERSION={version_num}",
     f"-DVERSION_{config.version}",
 ]
@@ -292,6 +325,7 @@ config.libs = [
         [
             Object(Matching, "dolphin/os/OSArena.c"),
             Object(Matching, "dolphin/os/OSMutex.c"),
+            Object(Matching, "dolphin/os/OSTime.c"),
         ],
     ),
 ]
