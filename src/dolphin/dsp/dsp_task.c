@@ -353,6 +353,22 @@ void __DSP_insert_task(DSPTaskInfo* task) {
   }
 }
 
+void __DSP_add_task(DSPTaskInfo* task) {
+  if (__DSP_last_task == NULL) {
+    __DSP_first_task = __DSP_last_task = __DSP_curr_task = task;
+    task->next = task->prev = NULL;
+  } else {
+    __DSP_last_task->next = task;
+    task->next = NULL;
+    task->prev = __DSP_last_task;
+    __DSP_last_task = task;
+  }
+
+  task->state = DSP_TASK_STATE_INIT;
+
+  __DSP_debug_printf("__DSP_add_task() : Added task    : 0x%08X\n", task);
+}
+
 void __DSP_remove_task(DSPTaskInfo* task) {
 
   task->flags = DSP_TASK_FLAG_CLEARALL;
