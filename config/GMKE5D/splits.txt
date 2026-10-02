@@ -19,6 +19,16 @@ Runtime.PPCEABI.H/__init_cpp_exceptions.cpp:
 	.dtors      start:0x8022E660 end:0x8022E668
 	.sdata      start:0x8041B688 end:0x8041B690
 
+dolphin/db.c:
+	.text       start:0x80198FB8 end:0x80199024
+	.sbss       start:0x8041CBF8 end:0x8041CC00
+
+dolphin/dsp/dsp.c:
+	.text       start:0x80199024 end:0x80199070
+
+dolphin/dsp/dsp_debug.c:
+	.text       start:0x80199230 end:0x80199280
+
 dolphin/dvd/dvdqueue.c:
 	.text       start:0x8019D438 end:0x8019D630
 	.bss        start:0x803EADF8 end:0x803EAE18

@@ -320,6 +320,14 @@ config.warn_missing_config = False
 config.warn_missing_source = False
 # The remaining objects continue to link from the original binary.
 config.libs = [
+    DolphinLib("db", [Object(Matching, "dolphin/db.c")]),
+    DolphinLib(
+        "dsp",
+        [
+            Object(Matching, "dolphin/dsp/dsp.c"),
+            Object(Matching, "dolphin/dsp/dsp_debug.c"),
+        ],
+    ),
     DolphinLib(
         "dvd",
         [
