@@ -321,9 +321,17 @@ config.warn_missing_source = False
 # The remaining objects continue to link from the original binary.
 config.libs = [
     DolphinLib(
+        "dvd",
+        [
+            Object(Matching, "dolphin/dvd/dvdqueue.c"),
+            Object(Matching, "dolphin/dvd/dvderror.c"),
+        ],
+    ),
+    DolphinLib(
         "os",
         [
             Object(Matching, "dolphin/os/OSArena.c"),
+            Object(Matching, "dolphin/os/OSLink.c"),
             Object(Matching, "dolphin/os/OSMutex.c"),
             Object(Matching, "dolphin/os/OSTime.c"),
         ],
