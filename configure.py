@@ -365,7 +365,7 @@ def MusyX(objects: List[Object], major: int = 2, minor: int = 0, patch: int = 0)
             f"-DMUSY_VERSION_MINOR={minor}",
             f"-DMUSY_VERSION_PATCH={patch}",
         ],
-        "progress_category": "third_party",
+        "progress_category": "musyx",
         "objects": objects,
     }
 
@@ -556,18 +556,25 @@ config.libs = [
     ),
     MusyX(
         [
+            Object(Matching, "musyx/runtime/seq.c"),
+            Object(Matching, "musyx/runtime/synth.c"),
             Object(Matching, "musyx/runtime/seq_api.c"),
             Object(Matching, "musyx/runtime/snd_synthapi.c"),
+            Object(Matching, "musyx/runtime/stream.c"),
+            Object(Matching, "musyx/runtime/synthdata.c"),
+            Object(Matching, "musyx/runtime/synthmacros.c"),
             Object(Matching, "musyx/runtime/synthvoice.c"),
             Object(Matching, "musyx/runtime/synth_ac.c"),
             Object(Matching, "musyx/runtime/synth_adsr.c"),
             Object(Matching, "musyx/runtime/synth_dbtab.c"),
             Object(Matching, "musyx/runtime/synth_vsamples.c"),
             Object(Matching, "musyx/runtime/s_data.c"),
+            Object(Matching, "musyx/runtime/hw_dspctrl.c"),
             Object(Matching, "musyx/runtime/hw_volconv.c"),
             Object(Matching, "musyx/runtime/snd3d.c"),
             Object(Matching, "musyx/runtime/snd_init.c"),
             Object(Matching, "musyx/runtime/snd_math.c"),
+            Object(Matching, "musyx/runtime/snd_midictrl.c"),
             Object(Matching, "musyx/runtime/snd_service.c"),
             Object(Matching, "musyx/runtime/hardware.c"),
             Object(Matching, "musyx/runtime/hw_aramdma.c"),
@@ -598,7 +605,7 @@ def link_order_callback(module_id: int, objects: List[str]) -> List[str]:
 # Adjust as desired for your project
 config.progress_categories = [
     ProgressCategory("sdk", "Dolphin SDK"),
-    ProgressCategory("third_party", "Third Party"),
+    ProgressCategory("musyx", "MusyX"),
 ]
 config.progress_each_module = args.verbose
 # Optional extra arguments to `objdiff-cli report generate`
