@@ -8,30 +8,39 @@
 #include <dolphin/os/OSException.h>
 #include <dolphin/os/OSThread.h>
 #include <dolphin/hw_regs.h>
+#include <dolphin/asm_sequences.inc>
 
 extern void* memset(void* ptr, int value, u32 size);
 extern __OSExceptionHandler __OSSetExceptionHandler(__OSException exception, __OSExceptionHandler handler);
-extern void ExternalInterruptHandler_801AB49C(__OSException exception, OSContext* context);
+static void ExternalInterruptHandler(__OSException exception, OSContext* context);
 extern void OSLoadContext(OSContext* context);
 extern void __OSReschedule(void);
-extern volatile OSTime __OSLastInterruptTime;
-extern volatile __OSInterrupt __OSLastInterrupt;
-extern volatile u32 __OSLastInterruptSrr0;
 
+static __OSInterruptHandler* InterruptHandlerTable;
+volatile OSTime __OSLastInterruptTime;
+volatile __OSInterrupt __OSLastInterrupt;
+volatile u32 __OSLastInterruptSrr0;
 
-extern __OSInterruptHandler* InterruptHandlerTable_8041CD90;
+void __RAS_OSDisableInterrupts_begin(void);
+void __RAS_OSDisableInterrupts_end(void);
+
+asm BOOL OSDisableInterrupts(void) { SEQ_OSDisableInterrupts(); }
+
+asm BOOL OSEnableInterrupts(void) { SEQ_OSEnableInterrupts(); }
+
+asm BOOL OSRestoreInterrupts(register BOOL level) { SEQ_OSRestoreInterrupts(); }
 
 __OSInterruptHandler
     __OSSetInterruptHandler(__OSInterrupt interrupt, __OSInterruptHandler handler) {
   __OSInterruptHandler oldHandler;
 
-  oldHandler = InterruptHandlerTable_8041CD90[interrupt];
-  InterruptHandlerTable_8041CD90[interrupt] = handler;
+  oldHandler = InterruptHandlerTable[interrupt];
+  InterruptHandlerTable[interrupt] = handler;
   return oldHandler;
 }
 
 __OSInterruptHandler __OSGetInterruptHandler(__OSInterrupt interrupt) {
-  return InterruptHandlerTable_8041CD90[interrupt];
+  return InterruptHandlerTable[interrupt];
 }
 
 static OSInterruptMask InterruptPrioTable[] = {
@@ -50,8 +59,8 @@ static OSInterruptMask InterruptPrioTable[] = {
 };
 
 void __OSInterruptInit(void) {
-  InterruptHandlerTable_8041CD90 = OSPhysicalToCached(0x3040);
-  memset(InterruptHandlerTable_8041CD90, 0, __OS_INTERRUPT_MAX * sizeof(__OSInterruptHandler));
+  InterruptHandlerTable = OSPhysicalToCached(0x3040);
+  memset(InterruptHandlerTable, 0, __OS_INTERRUPT_MAX * sizeof(__OSInterruptHandler));
 
   *(OSInterruptMask*)OSPhysicalToCached(0x00C4) = 0;
 
@@ -62,7 +71,7 @@ void __OSInterruptInit(void) {
   __OSMaskInterrupts(OS_INTERRUPTMASK_MEM | OS_INTERRUPTMASK_DSP | OS_INTERRUPTMASK_AI |
                      OS_INTERRUPTMASK_EXI | OS_INTERRUPTMASK_PI);
 
-  __OSSetExceptionHandler(4, ExternalInterruptHandler_801AB49C);
+  __OSSetExceptionHandler(4, ExternalInterruptHandler);
 }
 
 u32 SetInterruptMask(OSInterruptMask mask, OSInterruptMask current) {
@@ -357,4 +366,9 @@ void __OSDispatchInterrupt(__OSException exception, OSContext* context) {
   }
 
   OSLoadContext(context);
+}
+
+static asm void ExternalInterruptHandler(register __OSException exception,
+                                         register OSContext* context) {
+  SEQ_ExternalInterruptHandler();
 }

@@ -9,9 +9,9 @@
 #include <dolphin/os/OSThread.h>
 #include <dolphin/OSRtcPriv.h>
 #include <dolphin/hw_regs.h>
+#include <dolphin/asm_sequences.inc>
 
 extern void* memset(void* ptr, int value, u32 size);
-extern void Reset(s32 resetCode);
 extern void __OSStopAudioSystem(void);
 extern BOOL __PADDisableRecalibration(BOOL disable);
 extern void __OSReboot(u32 resetCode, BOOL forceMenu);
@@ -28,27 +28,25 @@ typedef struct OSResetQueue {
   OSResetFunctionInfo* last;
 } OSResetQueue;
 
-extern OSResetQueue ResetFunctionQueue_8041CDB8;
+static OSResetQueue ResetFunctionQueue;
 
-#pragma push
-#pragma peephole on
 void OSRegisterResetFunction(OSResetFunctionInfo* func) {
   OSResetFunctionInfo* tmp;
   OSResetFunctionInfo* iter;
 
-  for (iter = ResetFunctionQueue_8041CDB8.first; iter && iter->priority <= func->priority; iter = iter->next)
+  for (iter = ResetFunctionQueue.first; iter && iter->priority <= func->priority; iter = iter->next)
     ;
 
   if (iter == NULL) {
-    tmp = ResetFunctionQueue_8041CDB8.last;
+    tmp = ResetFunctionQueue.last;
     if (tmp == NULL) {
-      ResetFunctionQueue_8041CDB8.first = func;
+      ResetFunctionQueue.first = func;
     } else {
       tmp->next = func;
     }
     func->prev = tmp;
     func->next = NULL;
-    ResetFunctionQueue_8041CDB8.last = func;
+    ResetFunctionQueue.last = func;
     return;
   }
 
@@ -57,19 +55,19 @@ void OSRegisterResetFunction(OSResetFunctionInfo* func) {
   iter->prev = func;
   func->prev = tmp;
   if (tmp == NULL) {
-    ResetFunctionQueue_8041CDB8.first = func;
+    ResetFunctionQueue.first = func;
     return;
   }
   tmp->next = func;
 }
 
-#pragma pop
+static asm void Reset(s32 resetCode) { SEQ_Reset(); }
 
 static inline BOOL __OSCallResetFunctions(u32 arg0) {
   OSResetFunctionInfo* iter;
   s32 retCode = 0;
 
-  for (iter = ResetFunctionQueue_8041CDB8.first; iter != NULL; iter = iter->next) {
+  for (iter = ResetFunctionQueue.first; iter != NULL; iter = iter->next) {
     retCode |= !iter->func(arg0);
   }
   retCode |= !__OSSyncSram();

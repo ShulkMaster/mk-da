@@ -61,7 +61,7 @@ static BOOL WriteSram(void* buffer, u32 offset, u32 size) {
   return !err;
 }
 
-static BOOL ReadSram(void* buffer) {
+static inline BOOL ReadSram(void* buffer) {
   BOOL err;
   u32 cmd;
 
@@ -93,7 +93,7 @@ void __OSInitSram() {
   Scb.offset = RTC_SRAM_SIZE;
 }
 
-static void* LockSram(u32 offset) {
+static inline void* LockSram(u32 offset) {
   BOOL enabled;
   enabled = OSDisableInterrupts();
 

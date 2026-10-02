@@ -14,7 +14,7 @@
 
 typedef u16 OSError;
 typedef void (*OSErrorHandler)(OSError error, OSContext* context, ...);
-extern OSErrorHandler __OSErrorTable[16];
+OSErrorHandler __OSErrorTable[16];
 extern volatile OSTime __OSLastInterruptTime;
 extern volatile __OSInterrupt __OSLastInterrupt;
 extern volatile u32 __OSLastInterruptSrr0;
