@@ -232,10 +232,10 @@ static void AlarmHandlerForTimeout(OSAlarm *alarm, OSContext *context) {
   OSSetCurrentContext(context);
 }
 
-static void Read(void *addr, u32 length, u32 offset, DVDLowCallback callback) {
+static void Read(void* addr, u32 length, u32 offset, DVDLowCallback callback) {
   StopAtNextInt = FALSE;
-  Callback = callback;
   LastCommandWasRead = TRUE;
+  Callback = callback;
   LastReadIssued = __OSGetSystemTime();
 
   __DIRegs[2] = 0xa8000000;
@@ -247,9 +247,9 @@ static void Read(void *addr, u32 length, u32 offset, DVDLowCallback callback) {
   __DIRegs[7] = 3;
 
   if (length > 0xa00000) {
-    SetTimeoutAlarm(OSSecondsToTicks(20));
+  SetTimeoutAlarm(OSSecondsToTicks(20));
   } else {
-    SetTimeoutAlarm(OSSecondsToTicks(10));
+  SetTimeoutAlarm(OSSecondsToTicks(10));
   }
 }
 

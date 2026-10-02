@@ -15,31 +15,33 @@ static void FormatCallback(s32 chan, s32 result) {
   CARDCallback callback;
 
   card = &__CARDBlock[chan];
-  /* Retail formatting reuses the mounting step at offset 0x24. */
-  if (result >= 0) {
-    ++card->mountStep;
-    if (card->mountStep < CARD_NUM_SYSTEM_BLOCK) {
-      result = __CARDEraseSector(chan, (u32)card->sectorSize * card->mountStep, FormatCallback);
-      if (0 <= result) {
-        return;
-      }
-    } else if (card->mountStep < 2 * CARD_NUM_SYSTEM_BLOCK) {
-      int step = card->mountStep - CARD_NUM_SYSTEM_BLOCK;
-      result = __CARDWrite(chan, (u32)card->sectorSize * step, CARD_SYSTEM_BLOCK_SIZE,
-                           (u8*)card->workArea + (CARD_SYSTEM_BLOCK_SIZE * step), FormatCallback);
-      if (result >= 0) {
-        return;
-      }
-    } else {
-      card->currentDir = (CARDDir*)((u8*)card->workArea + (1 + 0) * CARD_SYSTEM_BLOCK_SIZE);
-      memcpy(card->currentDir, (u8*)card->workArea + (1 + 1) * CARD_SYSTEM_BLOCK_SIZE,
-             CARD_SYSTEM_BLOCK_SIZE);
-      card->currentFat = (u16*)((u8*)card->workArea + (3 + 0) * CARD_SYSTEM_BLOCK_SIZE);
-      memcpy(card->currentFat, (u8*)card->workArea + (3 + 1) * CARD_SYSTEM_BLOCK_SIZE,
-             CARD_SYSTEM_BLOCK_SIZE);
-    }
-
+  if (result < 0) {
+    goto error;
   }
+
+  ++card->mountStep;
+  if (card->mountStep < CARD_NUM_SYSTEM_BLOCK) {
+    result = __CARDEraseSector(chan, (u32)card->sectorSize * card->mountStep, FormatCallback);
+    if (0 <= result) {
+      return;
+    }
+  } else if (card->mountStep < 2 * CARD_NUM_SYSTEM_BLOCK) {
+    int step = card->mountStep - CARD_NUM_SYSTEM_BLOCK;
+    result = __CARDWrite(chan, (u32)card->sectorSize * step, CARD_SYSTEM_BLOCK_SIZE,
+                         (u8*)card->workArea + (CARD_SYSTEM_BLOCK_SIZE * step), FormatCallback);
+    if (result >= 0) {
+      return;
+    }
+  } else {
+    card->currentDir = (CARDDir*)((u8*)card->workArea + (1 + 0) * CARD_SYSTEM_BLOCK_SIZE);
+    memcpy(card->currentDir, (u8*)card->workArea + (1 + 1) * CARD_SYSTEM_BLOCK_SIZE,
+           CARD_SYSTEM_BLOCK_SIZE);
+    card->currentFat = (u16*)((u8*)card->workArea + (3 + 0) * CARD_SYSTEM_BLOCK_SIZE);
+    memcpy(card->currentFat, (u8*)card->workArea + (3 + 1) * CARD_SYSTEM_BLOCK_SIZE,
+           CARD_SYSTEM_BLOCK_SIZE);
+  }
+
+error:
   callback = card->apiCallback;
   card->apiCallback = 0;
   __CARDPutControlBlock(card, result);

@@ -68,6 +68,7 @@ class Object:
             "shift_jis": None,
             "source": name,
             "src_dir": None,
+            "symbol_aliases": {},
         }
         self.options.update(options)
 
@@ -200,12 +201,12 @@ class ProjectConfig:
         self.link_order_callback: Optional[Callable[[int, List[str]], List[str]]] = (
             None  # Callback to add/remove/reorder units within a module
         )
-        self.context_exclude_globs: List[
-            str
-        ] = []  # Globs to exclude from context files
-        self.context_defines: List[
-            str
-        ] = []  # Macros to define at the top of context files
+        self.context_exclude_globs: List[str] = (
+            []
+        )  # Globs to exclude from context files
+        self.context_defines: List[str] = (
+            []
+        )  # Macros to define at the top of context files
 
         # Progress output and report.json config
         self.progress = True  # Enable report.json generation and CLI progress output
@@ -498,6 +499,12 @@ def generate_build_ninja(
     )
 
     decompctx = config.tools_dir / "decompctx.py"
+    symbol_alias_tool = config.tools_dir / "elf_symbol_aliases.py"
+    n.rule(
+        name="elf_symbol_aliases",
+        command=f"$python {symbol_alias_tool} $in $out $aliases",
+        description="SYMBOL ALIASES $out",
+    )
     n.rule(
         name="decompctx",
         command=f"$python {decompctx} $in -o $out -d $out.d $includes $excludes $defines",
@@ -1034,6 +1041,13 @@ def generate_build_ninja(
                 "basedir": os.path.dirname(obj.src_obj_path),
                 "basefile": obj.src_obj_path.with_suffix(""),
             }
+            compiled_obj_path = obj.src_obj_path
+            if obj.options["symbol_aliases"]:
+                compiled_obj_path = (
+                    obj.src_obj_path.parent / "raw" / obj.src_obj_path.name
+                )
+                variables["basedir"] = compiled_obj_path.parent
+                variables["basefile"] = compiled_obj_path.with_suffix("")
 
             if obj.options["shift_jis"] and obj.options["extab_padding"] is not None:
                 build_rule = "mwcc_sjis_extab"
@@ -1052,13 +1066,26 @@ def generate_build_ninja(
                 )
             n.comment(f"{obj.name}: {lib_name} (linked {obj.completed})")
             n.build(
-                outputs=obj.src_obj_path,
+                outputs=compiled_obj_path,
                 rule=build_rule,
                 inputs=src_path,
                 variables=variables,
                 implicit=build_implcit,
                 order_only="pre-compile",
             )
+            if obj.options["symbol_aliases"]:
+                n.build(
+                    outputs=obj.src_obj_path,
+                    rule="elf_symbol_aliases",
+                    inputs=compiled_obj_path,
+                    implicit=symbol_alias_tool,
+                    variables={
+                        "aliases": " ".join(
+                            f"--alias {alias}={target}"
+                            for alias, target in obj.options["symbol_aliases"].items()
+                        )
+                    },
+                )
 
             # Add ctx build rule
             if obj.ctx_path is not None:
@@ -1136,6 +1163,22 @@ def generate_build_ninja(
                 return
 
             link_built_obj = obj.completed
+            if obj.options["symbol_aliases"] and obj_path is not None:
+                aliased_target = Path(obj_path).with_suffix(".aliased.o")
+                n.build(
+                    outputs=aliased_target,
+                    rule="elf_symbol_aliases",
+                    inputs=obj_path,
+                    implicit=symbol_alias_tool,
+                    variables={
+                        "aliases": " ".join(
+                            f"--alias {alias}={target}"
+                            for alias, target in obj.options["symbol_aliases"].items()
+                        )
+                    },
+                )
+                source_inputs.append(aliased_target)
+                obj_path = aliased_target
             built_obj_path: Optional[Path] = None
             if obj.src_path is not None and obj.src_path.exists():
                 check_path_case(obj.src_path)
@@ -1664,6 +1707,8 @@ def generate_objdiff_config(
             return
 
         src_exists = obj.src_path is not None and obj.src_path.exists()
+        if obj.options["symbol_aliases"] and obj_path is not None:
+            unit_config["target_path"] = Path(obj_path).with_suffix(".aliased.o")
         if src_exists:
             unit_config["base_path"] = obj.src_obj_path
             unit_config["metadata"]["source_path"] = obj.src_path

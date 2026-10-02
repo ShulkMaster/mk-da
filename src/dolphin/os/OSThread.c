@@ -15,9 +15,9 @@ static OSThreadQueue RunQueue[32];
 static OSThread IdleThread;
 static OSThread DefaultThread;
 static OSContext IdleContext;
-extern volatile u32 RunQueueBits_8041CDE0;
-extern volatile BOOL RunQueueHint_8041CDE4;
-extern s32 Reschedule_8041CDE8;
+static volatile u32 RunQueueBits;
+static volatile BOOL RunQueueHint;
+static s32 Reschedule;
 
 void OSLoadContext(OSContext *context);
 void OSInitContext(OSContext *context, u32 pc, u32 sp);
@@ -92,8 +92,8 @@ static OSThread *SelectThread(BOOL yield);
 static inline void SetRun(OSThread *thread) {
   thread->queue = &RunQueue[thread->priority];
   AddTail(thread->queue, thread, link);
-  RunQueueBits_8041CDE0 |= 1u << (OS_PRIORITY_MAX - thread->priority);
-  RunQueueHint_8041CDE4 = TRUE;
+  RunQueueBits |= 1u << (OS_PRIORITY_MAX - thread->priority);
+  RunQueueHint = TRUE;
 }
 
 static inline void UpdatePriority(OSThread *thread) {
@@ -153,8 +153,8 @@ void __OSThreadInit() {
   thread->stackEnd = (unsigned long *)&_stack_end;
   *(u32 *)thread->stackEnd = 0xDEADBABE;
   __OSCurrentThread = thread;
-  RunQueueBits_8041CDE0 = 0;
-  RunQueueHint_8041CDE4 = 0;
+  RunQueueBits = 0;
+  RunQueueHint = 0;
 
   for (prio = 0; prio <= 31; prio++) {
     OSInitThreadQueue(&RunQueue[prio]);
@@ -164,7 +164,7 @@ void __OSThreadInit() {
   AddTail(&__OSActiveThreadQueue, thread, linkActive);
 
   OSClearContext(&IdleContext);
-  Reschedule_8041CDE8 = 0;
+  Reschedule = 0;
 }
 
 void OSInitThreadQueue(OSThreadQueue *queue) { queue->head = queue->tail = NULL; }
@@ -180,7 +180,7 @@ s32 OSDisableScheduler() {
   s32 count;
 
   enabled = OSDisableInterrupts();
-  count = Reschedule_8041CDE8++;
+  count = Reschedule++;
   OSRestoreInterrupts(enabled);
   return count;
 }
@@ -190,7 +190,7 @@ s32 OSEnableScheduler() {
   s32 count;
 
   enabled = OSDisableInterrupts();
-  count = Reschedule_8041CDE8--;
+  count = Reschedule--;
   OSRestoreInterrupts(enabled);
   return count;
 }
@@ -201,7 +201,7 @@ static void UnsetRun(OSThread *thread) {
   queue = thread->queue;
   RemoveItem(queue, thread, link);
   if (queue->head == 0)
-    RunQueueBits_8041CDE0 &= ~(1u << (OS_PRIORITY_MAX - thread->priority));
+    RunQueueBits &= ~(1u << (OS_PRIORITY_MAX - thread->priority));
   thread->queue = NULL;
 }
 #pragma dont_inline reset
@@ -237,7 +237,7 @@ static OSThread *SetEffectivePriority(OSThread *thread, OSPriority priority) {
     }
     break;
   case OS_THREAD_STATE_RUNNING:
-    RunQueueHint_8041CDE4 = TRUE;
+    RunQueueHint = TRUE;
     thread->priority = priority;
     break;
   }
@@ -263,7 +263,7 @@ static OSThread *SelectThread(BOOL yield) {
   OSPriority priority;
   OSThreadQueue *queue;
 
-  if (0 < Reschedule_8041CDE8) {
+  if (0 < Reschedule) {
     return 0;
   }
 
@@ -276,7 +276,7 @@ static OSThread *SelectThread(BOOL yield) {
   if (currentThread) {
     if (currentThread->state == OS_THREAD_STATE_RUNNING) {
       if (!yield) {
-        priority = __cntlzw(RunQueueBits_8041CDE0);
+        priority = __cntlzw(RunQueueBits);
         if (currentThread->priority <= priority) {
           return 0;
         }
@@ -292,25 +292,25 @@ static OSThread *SelectThread(BOOL yield) {
   }
 
   __OSCurrentThread = NULL;
-  if (RunQueueBits_8041CDE0 == 0) {
+  if (RunQueueBits == 0) {
     OSSetCurrentContext(&IdleContext);
     do {
       OSEnableInterrupts();
-      while (RunQueueBits_8041CDE0 == 0)
+      while (RunQueueBits == 0)
         ;
       OSDisableInterrupts();
-    } while (RunQueueBits_8041CDE0 == 0);
+    } while (RunQueueBits == 0);
 
     OSClearContext(&IdleContext);
   }
 
-  RunQueueHint_8041CDE4 = FALSE;
+  RunQueueHint = FALSE;
 
-  priority = __cntlzw(RunQueueBits_8041CDE0);
+  priority = __cntlzw(RunQueueBits);
   queue = &RunQueue[priority];
   RemoveHead(queue, nextThread, link);
   if (queue->head == 0) {
-    RunQueueBits_8041CDE0 &= ~(1u << (OS_PRIORITY_MAX - priority));
+    RunQueueBits &= ~(1u << (OS_PRIORITY_MAX - priority));
   }
   nextThread->queue = NULL;
   nextThread->state = OS_THREAD_STATE_RUNNING;
@@ -319,7 +319,7 @@ static OSThread *SelectThread(BOOL yield) {
 }
 
 void __OSReschedule() {
-  if (!RunQueueHint_8041CDE4) {
+  if (!RunQueueHint) {
     return;
   }
 
@@ -386,8 +386,8 @@ void OSExitThread(void *val) {
   }
   __OSUnlockAllMutex(currentThread);
   OSWakeupThread(&currentThread->queueJoin);
-  RunQueueHint_8041CDE4 = 1;
-  if (RunQueueHint_8041CDE4 != 0) {
+  RunQueueHint = 1;
+  if (RunQueueHint != 0) {
     SelectThread(0);
   }
 
@@ -406,7 +406,7 @@ void OSCancelThread(OSThread *thread) {
     }
     break;
   case OS_THREAD_STATE_RUNNING:
-    RunQueueHint_8041CDE4 = TRUE;
+    RunQueueHint = TRUE;
     break;
   case OS_THREAD_STATE_WAITING:
     RemoveItem(thread->queue, thread, link);
@@ -499,7 +499,7 @@ s32 OSSuspendThread(OSThread *thread) {
   if (suspendCount == 0) {
     switch (thread->state) {
     case OS_THREAD_STATE_RUNNING:
-      RunQueueHint_8041CDE4 = TRUE;
+      RunQueueHint = TRUE;
       thread->state = OS_THREAD_STATE_READY;
       break;
     case OS_THREAD_STATE_READY:
@@ -531,7 +531,7 @@ void OSSleepThread(OSThreadQueue *queue) {
   currentThread->state = OS_THREAD_STATE_WAITING;
   currentThread->queue = queue;
   AddPrio(queue, currentThread, link);
-  RunQueueHint_8041CDE4 = TRUE;
+  RunQueueHint = TRUE;
   __OSReschedule();
   OSRestoreInterrupts(enabled);
 }

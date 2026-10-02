@@ -21,11 +21,6 @@ static u32 LatencyTable[8] = {
 
 static void DoUnmount(s32 chan, s32 result);
 void __CARDMountCallback(s32 chan, s32 result);
-static inline s32 MountError(s32 chan, s32 result) {
-  EXIUnlock(chan);
-  DoUnmount(chan, result);
-  return result;
-}
 
 BOOL CARDProbe(s32 chan) {
   if (GameChoice & 0x80) {
@@ -91,141 +86,145 @@ s32 CARDProbeEx(s32 chan, s32* memSize, s32* sectorSize) {
 }
 
 static s32 DoMount(s32 chan) {
-  CARDControl* card;
+  CARDControl *card;
   u32 id;
   u8 status;
   s32 result;
-  OSSramEx* sram;
+  struct OSSramEx *sram;
   int i;
   u8 checkSum;
   int step;
 
+
   card = &__CARDBlock[chan];
-
-  do {
-    if (card->mountStep == 0) {
-      if (EXIGetID(chan, 0, &id) == 0) {
-        result = CARD_RESULT_NOCARD;
-      } else if (((id == 0x80000004 && __CARDVendorID != 0xffff) ||
-               ((id & 0xffff0000) == 0 && (id & 3) == 0))) {
-        result = CARD_RESULT_READY;
-      } else {
-        result = CARD_RESULT_WRONGDEVICE;
-      }
-      if (result < 0) {
-        break;
-      }
-
-      card->cid = id;
-
-      card->size = (u16)(id & 0xFC);
-      switch (card->size) {
-      case 4:
-      case 8:
-      case 16:
-      case 32:
-      case 64:
-      case 128:
-        break;
-      default:
-        result = CARD_RESULT_WRONGDEVICE;
-        goto mountError;
-      }
-      card->sectorSize = SectorSizeTable[(id & 0x00003800) >> 11];
-      if (card->sectorSize == 0) {
-        result = CARD_RESULT_WRONGDEVICE;
-        break;
-      }
-      card->cBlock = (u16)((card->size * 1024 * 1024 / 8) / card->sectorSize);
-      if (card->cBlock < 8) {
-        result = CARD_RESULT_WRONGDEVICE;
-        break;
-      }
-      card->latency = LatencyTable[(id & 0x00000700) >> 8];
-
-      result = __CARDClearStatus(chan);
-      if (result < 0) {
-        break;
-      }
-      result = __CARDReadStatus(chan, &status);
-      if (result < 0) {
-        break;
-      }
-
-      if (!EXIProbe(chan)) {
-        result = CARD_RESULT_NOCARD;
-        break;
-      }
-
-      if (!(status & 0x40)) {
-        result = __CARDUnlock(chan, card->id);
-        if (result < 0) {
-          break;
-        }
-
-        checkSum = 0;
-        sram = __OSLockSramEx();
-        for (i = 0; i < 12; i++) {
-          sram->flashID[chan][i] = card->id[i];
-          checkSum += card->id[i];
-        }
-        sram->flashIDCheckSum[chan] = (u8)~checkSum;
-        __OSUnlockSramEx(TRUE);
-
-        return result;
-      } else {
-        card->mountStep = 1;
-
-        checkSum = 0;
-        sram = __OSLockSramEx();
-        for (i = 0; i < 12; i++) {
-          checkSum += sram->flashID[chan][i];
-        }
-        __OSUnlockSramEx(FALSE);
-        if (sram->flashIDCheckSum[chan] != (u8)~checkSum) {
-          result = CARD_RESULT_IOERROR;
-          break;
-        }
-      }
+  if (card->mountStep == 0)
+  {
+    if (EXIGetID(chan, 0, &id) == 0) {
+      result = CARD_RESULT_NOCARD;
+    } else if ((id == 0x80000004 && __CARDVendorID != 0xFFFF) ||
+                   (!(id & 0xFFFF0000) && !(id & 3)))
+    {
+      result = CARD_RESULT_READY;
+    } else {
+      result = CARD_RESULT_WRONGDEVICE;
     }
 
-    if (card->mountStep == 1) {
-      if (card->cid == 0x80000004) {
-        u16 vendorID;
+    if (result < 0)
+      goto error;
 
-        sram = __OSLockSramEx();
-        vendorID = *(u16*)sram->flashID[chan];
-        __OSUnlockSramEx(FALSE);
+    card->cid = id;
 
-        if (__CARDVendorID == 0xffff || vendorID != __CARDVendorID) {
-          result = CARD_RESULT_WRONGDEVICE;
-          break;
-        }
-      }
-
-      card->mountStep = 2;
-
-      result = __CARDEnableInterrupt(chan, TRUE);
-      if (result < 0) {
-        break;
-      }
-
-      EXISetExiCallback(chan, __CARDExiHandler);
-      EXIUnlock(chan);
-      DCInvalidateRange(card->workArea, CARD_WORKAREA_SIZE);
+    card->size = (u16)(id & 0xFC);
+    switch (card->size)
+    {
+    case 4:
+    case 8:
+    case 16:
+    case 32:
+    case 64:
+    case 128:
+      break;
+    default:
+      result = CARD_RESULT_WRONGDEVICE;
+      goto error;
+    }
+    card->sectorSize = SectorSizeTable[(id & 0x00003800) >> 11];
+    if (card->sectorSize == 0)
+    {
+      result = CARD_RESULT_WRONGDEVICE;
+      goto error;
+    }
+    card->cBlock = (u16)((card->size * 1024 * 1024 / 8) / card->sectorSize);
+    if (card->cBlock < 8)
+    {
+      result = CARD_RESULT_WRONGDEVICE;
+      goto error;
+    }
+    card->latency = LatencyTable[(id & 0x00000700) >> 8];
+    result = __CARDClearStatus(chan);
+    if (result < 0)
+      goto error;
+    result = __CARDReadStatus(chan, &status);
+    if (result < 0)
+      goto error;
+    if (!EXIProbe(chan))
+    {
+      result = CARD_RESULT_NOCARD;
+      goto error;
     }
 
-    step = card->mountStep - 2;
-    result = __CARDRead(chan, (u32)card->sectorSize * step, CARD_SYSTEM_BLOCK_SIZE,
-                        (u8*)card->workArea + (CARD_SYSTEM_BLOCK_SIZE * step), __CARDMountCallback);
-    if (result < 0) {
-      __CARDPutControlBlock(card, result);
-    }
-    return result;
-  } while (FALSE);
+    if (!(status & 0x40))
+    {
+      result = __CARDUnlock(chan, card->id);
+      if (result < 0)
+        goto error;
 
-mountError:
-  return MountError(chan, result);
+      checkSum = 0;
+      sram = __OSLockSramEx();
+      for (i = 0; i < 12; i++)
+      {
+        sram->flashID[chan][i] = card->id[i];
+        checkSum += card->id[i];
+      }
+      sram->flashIDCheckSum[chan] = (u8)~checkSum;
+      __OSUnlockSramEx(TRUE);
+
+      return result;
+    }
+    else
+    {
+      card->mountStep = 1;
+
+      checkSum = 0;
+      sram = __OSLockSramEx();
+      for (i = 0; i < 12; i++)
+        checkSum += sram->flashID[chan][i];
+
+      __OSUnlockSramEx(FALSE);
+      if (sram->flashIDCheckSum[chan] != (u8)~checkSum)
+      {
+        result = CARD_RESULT_IOERROR;
+        goto error;
+      }
+    }
+  }
+
+  if (card->mountStep == 1)
+  {
+    if (card->cid == 0x80000004) {
+      u16 vendorID;
+
+      sram = __OSLockSramEx();
+      vendorID = *(u16*) sram->flashID[chan];
+      __OSUnlockSramEx(0);
+
+      if (__CARDVendorID == 0xFFFF || vendorID != __CARDVendorID) {
+        result = CARD_RESULT_WRONGDEVICE;
+        goto error;
+      }
+    }
+    card->mountStep = 2;
+
+    result = __CARDEnableInterrupt(chan, TRUE);
+    if (result < 0)
+      goto error;
+
+    EXISetExiCallback(chan, __CARDExiHandler);
+    EXIUnlock(chan);
+    DCInvalidateRange(card->workArea, CARD_WORKAREA_SIZE);
+  }
+
+  step = card->mountStep - 2;
+  result = __CARDRead(chan, (u32)card->sectorSize * step, CARD_SYSTEM_BLOCK_SIZE,
+            (u8 *)card->workArea + (CARD_SYSTEM_BLOCK_SIZE * step), __CARDMountCallback);
+  if (result < 0)
+    __CARDPutControlBlock(card, result);
+  return result;
+
+error:
+  EXIUnlock(chan);
+  DoUnmount(chan, result);
+  return result;
 }
 
 void __CARDMountCallback(s32 chan, s32 result) {

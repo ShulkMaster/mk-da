@@ -57,7 +57,7 @@ static OSTime XferTime[SI_MAX_CHAN];
 static SITypeAndStatusCallback TypeCallback[SI_MAX_CHAN][4];
 static __OSInterruptHandler RDSTHandler[4];
 
-extern u32 __PADFixBits;
+u32 __PADFixBits;
 
 static BOOL __SITransfer(s32 chan, void *output, u32 outputBytes, void *input, u32 inputBytes,
                          SICallback callback);
@@ -728,3 +728,30 @@ u32 SIDecodeType(u32 type) {
 }
 
 u32 SIProbe(s32 chan) { return SIDecodeType(SIGetType(chan)); }
+
+char* SIGetTypeString(u32 type) {
+  switch (SIDecodeType(type)) {
+  case SI_ERROR_NO_RESPONSE:
+    return "No response";
+  case SI_N64_CONTROLLER:
+    return "N64 controller";
+  case SI_N64_MIC:
+    return "N64 microphone";
+  case SI_N64_KEYBOARD:
+    return "N64 keyboard";
+  case SI_N64_MOUSE:
+    return "N64 mouse";
+  case SI_GBA:
+    return "GameBoy Advance";
+  case SI_GC_CONTROLLER:
+    return "Standard controller";
+  case SI_GC_RECEIVER:
+    return "Wireless receiver";
+  case SI_GC_WAVEBIRD:
+    return "WaveBird controller";
+  case SI_GC_KEYBOARD:
+    return "Keyboard";
+  case SI_GC_STEERING:
+    return "Steering";
+  }
+}

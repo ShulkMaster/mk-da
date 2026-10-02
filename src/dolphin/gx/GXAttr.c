@@ -198,14 +198,16 @@ void GXSetVtxDesc(GXAttr attr, GXAttrType type) {
   __GXData->dirtyState |= 8;
 }
 
-void __GXSetVCD(void) {
+void __GXSetVCD(void)
+{
   static u8 tbl1[] = { 0, 4, 1, 2 };
   static u8 tbl2[] = { 0, 8, 1, 2 };
   static u8 tbl3[] = { 0, 12, 1, 2 };
-  /* Vertex byte count and normal multiplicity. */
-  unsigned long counts[2];
+  unsigned long vlm;
+  unsigned long b;
   unsigned long vl;
   unsigned long vh;
+  u32 unused[2];
 
   GX_WRITE_SOME_REG4(8, 0x50, __GXData->vcdLo, -12);
   GX_WRITE_SOME_REG4(8, 0x60, __GXData->vcdHi, -12);
@@ -213,29 +215,29 @@ void __GXSetVCD(void) {
   if (__GXData->vNum != 0) {
     vl = __GXData->vcdLo;
     vh = __GXData->vcdHi;
-    counts[0] = GET_REG_FIELD(vl, 1, 0);
-    counts[0] += (u8)GET_REG_FIELD(vl, 1, 1);
-    counts[0] += (u8)GET_REG_FIELD(vl, 1, 2);
-    counts[0] += (u8)GET_REG_FIELD(vl, 1, 3);
-    counts[0] += (u8)GET_REG_FIELD(vl, 1, 4);
-    counts[0] += (u8)GET_REG_FIELD(vl, 1, 5);
-    counts[0] += (u8)GET_REG_FIELD(vl, 1, 6);
-    counts[0] += (u8)GET_REG_FIELD(vl, 1, 7);
-    counts[0] += (u8)GET_REG_FIELD(vl, 1, 8);
-    counts[0] += tbl3[(u8)GET_REG_FIELD(vl, 2, 9)];
-    counts[1] = (__GXData->hasBiNrms << 1) + 1;
-    counts[0] += tbl3[(u8)GET_REG_FIELD(vl, 2, 11)] * counts[1];
-    counts[0] += tbl1[(u8)GET_REG_FIELD(vl, 2, 13)];
-    counts[0] += tbl1[(u8)GET_REG_FIELD(vl, 2, 15)];
-    counts[0] += tbl2[(u8)GET_REG_FIELD(vh, 2, 0)];
-    counts[0] += tbl2[(u8)GET_REG_FIELD(vh, 2, 2)];
-    counts[0] += tbl2[(u8)GET_REG_FIELD(vh, 2, 4)];
-    counts[0] += tbl2[(u8)GET_REG_FIELD(vh, 2, 6)];
-    counts[0] += tbl2[(u8)GET_REG_FIELD(vh, 2, 8)];
-    counts[0] += tbl2[(u8)GET_REG_FIELD(vh, 2, 10)];
-    counts[0] += tbl2[(u8)GET_REG_FIELD(vh, 2, 12)];
-    counts[0] += tbl2[(u8)GET_REG_FIELD(vh, 2, 14)];
-    __GXData->vLim = counts[0];
+    vlm = GET_REG_FIELD(vl, 1, 0);
+    vlm += (u8)GET_REG_FIELD(vl, 1, 1);
+    vlm += (u8)GET_REG_FIELD(vl, 1, 2);
+    vlm += (u8)GET_REG_FIELD(vl, 1, 3);
+    vlm += (u8)GET_REG_FIELD(vl, 1, 4);
+    vlm += (u8)GET_REG_FIELD(vl, 1, 5);
+    vlm += (u8)GET_REG_FIELD(vl, 1, 6);
+    vlm += (u8)GET_REG_FIELD(vl, 1, 7);
+    vlm += (u8)GET_REG_FIELD(vl, 1, 8);
+    vlm += tbl3[(u8)GET_REG_FIELD(vl, 2, 9)];
+    b = (__GXData->hasBiNrms << 1) + 1;
+    vlm += tbl3[(u8)GET_REG_FIELD(vl, 2, 11)] * b;
+    vlm += tbl1[(u8)GET_REG_FIELD(vl, 2, 13)];
+    vlm += tbl1[(u8)GET_REG_FIELD(vl, 2, 15)];
+    vlm += tbl2[(u8)GET_REG_FIELD(vh, 2, 0)];
+    vlm += tbl2[(u8)GET_REG_FIELD(vh, 2, 2)];
+    vlm += tbl2[(u8)GET_REG_FIELD(vh, 2, 4)];
+    vlm += tbl2[(u8)GET_REG_FIELD(vh, 2, 6)];
+    vlm += tbl2[(u8)GET_REG_FIELD(vh, 2, 8)];
+    vlm += tbl2[(u8)GET_REG_FIELD(vh, 2, 10)];
+    vlm += tbl2[(u8)GET_REG_FIELD(vh, 2, 12)];
+    vlm += tbl2[(u8)GET_REG_FIELD(vh, 2, 14)];
+    __GXData->vLim = vlm;
   }
 }
 

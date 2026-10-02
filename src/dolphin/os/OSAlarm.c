@@ -6,14 +6,15 @@
 
 #include <dolphin/os/OSAlarm.h>
 #include <dolphin/os/OSException.h>
+#include <dolphin/asm_sequences.inc>
 
 typedef struct OSAlarmQueue {
   OSAlarm *head;
   OSAlarm *tail;
 } OSAlarmQueue;
 
-extern OSAlarmQueue AlarmQueue_8041CD60;
-void DecrementerExceptionHandler_801A8550(__OSException exception, OSContext *context);
+static OSAlarmQueue AlarmQueue;
+static void DecrementerExceptionHandler(__OSException exception, OSContext *context);
 void PPCMtdec(u32 value);
 OSTime __OSTimeToSystemTime(OSTime time);
 void OSLoadContext(OSContext *context);
@@ -33,9 +34,9 @@ static inline void SetTimer(OSAlarm *alarm) {
 }
 
 void OSInitAlarm(void) {
-  if (__OSGetExceptionHandler(8) != DecrementerExceptionHandler_801A8550) {
-    AlarmQueue_8041CD60.head = AlarmQueue_8041CD60.tail = NULL;
-    __OSSetExceptionHandler(8, DecrementerExceptionHandler_801A8550);
+  if (__OSGetExceptionHandler(8) != DecrementerExceptionHandler) {
+    AlarmQueue.head = AlarmQueue.tail = NULL;
+    __OSSetExceptionHandler(8, DecrementerExceptionHandler);
   }
 }
 
@@ -57,7 +58,7 @@ static void InsertAlarm(OSAlarm *alarm, OSTime fire, OSAlarmHandler handler) {
   alarm->handler = handler;
   alarm->fire = fire;
 
-  for (next = AlarmQueue_8041CD60.head; next; next = next->next) {
+  for (next = AlarmQueue.head; next; next = next->next) {
     if (next->fire <= fire) {
       continue;
     }
@@ -69,19 +70,19 @@ static void InsertAlarm(OSAlarm *alarm, OSTime fire, OSAlarmHandler handler) {
     if (prev) {
       prev->next = alarm;
     } else {
-      AlarmQueue_8041CD60.head = alarm;
+      AlarmQueue.head = alarm;
       SetTimer(alarm);
     }
     return;
   }
   alarm->next = 0;
-  prev = AlarmQueue_8041CD60.tail;
-  AlarmQueue_8041CD60.tail = alarm;
+  prev = AlarmQueue.tail;
+  AlarmQueue.tail = alarm;
   alarm->prev = prev;
   if (prev) {
     prev->next = alarm;
   } else {
-    AlarmQueue_8041CD60.head = AlarmQueue_8041CD60.tail = alarm;
+    AlarmQueue.head = AlarmQueue.tail = alarm;
     SetTimer(alarm);
   }
 }
@@ -116,14 +117,14 @@ void OSCancelAlarm(OSAlarm *alarm) {
 
   next = alarm->next;
   if (next == 0) {
-    AlarmQueue_8041CD60.tail = alarm->prev;
+    AlarmQueue.tail = alarm->prev;
   } else {
     next->prev = alarm->prev;
   }
   if (alarm->prev) {
     alarm->prev->next = next;
   } else {
-    AlarmQueue_8041CD60.head = next;
+    AlarmQueue.head = next;
     if (next) {
       SetTimer(next);
     }
@@ -133,14 +134,14 @@ void OSCancelAlarm(OSAlarm *alarm) {
   OSRestoreInterrupts(enabled);
 }
 
-void DecrementerExceptionCallback_801A8320(__OSException exception, OSContext *context) {
+static void DecrementerExceptionCallback(__OSException exception, OSContext *context) {
   OSAlarm *alarm;
   OSAlarm *next;
   OSAlarmHandler handler;
   OSTime time;
   OSContext exceptionContext;
   time = __OSGetSystemTime();
-  alarm = AlarmQueue_8041CD60.head;
+  alarm = AlarmQueue.head;
   if (alarm == 0) {
     OSLoadContext(context);
   }
@@ -151,9 +152,9 @@ void DecrementerExceptionCallback_801A8320(__OSException exception, OSContext *c
   }
 
   next = alarm->next;
-  AlarmQueue_8041CD60.head = next;
+  AlarmQueue.head = next;
   if (next == 0) {
-    AlarmQueue_8041CD60.tail = 0;
+    AlarmQueue.tail = 0;
   } else {
     next->prev = 0;
   }
@@ -164,8 +165,8 @@ void DecrementerExceptionCallback_801A8320(__OSException exception, OSContext *c
     InsertAlarm(alarm, 0, handler);
   }
 
-  if (AlarmQueue_8041CD60.head) {
-    SetTimer(AlarmQueue_8041CD60.head);
+  if (AlarmQueue.head) {
+    SetTimer(AlarmQueue.head);
   }
 
   OSDisableScheduler();
@@ -177,4 +178,9 @@ void DecrementerExceptionCallback_801A8320(__OSException exception, OSContext *c
   OSEnableScheduler();
   __OSReschedule();
   OSLoadContext(context);
+}
+
+static asm void DecrementerExceptionHandler(register __OSException exception,
+                                            register OSContext* context) {
+  SEQ_DecrementerExceptionHandler();
 }

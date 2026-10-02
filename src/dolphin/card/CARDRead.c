@@ -72,41 +72,40 @@ static void ReadCallback(s32 chan, s32 result) {
   s32 length;
 
   card = &__CARDBlock[chan];
-  do {
-    if (result < 0) {
-      break;
-    }
+  if (result < 0) {
+    goto error;
+  }
 
-    fileInfo = card->fileInfo;
-    if (fileInfo->length < 0) {
-      result = CARD_RESULT_CANCELED;
-      break;
-    }
+  fileInfo = card->fileInfo;
+  if (fileInfo->length < 0) {
+    result = CARD_RESULT_CANCELED;
+    goto error;
+  }
 
-    length = (s32)TRUNC(fileInfo->offset + card->sectorSize, card->sectorSize) - fileInfo->offset;
-    fileInfo->length -= length;
-    if (fileInfo->length <= 0) {
-      break;
-    }
+  length = (s32)TRUNC(fileInfo->offset + card->sectorSize, card->sectorSize) - fileInfo->offset;
+  fileInfo->length -= length;
+  if (fileInfo->length <= 0) {
+    goto error;
+  }
 
-    fat = __CARDGetFatBlock(card);
-    fileInfo->offset += length;
-    fileInfo->iBlock = fat[fileInfo->iBlock];
-    if (!CARDIsValidBlockNo(card, fileInfo->iBlock)) {
-      result = CARD_RESULT_BROKEN;
-      break;
-    }
+  fat = __CARDGetFatBlock(card);
+  fileInfo->offset += length;
+  fileInfo->iBlock = fat[fileInfo->iBlock];
+  if (!CARDIsValidBlockNo(card, fileInfo->iBlock)) {
+    result = CARD_RESULT_BROKEN;
+    goto error;
+  }
 
-    result = __CARDRead(chan, card->sectorSize * (u32)fileInfo->iBlock,
-                        (fileInfo->length < card->sectorSize) ? fileInfo->length : card->sectorSize,
-                        card->buffer, ReadCallback);
-    if (result < 0) {
-      break;
-    }
+  result = __CARDRead(chan, card->sectorSize * (u32)fileInfo->iBlock,
+                      (fileInfo->length < card->sectorSize) ? fileInfo->length : card->sectorSize,
+                      card->buffer, ReadCallback);
+  if (result < 0) {
+    goto error;
+  }
 
-    return;
-  } while (0);
+  return;
 
+error:
   callback = card->apiCallback;
   card->apiCallback = 0;
   __CARDPutControlBlock(card, result);

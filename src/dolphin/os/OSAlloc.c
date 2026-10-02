@@ -23,11 +23,11 @@ typedef struct HeapDesc {
   Cell *allocated;
 } HeapDesc;
 
-extern volatile OSHeapHandle __OSCurrHeap;
-extern HeapDesc *HeapArray_8041CD68;
-extern int NumHeaps_8041CD6C;
-extern void *ArenaStart_8041CD70;
-extern void *ArenaEnd_8041CD74;
+volatile OSHeapHandle __OSCurrHeap = -1;
+static HeapDesc *HeapArray;
+static int NumHeaps;
+static void *ArenaStart;
+static void *ArenaEnd;
 
 static inline Cell *DLAddFront(Cell *list, Cell *cell) {
   cell->next = list;
@@ -92,7 +92,7 @@ void *OSAllocFromHeap(OSHeapHandle heap, u32 size) {
   Cell *newCell;
   s32 leftoverSize;
 
-  hd = &HeapArray_8041CD68[heap];
+  hd = &HeapArray[heap];
   size += HEADERSIZE;
   size = (size + ALIGNMENT - 1) & ~(ALIGNMENT - 1);
 
@@ -134,7 +134,7 @@ void OSFreeToHeap(OSHeapHandle heap, void *ptr) {
   Cell *cell;
 
   cell = (void *)((unsigned long)ptr - HEADERSIZE);
-  hd = &HeapArray_8041CD68[heap];
+  hd = &HeapArray[heap];
   hd->allocated = DLExtract(hd->allocated, cell);
   hd->free = DLInsert(hd->free, cell);
 }
@@ -153,19 +153,19 @@ void *OSInitAlloc(void *arenaStart, void *arenaEnd, int maxHeaps) {
   HeapDesc *hd;
 
   arraySize = maxHeaps * sizeof(HeapDesc);
-  HeapArray_8041CD68 = arenaStart;
-  NumHeaps_8041CD6C = maxHeaps;
+  HeapArray = arenaStart;
+  NumHeaps = maxHeaps;
 
-  for (i = 0; i < NumHeaps_8041CD6C; i++) {
-    hd = &HeapArray_8041CD68[i];
+  for (i = 0; i < NumHeaps; i++) {
+    hd = &HeapArray[i];
     hd->size = -1;
     hd->free = hd->allocated = 0;
   }
   __OSCurrHeap = -1;
-  arenaStart = (void *)((unsigned long)((char *)HeapArray_8041CD68 + arraySize));
+  arenaStart = (void *)((unsigned long)((char *)HeapArray + arraySize));
   arenaStart = (void *)(((unsigned long)arenaStart + ALIGNMENT - 1) & ~(ALIGNMENT - 1));
-  ArenaStart_8041CD70 = arenaStart;
-  ArenaEnd_8041CD74 = (void *)((unsigned long)arenaEnd & ~(ALIGNMENT - 1));
+  ArenaStart = arenaStart;
+  ArenaEnd = (void *)((unsigned long)arenaEnd & ~(ALIGNMENT - 1));
   return arenaStart;
 }
 
@@ -177,8 +177,8 @@ OSHeapHandle OSCreateHeap(void *start, void *end) {
   start = (void *)(((unsigned long)start + ALIGNMENT - 1) & ~(ALIGNMENT - 1));
   end = (void *)((unsigned long)end & ~(ALIGNMENT - 1));
 
-  for (heap = 0; heap < NumHeaps_8041CD6C; heap++) {
-    hd = &HeapArray_8041CD68[heap];
+  for (heap = 0; heap < NumHeaps; heap++) {
+    hd = &HeapArray[heap];
     if (hd->size < 0) {
       hd->size = (unsigned long)end - (unsigned long)start;
       cell = start;
@@ -191,4 +191,75 @@ OSHeapHandle OSCreateHeap(void *start, void *end) {
     }
   }
   return -1;
+}
+
+#define InRange(cell, arenaStart, arenaEnd) \
+  ((u32)(arenaStart) <= (u32)(cell) && (u32)(cell) < (u32)(arenaEnd))
+#define OFFSET(n, a) ((u32)(n) & ((a) - 1))
+#define ASSERTREPORT(line, cond) \
+  if (!(cond)) { \
+    OSReport("OSCheckHeap: Failed " #cond " in %d", line); \
+    return -1; \
+  }
+
+long OSCheckHeap(OSHeapHandle heap) {
+  HeapDesc* hd;
+  Cell* cell;
+  long total = 0;
+  long free = 0;
+
+  ASSERTREPORT(0x37D, HeapArray);
+  ASSERTREPORT(0x37E, 0 <= heap && heap < NumHeaps);
+  hd = &HeapArray[heap];
+  ASSERTREPORT(0x381, 0 <= hd->size);
+  ASSERTREPORT(0x383, hd->allocated == NULL || hd->allocated->prev == NULL);
+
+  for (cell = hd->allocated; cell; cell = cell->next) {
+    ASSERTREPORT(0x386, InRange(cell, ArenaStart, ArenaEnd));
+    ASSERTREPORT(0x387, OFFSET(cell, ALIGNMENT) == 0);
+    ASSERTREPORT(0x388, cell->next == NULL || cell->next->prev == cell);
+    ASSERTREPORT(0x389, MINOBJSIZE <= cell->size);
+    ASSERTREPORT(0x38A, OFFSET(cell->size, ALIGNMENT) == 0);
+    total += cell->size;
+    ASSERTREPORT(0x38D, 0 < total && total <= hd->size);
+  }
+
+  ASSERTREPORT(0x395, hd->free == NULL || hd->free->prev == NULL);
+  for (cell = hd->free; cell; cell = cell->next) {
+    ASSERTREPORT(0x398, InRange(cell, ArenaStart, ArenaEnd));
+    ASSERTREPORT(0x399, OFFSET(cell, ALIGNMENT) == 0);
+    ASSERTREPORT(0x39A, cell->next == NULL || cell->next->prev == cell);
+    ASSERTREPORT(0x39B, MINOBJSIZE <= cell->size);
+    ASSERTREPORT(0x39C, OFFSET(cell->size, ALIGNMENT) == 0);
+    ASSERTREPORT(0x39D, cell->next == NULL || (char*) cell + cell->size < (char*) cell->next);
+    total += cell->size;
+    free = cell->size + free;
+    free -= HEADERSIZE;
+    ASSERTREPORT(0x3A1, 0 < total && total <= hd->size);
+  }
+  ASSERTREPORT(0x3A8, total == hd->size);
+  return free;
+}
+
+void OSDumpHeap(OSHeapHandle heap) {
+  HeapDesc *hd;
+  Cell *cell;
+
+  OSReport("\nOSDumpHeap(%d):\n", heap);
+  hd = &HeapArray[heap];
+  if (hd->size < 0) {
+    OSReport("--------Inactive\n");
+    return;
+  }
+  OSReport("addr\tsize\t\tend\tprev\tnext\n");
+  OSReport("--------Allocated\n");
+  for (cell = hd->allocated; cell; cell = cell->next) {
+    OSReport("%x\t%d\t%x\t%x\t%x\n", cell, cell->size, (char *)cell + cell->size, cell->prev,
+             cell->next);
+  }
+  OSReport("--------Free\n");
+  for (cell = hd->free; cell; cell = cell->next) {
+    OSReport("%x\t%d\t%x\t%x\t%x\n", cell, cell->size, (char *)cell + cell->size, cell->prev,
+             cell->next);
+  }
 }
