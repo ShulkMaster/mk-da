@@ -19,13 +19,122 @@ Runtime.PPCEABI.H/__init_cpp_exceptions.cpp:
 	.dtors      start:0x8022E660 end:0x8022E668
 	.sdata      start:0x8041B688 end:0x8041B690
 
+dolphin/ai.c:
+	.text       start:0x801910A4 end:0x8019110C
+
+dolphin/ar/ar.c:
+	.text       start:0x801915B8 end:0x801916EC
+
+dolphin/ar/arq.c:
+	.text       start:0x80192144 end:0x80192314
+
+dolphin/card/CARDOpen.c:
+	.text       start:0x80197934 end:0x8019793C
+
+dolphin/db_init.c:
+	.text       start:0x80198F38 end:0x80198FA8
+	.data       start:0x8029A240 end:0x8029A258
+
+dolphin/db.c:
+	.text       start:0x80198FB8 end:0x80199024
+	.sbss       start:0x8041CBF8 end:0x8041CC00
+
+dolphin/dsp/dsp.c:
+	.text       start:0x80199024 end:0x80199070
+
+dolphin/dsp/dsp_debug.c:
+	.text       start:0x80199230 end:0x80199280
+
+dolphin/dsp/dsp_task.c:
+	.text       start:0x80199280 end:0x80199B04
+	.data       start:0x8029A290 end:0x8029A3A0
+	.sbss       start:0x8041CC08 end:0x8041CC20
+
+dolphin/dvd/dvdlow.c:
+	.text       start:0x8019A914 end:0x8019A958
+
+dolphin/dvd/dvdfs.c:
+	.text       start:0x8019AD4C end:0x8019AD70
+
+dolphin/dvd/dvd.c:
+	.text       start:0x8019CDA4 end:0x8019CE34
+
+dolphin/dvd/dvdqueue.c:
+	.text       start:0x8019D438 end:0x8019D630
+	.bss        start:0x803EADF8 end:0x803EAE18
+
+dolphin/dvd/dvderror.c:
+	.text       start:0x8019D630 end:0x8019D7C8
+	.data       start:0x8029A620 end:0x8029A668
+
+dolphin/gx/GXAttr.c:
+	.text       start:0x801A1B3C end:0x801A1B4C
+
+dolphin/gx/GXMisc.c:
+	.text       start:0x801A211C end:0x801A2160
+
+dolphin/gx/GXGeometry.c:
+	.text       start:0x801A2594 end:0x801A27E4
+
+dolphin/gx/GXLight.c:
+	.text       start:0x801A3398 end:0x801A33C4
+
+dolphin/gx/GXTexture.c:
+	.text       start:0x801A41C8 end:0x801A41D0
+
+dolphin/gx/GXBump.c:
+	.text       start:0x801A4B10 end:0x801A4DF4
+
+dolphin/gx/GXTev.c:
+	.text       start:0x801A5088 end:0x801A591C
+	.data       start:0x8029AAF0 end:0x8029AB14
+
+dolphin/gx/GXPixel.c:
+	.text       start:0x801A5ACC end:0x801A6064
+	.data       start:0x8029AB18 end:0x8029AB38
+
+dolphin/gx/GXPerf.c:
+	.text       start:0x801A7228 end:0x801A7238
+
+dolphin/os/OS.c:
+	.text       start:0x801A7D28 end:0x801A7D3C
+
 dolphin/os/OSArena.c:
 	.text       start:0x801A8C0C end:0x801A8C2C
 	.sdata      start:0x8041B738 end:0x8041B740
 	.sbss       start:0x8041CD78 end:0x8041CD80
 
+dolphin/os/OSAudioSystem.c:
+	.text       start:0x801A8DE8 end:0x801A8EC0
+
+dolphin/os/OSContext.c:
+	.text       start:0x801A9780 end:0x801A97A4
+
+dolphin/os/OSError.c:
+	.text       start:0x801A9BD4 end:0x801A9C54
+
+dolphin/os/OSInterrupt.c:
+	.text       start:0x801AACCC end:0x801AACFC
+
+dolphin/os/OSLink.c:
+	.text       start:0x801AB4E8 end:0x801AB500
+
+dolphin/os/OSMemory.c:
+	.text       start:0x801AB500 end:0x801AB5A8
+
 dolphin/os/OSMutex.c:
 	.text       start:0x801AB7E0 end:0x801ABA2C
 
+dolphin/os/OSReset.c:
+	.text       start:0x801ABC44 end:0x801ABCC8
+
+dolphin/os/OSThread.c:
+	.text       start:0x801ACEE8 end:0x801ACF04
+
 dolphin/os/OSTime.c:
 	.text       start:0x801ADFC0 end:0x801AE09C
+
+dolphin/si/SISamplingRate.c:
+	.text       start:0x801B1344 end:0x801B144C
+	.data       start:0x8029C558 end:0x8029C5EC
+	.sbss       start:0x8041CE28 end:0x8041CE2C

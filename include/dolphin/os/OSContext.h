@@ -160,6 +160,7 @@ typedef struct OSContext {
 
 u32 OSSaveContext(OSContext* context);
 void OSClearContext(OSContext* context);
+void OSDumpContext(OSContext* context);
 OSContext* OSGetCurrentContext();
 void OSSetCurrentContext(OSContext* context);
 u32 OSGetStackPointer();
