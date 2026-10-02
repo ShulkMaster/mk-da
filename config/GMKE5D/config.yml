@@ -10,8 +10,9 @@ mw_comment_version: 10
 # Keep generated disassembly in ignored build artifacts only.
 write_asm: true
 # Style tables hold plain values that look like pointers; retail .rela.data has no
-# relocation at these words (0x80400000 and 0x80410000).
+# relocation at these words (0x80420000, 0x80400000 and 0x80410000).
 block_relocations:
+  - source: .data:0x802803C4
   - source: .data:0x80280510
   - source: .data:0x8028065C
 # TRK exception vector table (__exception.s): symbolic references in retail code.
