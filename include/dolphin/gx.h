@@ -617,13 +617,48 @@ typedef enum _GXCopyMode {
   GX_COPY_INTLC_ODD = 3,
 } GXCopyMode;
 
+#define VI_TVMODE(format, interlace)  (((format) << 2) + (interlace))
+
+#define VI_INTERLACE     0
+#define VI_NON_INTERLACE 1
+#define VI_PROGRESSIVE   2
+
+#define VI_NTSC      0
+#define VI_PAL       1
+#define VI_MPAL      2
+#define VI_DEBUG     3
+#define VI_DEBUG_PAL 4
+#define VI_EURGB60   5
+
+typedef enum
+{
+    VI_TVMODE_NTSC_INT      = VI_TVMODE(VI_NTSC,        VI_INTERLACE),
+    VI_TVMODE_NTSC_DS       = VI_TVMODE(VI_NTSC,        VI_NON_INTERLACE),
+    VI_TVMODE_NTSC_PROG     = VI_TVMODE(VI_NTSC,        VI_PROGRESSIVE),
+    VI_TVMODE_PAL_INT       = VI_TVMODE(VI_PAL,         VI_INTERLACE),
+    VI_TVMODE_PAL_DS        = VI_TVMODE(VI_PAL,         VI_NON_INTERLACE),
+    VI_TVMODE_EURGB60_INT   = VI_TVMODE(VI_EURGB60,     VI_INTERLACE),
+    VI_TVMODE_EURGB60_DS    = VI_TVMODE(VI_EURGB60,     VI_NON_INTERLACE),
+    VI_TVMODE_MPAL_INT      = VI_TVMODE(VI_MPAL,        VI_INTERLACE),
+    VI_TVMODE_MPAL_DS       = VI_TVMODE(VI_MPAL,        VI_NON_INTERLACE),
+    VI_TVMODE_DEBUG_INT     = VI_TVMODE(VI_DEBUG,       VI_INTERLACE),
+    VI_TVMODE_DEBUG_PAL_INT = VI_TVMODE(VI_DEBUG_PAL,   VI_INTERLACE),
+    VI_TVMODE_DEBUG_PAL_DS  = VI_TVMODE(VI_DEBUG_PAL,   VI_NON_INTERLACE)
+} VITVMode;
+
+
+
+typedef void (*VIRetraceCallback)(u32 retraceCount);
+
+
+
 typedef enum _VIXFBMode {
   VI_XFBMODE_SF = 0,
   VI_XFBMODE_DF = 1,
 } VIXFBMode;
 
 typedef struct _GXRenderModeObj {
-  u32 viTVmode;
+  VITVMode viTVmode;
   u16 fbWidth;
   u16 efbHeight;
   u16 xfbHeight;
@@ -1051,6 +1086,55 @@ void __GXUpdateBPMask(void);
 
 void __GXFlushTextureState(void);
 
+typedef void (*GXDrawSyncCallback)(u16 token);
+
+typedef enum _GXTevMode {
+  GX_MODULATE,
+  GX_DECAL,
+  GX_BLEND,
+  GX_REPLACE,
+  GX_PASSCLR,
+} GXTevMode;
+
+typedef enum _GXFogType {
+  GX_FOG_NONE = 0,
+  GX_FOG_PERSP_LIN = 2,
+  GX_FOG_PERSP_EXP = 4,
+  GX_FOG_PERSP_EXP2 = 5,
+  GX_FOG_PERSP_REVEXP = 6,
+  GX_FOG_PERSP_REVEXP2 = 7,
+  GX_FOG_ORTHO_LIN = 10,
+  GX_FOG_ORTHO_EXP = 12,
+  GX_FOG_ORTHO_EXP2 = 13,
+  GX_FOG_ORTHO_REVEXP = 14,
+  GX_FOG_ORTHO_REVEXP2 = 15,
+  GX_FOG_LIN = GX_FOG_PERSP_LIN,
+  GX_FOG_EXP = GX_FOG_PERSP_EXP,
+  GX_FOG_EXP2 = GX_FOG_PERSP_EXP2,
+  GX_FOG_REVEXP = GX_FOG_PERSP_REVEXP,
+  GX_FOG_REVEXP2 = GX_FOG_PERSP_REVEXP2,
+} GXFogType;
+
+void GXSetTevOp(GXTevStageID id, GXTevMode mode);
+
+void GXSetFog(GXFogType type, f32 startz, f32 endz, f32 nearz, f32 farz, GXColor color);
+
+void GXFlush(void);
+
+void GXResetWriteGatherPipe(void);
+
+void GXAbortFrame(void);
+
+void GXSetDrawSync(u16 token);
+
+void GXDrawDone(void);
+
+void GXPixModeSync(void);
+
+GXDrawSyncCallback GXSetDrawSyncCallback(GXDrawSyncCallback callback);
+
+void __GXPEInit(void);
+
 void GXPokeAlphaMode(GXCompare func, u8 threshold);
 void GXPokeAlphaRead(GXAlphaReadMode mode);
 void GXPokeAlphaUpdate(GXBool update_enable);
@@ -1059,6 +1143,43 @@ void GXInitLightAttnA(GXLightObj* lt_obj, f32 a0, f32 a1, f32 a2);
 void GXInvalidateVtxCache(void);
 GXTexFmt GXGetTexObjFmt(const GXTexObj* to);
 void GXClearGPMetric(void);
+
+#define GX_FALSE 0
+#define GX_TRUE 1
+
+typedef struct GXFifoObj {
+  u8 pad[128];
+} GXFifoObj;
+
+typedef void (*GXBreakPtCallback)(void);
+
+void GXInitFifoBase(GXFifoObj *fifo, void *base, u32 size);
+
+void GXInitFifoPtrs(GXFifoObj *fifo, void *readPtr, void *writePtr);
+
+void GXInitFifoLimits(GXFifoObj *fifo, u32 hiWatermark, u32 loWatermark);
+
+void GXSetCPUFifo(GXFifoObj *fifo);
+
+void GXSetGPFifo(GXFifoObj *fifo);
+
+void GXSaveCPUFifo(GXFifoObj *fifo);
+
+void GXGetFifoPtrs(GXFifoObj *fifo, void **readPtr, void **writePtr);
+
+GXBreakPtCallback GXSetBreakPtCallback(GXBreakPtCallback cb);
+
+void GXEnableBreakPt(void *break_pt);
+
+void GXDisableBreakPt(void);
+
+void __GXFifoInit(void);
+
+void __GXCleanGPFifo(void);
+
+GXFifoObj *GXGetCPUFifo(void);
+
+GXFifoObj *GXGetGPFifo(void);
 
 #ifdef __cplusplus
 }
