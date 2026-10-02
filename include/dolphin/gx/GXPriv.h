@@ -112,4 +112,35 @@ void __GXSendFlushPrim(void);
 void __GXSetGenMode(void);
 void __GXFlushTextureState(void);
 
+#define GET_REG_FIELD(reg, size, shift) ((int)((reg) >> (shift)) & ((1 << (size)) - 1))
+#define GX_WRITE_XF_REG(addr, value) \
+  do { \
+    GX_WRITE_U8(0x10); \
+    GX_WRITE_U32(0x1000 + (addr)); \
+    GX_WRITE_U32(value); \
+  } while (0)
+#define GX_WRITE_SOME_REG4(command, address, value, index) \
+  do { \
+    GX_WRITE_U8(command); \
+    GX_WRITE_U8(address); \
+    GX_WRITE_U32(value); \
+  } while (0)
+
+void __GetImageTileCount(GXTexFmt fmt, u16 wd, u16 ht, u32* rowTiles, u32* colTiles, u32* cmpTiles);
+
+#define GX_WRITE_SOME_REG2(command, address, value, index) \
+  GX_WRITE_SOME_REG4(command, address, value, index)
+#define GX_WRITE_SOME_REG3(command, address, value, index) \
+  GX_WRITE_SOME_REG4(command, address, value, index)
+#define GX_WRITE_F32(v) (__GXWGFifo.f32 = (f32)(v))
+
+void __GXSetMatrixIndex(GXAttr matIdxAttr);
+
+void __GXSetDirtyState(void);
+void __GXSetSUTexRegs(void);
+void __GXUpdateBPMask(void);
+void __GXSetVCD(void);
+void __GXSetVAT(void);
+void __GXSetRange(f32 nearz, f32 sidex);
+
 #endif

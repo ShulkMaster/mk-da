@@ -1,9 +1,27 @@
 {
   "version": "GMKE5D",
   "assembly": "dolphin/os/OSTime.s",
-  "output": "dolphin/os/asm_sequences.inc",
+  "output": "dolphin/asm_sequences.inc",
   "functions": [
     { "name": "OSGetTime", "address": "0x801ADFC0", "size": "0x18" },
-    { "name": "OSGetTick", "address": "0x801ADFD8", "size": "0x8" }
+    { "name": "OSGetTick", "address": "0x801ADFD8", "size": "0x8" },
+    {
+      "name": "WriteMTXPS4x3",
+      "address": "0x801A649C",
+      "size": "0x34",
+      "assembly": "dolphin/gx/GXTransform.s"
+    },
+    {
+      "name": "WriteMTXPS3x3from3x4",
+      "address": "0x801A64D0",
+      "size": "0x34",
+      "assembly": "dolphin/gx/GXTransform.s"
+    },
+    {
+      "name": "WriteMTXPS4x2",
+      "address": "0x801A6504",
+      "size": "0x24",
+      "assembly": "dolphin/gx/GXTransform.s"
+    }
   ]
 }

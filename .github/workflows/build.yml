@@ -9,6 +9,7 @@ on:
 permissions:
   contents: read
   packages: read
+  pull-requests: write
 
 jobs:
   build:
@@ -27,6 +28,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/head', github.event.pull_request.number) || github.sha }}
           fetch-depth: 0
 
       - name: Git config
@@ -46,34 +48,73 @@ jobs:
             --wrapper /tools/wibo --sjiswrap /tools/sjiswrap.exe
           ninja all_source progress build/${{ matrix.version }}/report.json
 
-      - name: Checkout PR base
+      - name: Build PR branch baseline
         if: github.event_name == 'pull_request'
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          path: .baseline
-          persist-credentials: false
-
-      - name: Build PR base report
-        if: github.event_name == 'pull_request'
-        working-directory: .baseline
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
-          cp -a /orig .
+          # Compare with the main commit the PR branch was based on. Using the
+          # event's base SHA would move the baseline whenever main advances and
+          # can report unrelated changes as regressions.
+          base_sha="$(git merge-base HEAD "origin/${BASE_REF}")"
+          echo "Comparing PR progress against ${base_sha} (${BASE_REF} merge base)"
+          baseline_dir="${RUNNER_TEMP}/mkda-base-${{ matrix.version }}"
+          git worktree add --detach "${baseline_dir}" "${base_sha}"
+          cp -a /orig "${baseline_dir}/"
+          cd "${baseline_dir}"
           python3 configure.py --version ${{ matrix.version }} \
             --binutils /binutils --compilers /compilers \
             --dtk /tools/dtk --objdiff /tools/objdiff-cli \
             --wrapper /tools/wibo --sjiswrap /tools/sjiswrap.exe
           ninja all_source build/${{ matrix.version }}/report.json
+          cp build/${{ matrix.version }}/report.json \
+            "${GITHUB_WORKSPACE}/build/${{ matrix.version }}/baseline.json"
 
-      - name: PR progress table
+      - name: Compare PR against branch baseline
         if: github.event_name == 'pull_request'
         run: |
           /tools/objdiff-cli report changes --format json-pretty \
-            .baseline/build/${{ matrix.version }}/report.json \
+            build/${{ matrix.version }}/baseline.json \
             build/${{ matrix.version }}/report.json \
             -o build/${{ matrix.version }}/report_changes.json
           python3 tools/github_report.py \
-            build/${{ matrix.version }}/report_changes.json >> "$GITHUB_STEP_SUMMARY"
+            build/${{ matrix.version }}/report_changes.json \
+            --title "Objdiff report · ${{ matrix.version }}" \
+            --output build/${{ matrix.version }}/github_report.md \
+            --comments-dir build/${{ matrix.version }}/github_comments
+          # Step summaries are limited to 1 MiB; the artifact always has the
+          # full report.
+          if [ "$(wc -c < build/${{ matrix.version }}/github_report.md)" -lt 1000000 ]; then
+            cat build/${{ matrix.version }}/github_report.md >> "${GITHUB_STEP_SUMMARY}"
+          else
+            cat build/${{ matrix.version }}/github_comments/comment-1.md >> "${GITHUB_STEP_SUMMARY}"
+            echo "Full report is in the ${{ matrix.version }}_github_report artifact." >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+      - name: Upload PR diff report
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.version }}_github_report
+          path: |
+            build/${{ matrix.version }}/github_report.md
+            build/${{ matrix.version }}/github_comments/
+
+      - name: Publish objdiff report to PR
+        # Tokens for pull requests from forks are read-only. Those reports are
+        # published by the Comment fork report workflow.
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const post = require('./.github/scripts/post_report.js');
+            await post({
+              github,
+              context,
+              issueNumber: context.issue.number,
+              version: '${{ matrix.version }}',
+              dir: 'build/${{ matrix.version }}/github_comments',
+            });
 
       - name: Upload maps
         uses: actions/upload-artifact@v4
@@ -86,7 +127,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.version }}_report
-          path: |
-            build/${{ matrix.version }}/report.json
-            build/${{ matrix.version }}/report_changes.json
+          path: build/${{ matrix.version }}/report.json
           if-no-files-found: error

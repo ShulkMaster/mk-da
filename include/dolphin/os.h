@@ -137,6 +137,7 @@ u32 OSGetEuRgb60Mode(void);
 void OSSetEuRgb60Mode(u32 on);
 
 void OSRegisterVersion(const char* id);
+OSTime __OSGetSystemTime(void);
 
 BOOL OSDisableInterrupts(void);
 BOOL OSEnableInterrupts(void);

@@ -13,6 +13,7 @@ typedef void (*__OSInterruptHandler)(__OSInterrupt interrupt, OSContext* context
 __OSInterruptHandler __OSSetInterruptHandler(__OSInterrupt interrupt, __OSInterruptHandler handler);
 __OSInterruptHandler __OSGetInterruptHandler(__OSInterrupt interrupt);
 OSInterruptMask __OSMaskInterrupts(OSInterruptMask mask);
+OSInterruptMask __OSUnmaskInterrupts(OSInterruptMask mask);
 
 #ifdef __cplusplus
 }

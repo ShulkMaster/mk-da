@@ -7,6 +7,40 @@
 #include <dolphin/gx.h>
 #include <dolphin/gx/GXPriv.h>
 
+
+void __GXSetDirtyState(void)
+{
+    if (__GXData->dirtyState & 1) {
+        __GXSetSUTexRegs();
+    }
+    if (__GXData->dirtyState & 2) {
+        __GXUpdateBPMask();
+    }
+    if (__GXData->dirtyState & 4) {
+        __GXSetGenMode();
+    }
+    if (__GXData->dirtyState & 8) {
+        __GXSetVCD();
+    }
+    if (__GXData->dirtyState & 0x10) {
+        __GXSetVAT();
+    }
+    __GXData->dirtyState = 0;
+}
+
+void GXBegin(GXPrimitive type, GXVtxFmt vtxfmt, u16 nverts) {
+
+  if (__GXData->dirtyState != 0) {
+    __GXSetDirtyState();
+  }
+
+  if (*(u32 *)&__GXData->vNumNot == 0) { // checks both vNum and bpSentNot
+    __GXSendFlushPrim();
+  }
+  GX_WRITE_U8(vtxfmt | type);
+  GX_WRITE_U16(nverts);
+}
+
 void __GXSendFlushPrim(void) {
   u32 i;
   u32 numD = __GXData->vNum * __GXData->vLim;
@@ -20,6 +54,7 @@ void __GXSendFlushPrim(void) {
 }
 
 void GXSetLineWidth(u8 width, GXTexOffset texOffsets) {
+
   SET_REG_FIELD(__GXData->lpSize, 8, 0, width);
   SET_REG_FIELD(__GXData->lpSize, 3, 16, texOffsets);
   GX_WRITE_RAS_REG(__GXData->lpSize);
@@ -27,6 +62,7 @@ void GXSetLineWidth(u8 width, GXTexOffset texOffsets) {
 }
 
 void GXSetPointSize(u8 pointSize, GXTexOffset texOffsets) {
+
   SET_REG_FIELD(__GXData->lpSize, 8, 8, pointSize);
   SET_REG_FIELD(__GXData->lpSize, 3, 19, texOffsets);
   GX_WRITE_RAS_REG(__GXData->lpSize);
@@ -34,6 +70,7 @@ void GXSetPointSize(u8 pointSize, GXTexOffset texOffsets) {
 }
 
 void GXEnableTexOffsets(GXTexCoordID coord, u8 line_enable, u8 point_enable) {
+
   SET_REG_FIELD(__GXData->suTs0[coord], 1, 18, line_enable);
   SET_REG_FIELD(__GXData->suTs0[coord], 1, 19, point_enable);
   GX_WRITE_RAS_REG(__GXData->suTs0[coord]);
