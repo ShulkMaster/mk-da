@@ -496,11 +496,42 @@ dolphin/amcstubs/AmcExi2Stubs.c:
 dolphin/odenotstub/odenotstub.c:
 	.text       start:0x801B2EB8 end:0x801B2EC0
 
+musyx/runtime/seq.c:
+	.text       start:0x80205D74 end:0x80209C7C
+	.data       start:0x8029E6A0 end:0x8029E6F0
+	.bss        start:0x803F2678 end:0x803FFEB8
+	.sbss       start:0x8041D120 end:0x8041D140
+	.sdata2     start:0x80420920 end:0x80420940
+
+musyx/runtime/synth.c:
+	.text       start:0x80209C7C end:0x8020CFA4
+	.bss        start:0x803FFEB8 end:0x804014A0
+	.sbss       start:0x8041D140 end:0x8041D188
+	.sdata2     start:0x80420940 end:0x80420980
+
 musyx/runtime/seq_api.c:
 	.text       start:0x8020CFA4 end:0x8020D100
 
 musyx/runtime/snd_synthapi.c:
 	.text       start:0x8020D100 end:0x8020D67C
+
+musyx/runtime/stream.c:
+	.text       start:0x8020D67C end:0x80211280
+	.bss        start:0x804014A0 end:0x80402DA0
+	.sbss       start:0x8041D188 end:0x8041D190
+	.sdata2     start:0x80420980 end:0x80420994
+
+musyx/runtime/synthdata.c:
+	.text       start:0x80211280 end:0x80213010
+	.bss        start:0x80402DA0 end:0x8040D3D8
+	.sbss       start:0x8041D190 end:0x8041D1D8
+
+musyx/runtime/synthmacros.c:
+	.text       start:0x80213010 end:0x80217CAC
+	.data       start:0x8029E6F0 end:0x8029EB38
+	.bss        start:0x8040D3D8 end:0x8040D3F8
+	.sbss       start:0x8041D1D8 end:0x8041D1F8
+	.sdata2     start:0x80420998 end:0x804209C0
 
 musyx/runtime/synthvoice.c:
 	.text       start:0x80217CAC end:0x8021973C
@@ -528,6 +559,13 @@ musyx/runtime/s_data.c:
 	.bss        start:0x8040ED08 end:0x8040F308
 	.sbss       start:0x8041D210 end:0x8041D218
 
+musyx/runtime/hw_dspctrl.c:
+	.text       start:0x8021B328 end:0x8021E674
+	.rodata     start:0x80247AD8 end:0x80247B2A
+	.data       start:0x8029F6C0 end:0x8029F6D2
+	.bss        start:0x8040F308 end:0x8040F9E8
+	.sbss       start:0x8041D218 end:0x8041D258
+
 musyx/runtime/hw_volconv.c:
 	.text       start:0x8021E674 end:0x8021ED64
 	.data       start:0x8029F6D8 end:0x8029F8FC
@@ -545,6 +583,12 @@ musyx/runtime/snd_init.c:
 musyx/runtime/snd_math.c:
 	.text       start:0x802208E4 end:0x80220CA4
 	.sdata2     start:0x80420A80 end:0x80420A9C
+
+musyx/runtime/snd_midictrl.c:
+	.text       start:0x80220CA4 end:0x80222978
+	.rodata     start:0x80247B30 end:0x80247C3E
+	.data       start:0x8029F900 end:0x8029F98C
+	.bss        start:0x804107E8 end:0x80416FE8
 
 musyx/runtime/snd_service.c:
 	.text       start:0x80222978 end:0x80222B24
