@@ -18,3 +18,6 @@ Runtime.PPCEABI.H/__init_cpp_exceptions.cpp:
 	.ctors      start:0x8022E640 end:0x8022E644
 	.dtors      start:0x8022E660 end:0x8022E668
 	.sdata      start:0x8041B688 end:0x8041B690
+
+dolphin/os/OSMutex.c:
+	.text       start:0x801AB7E0 end:0x801ABA2C

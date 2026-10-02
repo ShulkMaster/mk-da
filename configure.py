@@ -247,7 +247,7 @@ cflags_rel = [
     "-sdata2 0",
 ]
 
-# Initial template linker; exact original toolchain is still to be researched.
+# This linker reproduces the retail DOL; the game compiler remains unconfirmed.
 config.linker_version = "GC/1.3.2"
 
 
@@ -285,8 +285,10 @@ def MatchingFor(*versions):
 
 config.warn_missing_config = False
 config.warn_missing_source = False
-# No decompiled source objects yet; link the original split objects.
-config.libs = []
+# The remaining objects continue to link from the original binary.
+config.libs = [
+    DolphinLib("os", [Object(Matching, "dolphin/os/OSMutex.c")]),
+]
 
 
 # Optional callback to adjust link order. This can be used to add, remove, or reorder objects.
@@ -309,8 +311,7 @@ def link_order_callback(module_id: int, objects: List[str]) -> List[str]:
 
 # Optional extra categories for progress tracking
 # Adjust as desired for your project
-# Add progress categories when source libraries are registered.
-config.progress_categories = []
+config.progress_categories = [ProgressCategory("sdk", "Dolphin SDK")]
 config.progress_each_module = args.verbose
 # Optional extra arguments to `objdiff-cli report generate`
 config.progress_report_args = [
