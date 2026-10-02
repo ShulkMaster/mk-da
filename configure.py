@@ -549,13 +549,23 @@ config.libs = [
     MusyX(
         [
             Object(Matching, "musyx/runtime/seq_api.c"),
+            Object(Matching, "musyx/runtime/snd_synthapi.c"),
+            Object(Matching, "musyx/runtime/synthvoice.c"),
             Object(Matching, "musyx/runtime/synth_ac.c"),
+            Object(Matching, "musyx/runtime/synth_adsr.c"),
             Object(Matching, "musyx/runtime/synth_dbtab.c"),
+            Object(Matching, "musyx/runtime/synth_vsamples.c"),
+            Object(Matching, "musyx/runtime/s_data.c"),
             Object(Matching, "musyx/runtime/hw_volconv.c"),
+            Object(Matching, "musyx/runtime/snd3d.c"),
             Object(Matching, "musyx/runtime/snd_init.c"),
             Object(Matching, "musyx/runtime/snd_math.c"),
             Object(Matching, "musyx/runtime/snd_service.c"),
+            Object(Matching, "musyx/runtime/hardware.c"),
+            Object(Matching, "musyx/runtime/hw_aramdma.c"),
+            Object(Matching, "musyx/runtime/hw_dolphin.c"),
             Object(Matching, "musyx/runtime/hw_memory.c"),
+            Object(Matching, "musyx/runtime/dsp_import.c"),
         ]
     ),
 ]

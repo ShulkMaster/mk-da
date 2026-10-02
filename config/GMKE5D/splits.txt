@@ -499,6 +499,14 @@ dolphin/odenotstub/odenotstub.c:
 musyx/runtime/seq_api.c:
 	.text       start:0x8020CFA4 end:0x8020D100
 
+musyx/runtime/snd_synthapi.c:
+	.text       start:0x8020D100 end:0x8020D67C
+
+musyx/runtime/synthvoice.c:
+	.text       start:0x80217CAC end:0x8021973C
+	.bss        start:0x8040D3F8 end:0x8040E3B8
+	.sbss       start:0x8041D1F8 end:0x8041D210
+
 musyx/runtime/synth_ac.c:
 	.text       start:0x8021973C end:0x8021985C
 	.data       start:0x8029EB38 end:0x8029EF38
@@ -507,10 +515,29 @@ musyx/runtime/synth_ac.c:
 musyx/runtime/synth_dbtab.c:
 	.data       start:0x8029EF38 end:0x8029F6C0
 
+musyx/runtime/synth_adsr.c:
+	.text       start:0x8021985C end:0x8021A01C
+	.sdata2     start:0x804209D8 end:0x80420A00
+
+musyx/runtime/synth_vsamples.c:
+	.text       start:0x8021A01C end:0x8021A7D0
+	.bss        start:0x8040E3B8 end:0x8040ED08
+
+musyx/runtime/s_data.c:
+	.text       start:0x8021A7D0 end:0x8021B328
+	.bss        start:0x8040ED08 end:0x8040F308
+	.sbss       start:0x8041D210 end:0x8041D218
+
 musyx/runtime/hw_volconv.c:
 	.text       start:0x8021E674 end:0x8021ED64
 	.data       start:0x8029F6D8 end:0x8029F8FC
 	.sdata2     start:0x80420A00 end:0x80420A34
+
+musyx/runtime/snd3d.c:
+	.text       start:0x8021ED64 end:0x80220798
+	.bss        start:0x8040F9E8 end:0x804107E8
+	.sbss       start:0x8041D258 end:0x8041D278
+	.sdata2     start:0x80420A38 end:0x80420A80
 
 musyx/runtime/snd_init.c:
 	.text       start:0x80220798 end:0x802208E4
@@ -523,6 +550,27 @@ musyx/runtime/snd_service.c:
 	.text       start:0x80222978 end:0x80222B24
 	.data       start:0x8029F990 end:0x802A0190
 	.sdata      start:0x8041B8F8 end:0x8041B8FC
+
+musyx/runtime/hardware.c:
+	.text       start:0x80222B24 end:0x80223AD4
+	.rodata     start:0x80247C40 end:0x80247D40
+	.sdata      start:0x8041B900 end:0x8041B90E
+	.sbss       start:0x8041D278 end:0x8041D288
+	.sdata2     start:0x80420AA0 end:0x80420AB8
+
+musyx/runtime/dsp_import.c:
+	.data       start:0x802A01A0 end:0x802A1B80
+	.sdata      start:0x8041B910 end:0x8041B918
+
+musyx/runtime/hw_aramdma.c:
+	.text       start:0x80223AD4 end:0x80224748
+	.bss        start:0x80416FE8 end:0x804178F0
+	.sbss       start:0x8041D288 end:0x8041D2A8
+
+musyx/runtime/hw_dolphin.c:
+	.text       start:0x80224748 end:0x80224C40
+	.bss        start:0x80417900 end:0x80419960
+	.sbss       start:0x8041D2A8 end:0x8041D2D0
 
 musyx/runtime/hw_memory.c:
 	.text       start:0x80224C40 end:0x80224C94
