@@ -495,3 +495,34 @@ dolphin/amcstubs/AmcExi2Stubs.c:
 
 dolphin/odenotstub/odenotstub.c:
 	.text       start:0x801B2EB8 end:0x801B2EC0
+
+musyx/runtime/seq_api.c:
+	.text       start:0x8020CFA4 end:0x8020D100
+
+musyx/runtime/synth_ac.c:
+	.text       start:0x8021973C end:0x8021985C
+	.data       start:0x8029EB38 end:0x8029EF38
+	.sdata2     start:0x804209C0 end:0x804209D4
+
+musyx/runtime/synth_dbtab.c:
+	.data       start:0x8029EF38 end:0x8029F6C0
+
+musyx/runtime/hw_volconv.c:
+	.text       start:0x8021E674 end:0x8021ED64
+	.data       start:0x8029F6D8 end:0x8029F8FC
+	.sdata2     start:0x80420A00 end:0x80420A34
+
+musyx/runtime/snd_init.c:
+	.text       start:0x80220798 end:0x802208E4
+
+musyx/runtime/snd_math.c:
+	.text       start:0x802208E4 end:0x80220CA4
+	.sdata2     start:0x80420A80 end:0x80420A9C
+
+musyx/runtime/snd_service.c:
+	.text       start:0x80222978 end:0x80222B24
+	.data       start:0x8029F990 end:0x802A0190
+	.sdata      start:0x8041B8F8 end:0x8041B8FC
+
+musyx/runtime/hw_memory.c:
+	.text       start:0x80224C40 end:0x80224C94
