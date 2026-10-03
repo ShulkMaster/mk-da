@@ -685,7 +685,7 @@ config.libs = [
             Object(NonMatching, "renderware/palquant.c"),
             Object(Matching, "renderware/dl2drend.c"),
             Object(NonMatching, "renderware/dlrendst.c"),
-            Object(NonMatching, "renderware/dltoken.c"),
+            Object(Matching, "renderware/dltoken.c"),
             Object(Matching, "renderware/gekkomul.c"),
             Object(Matching, "renderware/bapipe.c"),
             Object(NonMatching, "renderware/nodeCullTriangle.c"),
