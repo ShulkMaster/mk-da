@@ -686,7 +686,7 @@ config.libs = [
             Object(NonMatching, "renderware/dl2drend.c"),
             Object(NonMatching, "renderware/dlrendst.c"),
             Object(NonMatching, "renderware/dltoken.c"),
-            Object(NonMatching, "renderware/bapipe.c"),
+            Object(Matching, "renderware/bapipe.c"),
             Object(NonMatching, "renderware/nodeCullTriangle.c"),
             Object(NonMatching, "renderware/nodeImmMangleLineIndices.c"),
             Object(NonMatching, "renderware/nodeImmMangleTriangleIndices.c"),
