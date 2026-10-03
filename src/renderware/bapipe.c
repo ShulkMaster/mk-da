@@ -1,4 +1,3 @@
-/* #audit 2026-10-03T05:35Z clean-room FIXED (audit) */
 #include <renderware/project_pipeline.h>
 
 s32 _rxPipelineGlobalsOffset;

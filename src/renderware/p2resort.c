@@ -1,4 +1,3 @@
-/* #audit 2026-10-03T08:33Z clean-room PASS (audit) */
 #include <dolphin/types.h>
 #include <renderware/project_sort.h>
 

@@ -1,10 +1,8 @@
-/* #audit 2026-10-03T08:18Z clean-room PASS (audit) */
 #include <renderware/project_renderstate.h>
 #include <renderware/project_state.h>
 #include <renderware/project_error.h>
 
 ProjectRenderState* RxRenderStateVectorSetDefaultRenderStateVector(ProjectRenderState* arg0) {
-  /* #audit 2026-10-03T04:47Z clean-room PASS (audit) */
   if (arg0 != 0) {
     if (*(s32*)(RwEngineInstance + 0x14C) == 3) {
       *arg0 = ((ProjectRenderModule*)(RwEngineInstance + _rxPipelineGlobalsOffset))->unk04;
@@ -45,7 +43,6 @@ ProjectRenderState* RxRenderStateVectorSetDefaultRenderStateVector(ProjectRender
 }
 
 ProjectRenderState* RxRenderStateVectorCreate(s32 arg0) {
-  /* #audit 2026-10-03T08:18Z clean-room PASS (audit) */
   if (*(s32*)(RwEngineInstance + 0x14C) == 3) {
     ProjectRenderState* unk00 = (*(ProjectRenderState* (**)(u32))(RwEngineInstance + 0x130))(0x30);
     if (unk00 != 0) {
@@ -74,7 +71,6 @@ ProjectRenderState* RxRenderStateVectorCreate(s32 arg0) {
 }
 
 void RxRenderStateVectorDestroy(ProjectRenderState* arg0) {
-  /* #audit 2026-10-03T04:50Z clean-room PASS (audit) */
   if (arg0 != 0) {
     (*(void (**)(void*))(RwEngineInstance + 0x134))(arg0);
   } else {
@@ -86,7 +82,6 @@ void RxRenderStateVectorDestroy(ProjectRenderState* arg0) {
 }
 
 ProjectRenderState* RxRenderStateVectorLoadDriverState(ProjectRenderState* arg0) {
-  /* #audit 2026-10-03T04:54Z clean-room PASS (audit) */
   if (arg0 != 0) {
     s32 unk00;
     arg0->unk00[0] = 0;

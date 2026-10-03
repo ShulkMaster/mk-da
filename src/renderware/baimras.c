@@ -1,4 +1,3 @@
-/* #audit 2026-10-03T04:06Z clean-room PASS (audit) */
 #include <renderware/project_state.h>
 
 u32* RwImageSetFromRaster(u32* unk00, u8* unk04) {

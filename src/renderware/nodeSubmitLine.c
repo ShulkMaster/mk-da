@@ -1,4 +1,3 @@
-/* #audit 2026-10-03T05:57Z clean-room PASS (audit) */
 #include <renderware/project_node.h>
 
 static s32 SubmitLineNode(u8* arg0, u8* arg1) {

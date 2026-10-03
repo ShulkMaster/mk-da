@@ -1,4 +1,3 @@
-/* #audit 2026-10-03T05:14Z clean-room FIXED (audit) */
 #include <dolphin/types.h>
 
 extern void* RwStreamReadInt32(void*, s32*, u32);

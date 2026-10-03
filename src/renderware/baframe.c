@@ -1,4 +1,3 @@
-/* #audit 2026-10-03T09:20Z clean-room FIXED (audit) */
 #include <dolphin/types.h>
 #include <renderware/project_memory.h>
 #include <renderware/project_frame.h>
@@ -10,7 +9,6 @@ static s32 frameModule[2];
 s32 frameTKList[6] = {0xA4, 0xA4, 0, 0, 0, 0};
 
 u8* _rwFrameOpen(u8* arg0, s32 arg1, s32 arg2) {
-  /* #audit 2026-10-03T06:42Z clean-room PASS (audit) */
   frameModule[0] = arg1;
   *(u8**)(RwEngineInstance + frameModule[0]) = RwFreeListCreate(frameTKList[0], 0x32, 4);
   if (*(u8**)(RwEngineInstance + frameModule[0]) == 0) {
@@ -23,7 +21,6 @@ u8* _rwFrameOpen(u8* arg0, s32 arg1, s32 arg2) {
 }
 
 u8* _rwFrameClose(u8* unk00, s32 unk04, s32 unk08) {
-  /* #audit 2026-10-03T09:17Z clean-room PASS (audit) */
   void* unk0C = *(void**)(RwEngineInstance + frameModule[0]);
   if (unk0C != NULL) {
     RwFreeListDestroy(unk0C);
@@ -34,7 +31,6 @@ u8* _rwFrameClose(u8* unk00, s32 unk04, s32 unk08) {
 }
 
 static void rwSetHierarchyRoot(u8* arg0, u8* arg1) {
-  /* #audit 2026-10-03T06:47Z clean-room PASS (audit) */
   *(u8**)(arg0 + 0xA0) = arg1;
   arg0 = *(u8**)(arg0 + 0x98);
   while (arg0 != 0) {
@@ -44,12 +40,10 @@ static void rwSetHierarchyRoot(u8* arg0, u8* arg1) {
 }
 
 u32 RwFrameDirty(u8* frame) {
-  /* #audit 2026-10-03T06:46Z clean-room PASS (audit) */
   return (*(u8**)(frame + 0xA0))[3] & 3;
 }
 
 u8* RwFrameCreate(void) {
-  /* #audit 2026-10-03T06:43Z clean-room PASS (audit) */
   u8* unk00 = (*(u8* (**)(u8*))(RwEngineInstance + 0x140))(
       *(u8**)(RwEngineInstance + frameModule[0]));
   if (unk00 == 0) {
@@ -98,7 +92,6 @@ u8* RwFrameCreate(void) {
 }
 
 s32 RwFrameDestroy(u8* unk00) {
-  /* #audit 2026-10-03T06:50Z clean-room PASS (audit) */
   u8* unk04;
   _rwPluginRegistryDeInitObject((u8*)frameTKList, unk00);
   if (*(u8**)(unk00 + 4) != 0) {
@@ -119,7 +112,6 @@ s32 RwFrameDestroy(u8* unk00) {
 }
 
 static void FrameDestroyRecurseDeInitLeaf(u8* arg0) {
-  /* #audit 2026-10-03T06:47Z clean-room PASS (audit) */
   _rwPluginRegistryDeInitObject((u8*)frameTKList, arg0);
   if (arg0[3] & 3) {
     *(u8**)(*(u8**)(arg0 + 0xC)) = *(u8**)(arg0 + 8);
@@ -128,14 +120,12 @@ static void FrameDestroyRecurseDeInitLeaf(u8* arg0) {
 }
 
 static void rwFrameDestroyRecurseDestroyLeaf(u8* arg0) {
-  /* #audit 2026-10-03T06:47Z clean-room PASS (audit) */
   FrameDestroyRecurseDeInitLeaf(arg0);
   (*(void* (**)(u8*, void*))(RwEngineInstance + 0x144))(
       *(u8**)(RwEngineInstance + frameModule[0]), arg0);
 }
 
 static void rwFrameDestroyRecurse(u8* unk00) {
-  /* #audit 2026-10-03T06:47Z clean-room PASS (audit) */
   if (unk00 != 0) {
     u8* unk04 = *(u8**)(unk00 + 0x98);
     while (unk04 != 0) {
@@ -148,13 +138,11 @@ static void rwFrameDestroyRecurse(u8* unk00) {
 }
 
 s32 RwFrameDestroyHierarchy(u8* unk00) {
-  /* #audit 2026-10-03T09:20Z clean-room PASS (audit) */
   rwFrameDestroyRecurse(unk00);
   return 1;
 }
 
 u8* RwFrameUpdateObjects(u8* arg0) {
-  /* #audit 2026-10-03T06:47Z clean-room PASS (audit) */
   u8* unk00 = *(u8**)(arg0 + 0xA0);
   u32 unk04 = unk00[3];
   if (!(unk04 & 3)) {
@@ -169,7 +157,6 @@ u8* RwFrameUpdateObjects(u8* arg0) {
 }
 
 u8* RwFrameGetLTM(u8* frame) {
-  /* #audit 2026-10-03T06:48Z clean-room PASS (audit) */
   u8* root = *(u8**)(frame + 0xA0);
   if (root[3] & 1) {
     _rwFrameSyncHierarchyLTM(root);
@@ -178,7 +165,6 @@ u8* RwFrameGetLTM(u8* frame) {
 }
 
 u8* RwFrameAddChild(u8* arg0, u8* arg1) {
-  /* #audit 2026-10-03T06:50Z clean-room PASS (audit) */
   if (*(u8**)(arg1 + 4) != 0) {
     RwFrameRemoveChild(arg1);
   }
@@ -196,7 +182,6 @@ u8* RwFrameAddChild(u8* arg0, u8* arg1) {
 }
 
 u8* RwFrameRemoveChild(u8* unk00) {
-  /* #audit 2026-10-03T06:48Z clean-room PASS (audit) */
   u8* unk04 = *(u8**)(unk00 + 4);
   u8* unk08 = *(u8**)(unk04 + 0x98);
   if (unk08 == unk00) {
@@ -215,7 +200,6 @@ u8* RwFrameRemoveChild(u8* unk00) {
 }
 
 u8* RwFrameForAllChildren(u8* unk00, u8* (*unk04)(u8*, void*), void* unk08) {
-  /* #audit 2026-10-03T06:48Z clean-room PASS (audit) */
   u8* unk0C = *(u8**)(unk00 + 0x98);
   while (unk0C != 0) {
     u8* unk10 = *(u8**)(unk0C + 0x9C);
@@ -228,14 +212,12 @@ u8* RwFrameForAllChildren(u8* unk00, u8* (*unk04)(u8*, void*), void* unk08) {
 }
 
 u8* RwFrameTransform(u8* unk00, const u8* unk04, s32 unk08) {
-  /* #audit 2026-10-03T06:49Z clean-room PASS (audit) */
   RwMatrixTransform(unk00 + 0x10, unk04, unk08);
   RwFrameUpdateObjects(unk00);
   return unk00;
 }
 
 u8* RwFrameForAllObjects(u8* unk00, u8* (*unk04)(u8*, void*), void* unk08) {
-  /* #audit 2026-10-03T06:49Z clean-room PASS (audit) */
   u8* next;
   u8* end;
   u8* link = *(u8**)(unk00 + 0x90);
@@ -252,7 +234,6 @@ u8* RwFrameForAllObjects(u8* unk00, u8* (*unk04)(u8*, void*), void* unk08) {
 
 s32 RwFrameRegisterPlugin(s32 arg0, u32 arg1, ProjectRegistryCall arg2,
     ProjectRegistryCall arg3, ProjectRegistryCopy arg4) {
-  /* #audit 2026-10-03T09:20Z clean-room PASS (audit) */
   return _rwPluginRegistryAddPlugin((u8*)frameTKList, arg0, arg1,
       arg2, arg3, arg4);
 }

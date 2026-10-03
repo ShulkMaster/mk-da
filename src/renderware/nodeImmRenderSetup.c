@@ -1,4 +1,3 @@
-/* #audit 2026-10-03T08:18Z clean-room PASS (audit) */
 #include <renderware/project_pipeline.h>
 #include <renderware/project_renderstate.h>
 #include <renderware/project_node_defs.h>

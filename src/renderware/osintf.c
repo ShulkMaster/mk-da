@@ -1,4 +1,3 @@
-/* #audit 2026-10-03T04:06Z clean-room PASS (audit) */
 #include <dolphin/types.h>
 
 s32 _rwpathisabsolute(const char* unk00) {

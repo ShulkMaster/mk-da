@@ -1,4 +1,3 @@
-/* #audit 2026-10-03T04:47Z clean-room PASS (audit) */
 #include <renderware/project_resources.h>
 
 s32 _rwResHeapInit(ResmemHeap8* unk0, s32 unk4) {

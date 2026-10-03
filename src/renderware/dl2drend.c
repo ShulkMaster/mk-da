@@ -1,4 +1,3 @@
-/* #audit 2026-10-03T06:33Z clean-room FIXED (audit) */
 #include <dolphin/gx.h>
 #include <dolphin/vi.h>
 #include <renderware/project_driver.h>

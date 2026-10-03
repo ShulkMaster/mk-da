@@ -1,10 +1,8 @@
-/* #audit 2026-10-03T10:26Z clean-room PASS (audit) */
 #include <renderware/project_pipeline.h>
 #include <renderware/project_heap.h>
 #include <renderware/project_node_defs.h>
 
 static s32 _ImmMangleLineIndicesNode(u8* arg0, u8* arg1) {
-  /* #audit 2026-10-03T10:26Z clean-room PASS (audit) */
   u8* unk00;
   u8* unk08;
   u32 unk10;
@@ -97,7 +95,6 @@ static s32 _ImmMangleLineIndicesNode(u8* arg0, u8* arg1) {
 }
 
 ProjectNodeDef* RxNodeDefinitionGetImmMangleLineIndices(void) {
-  /* #audit 2026-10-03T08:47Z clean-room PASS (audit) */
   static ProjectNodeCluster N1clofinterest[2] = {
     {&RxClMeshState, 0, 0},
     {&RxClIndices, 0, 0},

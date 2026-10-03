@@ -1,4 +1,3 @@
-/* #audit 2026-10-03T09:17Z clean-room FIXED (audit) */
 #include <dolphin/types.h>
 #include <renderware/project_state.h>
 #include <renderware/project_frame.h>
@@ -6,13 +5,11 @@
 #include <renderware/project_vector.h>
 
 static u8* SyncObject(u8* arg0, void* arg1) {
-  /* #audit 2026-10-03T06:31Z clean-room PASS (audit) */
   (*(u8* (**)(u8*))(arg0 + 0x10))(arg0);
   return arg0;
 }
 
 static void FrameSyncHierarchyRecurse(u8* arg0, u32 arg1) {
-  /* #audit 2026-10-03T06:38Z clean-room FIXED (audit) */
   while (arg0 != 0) {
     u32 unk00 = arg0[3];
     u32 unk04 = arg1 | unk00;
@@ -36,7 +33,6 @@ static void FrameSyncHierarchyRecurse(u8* arg0, u32 arg1) {
 }
 
 static void FrameSyncHierarchyRecurseNoLTM(u8* unk00) {
-  /* #audit 2026-10-03T06:33Z clean-room PASS (audit) */
   while (unk00 != 0) {
     if (*(u8**)(unk00 + 0x90) != unk00 + 0x90) {
       RwFrameForAllObjects(unk00, SyncObject, 0);
@@ -48,7 +44,6 @@ static void FrameSyncHierarchyRecurseNoLTM(u8* unk00) {
 }
 
 static void FrameSyncHierarchy(u8* frame) {
-  /* #audit 2026-10-03T06:41Z clean-room PASS (audit) */
   u32 changed;
   u32 flags = frame[3];
   if (flags & 1) {
@@ -71,7 +66,6 @@ static void FrameSyncHierarchy(u8* frame) {
 }
 
 s32 _rwFrameSyncDirty(void) {
-  /* #audit 2026-10-03T09:17Z clean-room PASS (audit) */
   u8* unkBC = RwEngineInstance + 0xBC;
   u8* unk00 = *(u8**)(RwEngineInstance + 0xBC);
   while (unk00 != unkBC) {
@@ -84,7 +78,6 @@ s32 _rwFrameSyncDirty(void) {
 }
 
 static void FrameSyncHierarchyLTMRecurse(u8* unk00, u32 unk04) {
-  /* #audit 2026-10-03T06:38Z clean-room PASS (audit) */
   while (unk00 != 0) {
     u32 unk08 = unk04 | unk00[3];
     if (unk08 & 4) {
@@ -104,7 +97,6 @@ static void FrameSyncHierarchyLTMRecurse(u8* unk00, u32 unk04) {
 }
 
 void _rwFrameSyncHierarchyLTM(u8* arg0) {
-  /* #audit 2026-10-03T09:17Z clean-room PASS (audit) */
   u32 unk00 = arg0[3];
   if (unk00 & 4) {
     *(ProjectMatrix*)(arg0 + 0x50) = *(const ProjectMatrix*)(arg0 + 0x10);

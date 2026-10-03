@@ -1,4 +1,3 @@
-/* #audit 2026-10-03T06:27Z clean-room PASS (audit) */
 #include <dolphin/types.h>
 #include <dolphin/asm_sequences.inc>
 

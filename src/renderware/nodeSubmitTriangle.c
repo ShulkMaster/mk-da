@@ -1,4 +1,3 @@
-/* #audit 2026-10-03T06:02Z clean-room FIXED (audit) */
 #include <renderware/project_state.h>
 #include <renderware/project_pipeline.h>
 #include <renderware/project_renderstate.h>

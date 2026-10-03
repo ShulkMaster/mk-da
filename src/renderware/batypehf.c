@@ -1,4 +1,3 @@
-/* #audit 2026-10-03T04:35Z clean-room PASS (audit) */
 #include <dolphin/types.h>
 
 extern u8* RwFrameUpdateObjects(u8*);

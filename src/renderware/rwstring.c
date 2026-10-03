@@ -1,4 +1,3 @@
-/* #audit 2026-10-03T04:06Z clean-room FIXED (audit) */
 #include <dolphin/types.h>
 #include <renderware/project_state.h>
 #include <stdio.h>
