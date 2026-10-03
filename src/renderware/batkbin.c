@@ -1,10 +1,8 @@
-/* #audit 2026-10-03T05:03Z clean-room PASS (audit) */
+/* #audit 2026-10-03T09:16Z clean-room FIXED (audit) */
 #include <renderware/project_registry.h>
 #include <renderware/project_error.h>
+#include <renderware/project_binary.h>
 
-extern s32 RwStreamFindChunk(void* arg0, u32 arg1, u32* arg2, u32* arg3);
-extern s32 _rwStreamReadChunkHeader(void* arg0, u32* arg1, u32* arg2, u32* arg3, u32* arg4);
-extern void* RwStreamSkip(void* arg0, u32 arg1);
 extern void* _rwStreamWriteVersionedChunkHeader(void* arg0, u32 arg1, u32 arg2, u32 arg3, u32 arg4);
 
 s32 _rwPluginRegistryAddPluginStream(u8* arg0, u32 arg1,
