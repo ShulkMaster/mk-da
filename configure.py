@@ -637,7 +637,7 @@ config.libs = [
             Object(NonMatching, "movie/seqfile.c"),
             Object(Matching, "movie/errcode.c"),
             Object(NonMatching, "movie/movieplayer.cpp"),
-            Object(NonMatching, "movie/mwMemNewDelete.cpp"),
+            Object(Matching, "movie/mwMemNewDelete.cpp"),
         ],
     },
     {
