@@ -65,7 +65,7 @@ which prologue values are computed first.
 
 ## C13
 
-Name the real base quantity. Score: 2
+Name the real base quantity. Score: 4
 
 IF size arithmetic has the right operations but the wrong operand staging,
 REQUIRE a real base value in retail (pixel count, extent) and its type, TRY
@@ -114,7 +114,7 @@ here) so field offsets fold into the loads.
 
 ## C18
 
-Conditional expression for clamps. Score: 5
+Conditional expression for clamps. Score: 6
 
 IF retail compares before loading the default constant, but a source
 `x = default; if (...) x = other;` hoists the constant load ahead of the
@@ -126,7 +126,7 @@ expression (`x = cond ? other : default;`).
 
 ## C19
 
-Boolean result form. Score: 3
+Boolean result form. Score: 4
 
 IF a call's result becomes a 0/1 value and the shift/`mr` order around it
 differs (`cntlzw`; `srwi` into `r0` then `mr` vs straight into the saved
@@ -203,7 +203,7 @@ webs.
 
 ## C25
 
-Finite-state enum with explicit branches. Score: 3
+Finite-state enum with explicit branches. Score: 4
 
 IF a function stores small state constants (2/3, 4/5) into a field and the
 diff is register staging of those constants or of loop words around them,
@@ -214,6 +214,23 @@ stages enum constants from separate branches differently.
 
 - Exemplars: `mslStreamStart` (99.90 -> 100; enum {2, 3} + if/else),
   `mslStreamDVDCallback` (8 state/duration rows closed, 4/5 transition).
+
+## C26
+
+Bind a repeated field access inside the branch. Score: 2
+
+IF a value read from a field (or a pointer root) colors into the wrong
+register, callee-saved or volatile, and a named one-shot load
+(`T* x = s->field;` before the test) gives the wrong web, REQUIRE that
+retail reads the same field both in the test and in the branch, TRY testing
+the field directly in the condition (`if (s->field != NULL && ...)` or
+`if (slot->head != sound)`) and binding the local inside the branch
+(`T* x = s->field;`). MWCC CSE-merges the two loads into one web that
+colors like retail; a one-shot named load starts a different web.
+
+- Exemplars: `mslSoundStop` (99.58 -> 100, Fable, note 2122): the preloaded
+  release in mslRemovePendingPlayback (r28) and the slot root in
+  mslSlotRemove (r3/r4).
 
 ## R03
 

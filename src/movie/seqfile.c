@@ -261,7 +261,6 @@ SeqFile* SeqFileOpen(const char* filename, HVQM4PlayerExFileCallback callbackArg
   return file;
 }
 
-/* TODO: [breakthrough needed] 98.01%; completion-field reloads and prefetch scheduling remain. */
 static void callback(s32 result, DVDFileInfo* fileInfo) {
   SeqFile* file = (SeqFile*)fileInfo;
   {
@@ -292,10 +291,17 @@ static void callback(s32 result, DVDFileInfo* fileInfo) {
     file->unk64 = 1;
   } else if (file->unk60 >= file->unk50) {
     file->unk64 = 2;
-  } else if (file->unk60 >= (file->unk54 / 0x18000) * 0x18000 + 0x210000) {
-    file->unk64 = 1;
   } else {
-    u32 length = file->unk50;
+    u32 windowEnd = file->unk54;
+    u32 length;
+    windowEnd /= 0x18000;
+    windowEnd *= 0x18000;
+    windowEnd += 0x210000;
+    if (file->unk60 >= windowEnd) {
+      file->unk64 = 1;
+      return;
+    }
+    length = file->unk50;
     length -= file->unk60;
     if (length > 0x18000) {
       length = 0x18000;

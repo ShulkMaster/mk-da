@@ -5,7 +5,7 @@ covers tool access and profiles.
 
 ## S03
 
-Permuter honesty filter. Score: 10
+Permuter honesty filter. Score: 11
 
 IF a candidate scores better, REQUIRE porting it by hand or through its
 `replace` edits and checking it with `try`, TRY keeping only honest C.

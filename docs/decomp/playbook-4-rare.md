@@ -20,7 +20,13 @@ extab means C++ exceptions on. Score: 1
 IF the object has extab/extabindex entries, REQUIRE the ELF SECTION symbols,
 TRY `-Cpp_exceptions on` at lib or object scope.
 
+IF every function and data section is exact but linking fails the hash on
+two bytes inside `.extab` (uninitialized record padding), REQUIRE the retail
+bytes at that offset, and the coordinator sets `extab_padding=[b0, b1]` on the
+Object (dtk extab clean). This is metadata, not source.
+
 - Exemplar: hvqm4player lib applied.
+- Padding: Gecko_ExceptionPPC `[0x12, 0x00]`, movieplayer `[0x02, 0x55]`.
 
 ## U09
 

@@ -6,6 +6,26 @@
 #include <msl/mslMem.h>
 #include <mfl/mflFile.h>
 
+/* 0x60-byte header skipped before ADPCM sample reads. */
+struct mslStreamDataHeader {
+  u32 samples;
+  u32 bytes;
+  u32 frequency;
+  u8 unk0C[0x10];
+  SND_ADPCMSTREAM_INFO adpcmInfo;
+  u8 unk3C[0x24];
+};
+
+/* 0x4A0 bytes (local streamMgr). */
+struct mslStreamMgr {
+  mslStream streams[8];
+  s32 nextStream;
+  mslStreamChannel channels[7];
+  s32 nextChannel;
+  u32 bufferSize;
+  mlSysCalls *sysCalls;
+};
+
 static u32 mslStreamCallback(void* buffer1, u32 length1, void* buffer2,
                              u32 length2, u32 user);
 static int mslStreamActivate(mslStream* stream);
@@ -13,7 +33,7 @@ static void mslStreamDVDExtraCallback(s32 result, void* user);
 static void mslStreamDVDCallback(s32 result, void* user);
 
 static char mslWavePath[0x100];
-static mslStreamMgr streamMgr;
+static struct mslStreamMgr streamMgr;
 mslStreamFile streamFile[7];
 
 /* TODO: [blocked] Retail body stripped; only its "%s%s_%s%s" literal is known. */
@@ -107,7 +127,7 @@ static inline mslStream* mslStreamAlloc(void) {
   stream = &streamMgr.streams[streamMgr.nextStream];
   stream->state = 1;
   stream->volume = mkMusyXVolume(0.0f);
-  stream->playbackFlags.ended = 0;
+  stream->ended = 0;
   stream->channels[0] = NULL;
   stream->channels[1] = NULL;
   if (++streamMgr.nextStream >= 8) {
@@ -292,7 +312,7 @@ static inline void mslStreamChannelFill(mslStreamChannel* channel) {
     channel->seeking = 1;
     mslStreamChannelRefill(channel, destination, readBytes);
   } else {
-    channel->stream->playbackFlags.ended = 1;
+    channel->stream->ended = 1;
   }
   channel->half ^= 1;
 }
@@ -387,7 +407,7 @@ static u32 mslStreamCallback(void* buffer1, u32 length1, void* buffer2,
   u8* destination;
   mslStreamChannel* channel = (mslStreamChannel*)user;
   u32 halfBytes;
-  if (channel->stream->playbackFlags.ended) {
+  if (channel->stream->ended) {
     return 0;
   }
   if (length1 + length2 < channel->sampleCount / 2) {
@@ -419,7 +439,7 @@ static u32 mslStreamCallback(void* buffer1, u32 length1, void* buffer2,
     channel->seeking = 1;
     mslStreamChannelRefill(channel, destination, readBytes);
   } else {
-    channel->stream->playbackFlags.ended = 1;
+    channel->stream->ended = 1;
   }
   channel->half ^= 1;
   return channel->sampleCount / 2;
@@ -456,13 +476,13 @@ static void mslStreamDVDCallback(s32 result, void* user) {
   case 3:
     preloaded = 1;
   case 2: {
-    mslStreamDataHeader* header = channel->buffer;
+    struct mslStreamDataHeader* header = channel->buffer;
 
     channel->readEnd = (header->bytes >> 1) & ~31U;
-    channel->fileOffset += 0x60;
+    channel->fileOffset += sizeof(*header);
     channel->frequency = header->frequency;
     channel->unk2C = (u32)(1000.0f * ((f32)header->samples / (f32)header->frequency));
-    memcpy(&channel->adpcmInfo, &header->adpcmInfo, 0x20);
+    memcpy(&channel->adpcmInfo, &header->adpcmInfo, sizeof(channel->adpcmInfo));
     if (channel->pendingQ != NULL) {
       streamMgr.sysCalls->freeQ(channel->pendingQ);
       channel->pendingQ = NULL;
@@ -690,7 +710,7 @@ mslStream* mslStreamStart(mslBank* bank, mslPlayback* playback, u8 volume, u8 pa
     streamMgr.sysCalls->freeQ(request);
     stream->channels[0]->fileOffset = playback->asset->dataOffsets[0];
     stream->channels[0]->pendingQ = streamMgr.sysCalls->readAsync(
-        stream->channels[0]->buffer, 0x60, 1, stream->channels[0]->file, stream->priority,
+        stream->channels[0]->buffer, sizeof(struct mslStreamDataHeader), 1, stream->channels[0]->file, stream->priority,
         mslStreamDVDCallback, stream->channels[0]);
     break;
   case 2:
@@ -725,14 +745,14 @@ mslStream* mslStreamStart(mslBank* bank, mslPlayback* playback, u8 volume, u8 pa
     streamMgr.sysCalls->freeQ(request);
     stream->channels[0]->fileOffset = playback->asset->dataOffsets[0];
     stream->channels[0]->pendingQ = streamMgr.sysCalls->readAsync(
-        stream->channels[0]->buffer, 0x60, 1, stream->channels[0]->file, stream->priority,
+        stream->channels[0]->buffer, sizeof(struct mslStreamDataHeader), 1, stream->channels[0]->file, stream->priority,
         mslStreamDVDCallback, stream->channels[0]);
     streamMgr.sysCalls->freeQ(streamMgr.sysCalls->seekAsync(
         stream->channels[1]->file, playback->asset->dataOffsets[1], 0, stream->priority,
         mslStreamDVDExtraCallback, stream->channels[1]));
     stream->channels[1]->fileOffset = playback->asset->dataOffsets[1];
     stream->channels[1]->pendingQ = streamMgr.sysCalls->readAsync(
-        stream->channels[1]->buffer, 0x60, 1, stream->channels[1]->file, stream->priority,
+        stream->channels[1]->buffer, sizeof(struct mslStreamDataHeader), 1, stream->channels[1]->file, stream->priority,
         mslStreamDVDCallback, stream->channels[1]);
     break;
   default:
@@ -789,7 +809,7 @@ void mslStreamProcess(mslPlayback* playback) {
                  (!stereo || !stream->channels[1]->seeking)) {
         stream->elapsedTicks += time - stream->lastTime;
         stream->lastTime = time;
-        if (stream->playbackFlags.ended &&
+        if (stream->ended &&
             stream->elapsedTicks >= OSMillisecondsToTicks(stream->durationMs)) {
           mslStreamHalt(stream);
           playback->streamFlags.activationPending = 1;

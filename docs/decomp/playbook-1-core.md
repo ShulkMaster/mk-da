@@ -94,6 +94,7 @@ section, keep its ID) when a score crosses a threshold.
 | 0/1 result of a call shifted through a different register | C19 |
 | Index from a pointer difference with a signed divide | C20 |
 | Small state constants staged in the wrong registers | C25 |
+| Field-loaded local colored differently from retail | C26 |
 | Loop pointer, buffer and input colored in the wrong order | C24 |
 | Only coloring or scheduling left | R01, R04, tier 5 |
 
@@ -102,11 +103,11 @@ section, keep its ID) when a score crosses a threshold.
 Scores in parentheses.
 
 Tier 2, common:
-C05 declaration order and scope (23), C08 in-place derivation (12), C03 retail
-call boundary (8), R04 offline compiler pre-screen (8), C01 compound-
-assignment reassociation (6), C09 statement order follows the retail schedule
-(8), U07 unit-owned data and stripped-helper strings (6), U13 library
-optimization level (6), C16 genuine byte locals (4), C04 newer-version
+C05 declaration order and scope (25), C08 in-place derivation (13), C03 retail
+call boundary (10), R04 offline compiler pre-screen (8), C01 compound-
+assignment reassociation (7), C09 statement order follows the retail schedule
+(8), U07 unit-owned data and stripped-helper strings (11), U13 library
+optimization level (6), C16 genuine byte locals (6), C04 newer-version
 control flow (5), U05 static inline boundaries (12), C02 signed extrema (4),
 U08 Pikmin same-function exception (4), U11 genuine volatile on shared state
 (4).
@@ -115,11 +116,11 @@ Tier 3, uncommon:
 U02 lmw/stmw prologues (3), U06 function order (3), C06 real aggregate for
 frame size (2), C07 named loaded words (2), C10 cache a field before dispatch
 (4), C11 bounds in the loop's own units (2), C13 name the real base quantity
-(2), C14 named products against fused multiply-add (2), C15 conditional
+(4), C14 named products against fused multiply-add (2), C15 conditional
 call target (2), C17 byte-pointer base for read-only inputs (2), C18 conditional expression
-for clamps (5), C19 boolean result form (3), C20 signed index from a pointer
+for clamps (6), C19 boolean result form (4), C20 signed index from a pointer
 difference (2), C21 equality operand order (3), C24 indexed scan before a cursor local (3), C25 finite-state enum
-with explicit branches (3), R03 last-resort
+with explicit branches (4), C26 bind a repeated field access inside the branch (2), R03 last-resort
 goto (2), U03 per-literal read-only
 strings (2), U04 reverse `.sbss` declaration order (3), U12 literal
 over-allocation (2).
@@ -131,7 +132,7 @@ support (1), R01 coloring checklist (0), R02 guarded global reload (0), R05
 dead ends (do not repeat).
 
 Tier 5, search and escalation:
-S03 permuter honesty filter (10), S04 escalation ladder (5), S02 neutral seed
+S03 permuter honesty filter (11), S04 escalation ladder (5), S02 neutral seed
 rotation (7), S01 permuter ng procedure (3).
 
 ## Stop

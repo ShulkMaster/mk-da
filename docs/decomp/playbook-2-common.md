@@ -7,7 +7,7 @@ often the rule has paid off.
 
 ## C05
 
-Declaration order and scope. Score: 23
+Declaration order and scope. Score: 25
 
 IF only registers differ and lifetimes look shifted, REQUIRE identical CFG and
 memory accesses, TRY one honest change of where a real local is declared
@@ -23,7 +23,7 @@ memory accesses, TRY one honest change of where a real local is declared
 
 ## C08
 
-In-place derivation. Score: 12
+In-place derivation. Score: 13
 
 IF retail derives a value in the same register it was loaded into, REQUIRE one
 meaning for the variable, TRY computing it in steps in one local (`margin =
@@ -37,7 +37,7 @@ width; margin = (640 - margin) & ~1;`).
 
 ## C03
 
-Retail call boundary. Score: 8
+Retail call boundary. Score: 10
 
 IF the reference expands a helper inline or dispatches through a function
 table but retail calls each routine directly (or the reverse), REQUIRE retail
@@ -65,7 +65,7 @@ mwcceppc and comparing the symbol's objdump against retail before spending
 
 ## C01
 
-Compound-assignment reassociation. Score: 6
+Compound-assignment reassociation. Score: 7
 
 IF one add (or or/xor) has its operands commuted, REQUIRE the same operations
 and registers otherwise, TRY changing statement grouping: MWCC rewrites
@@ -93,7 +93,7 @@ advance cursors after the stores).
 
 ## U07
 
-Unit-owned data and stripped-helper strings. Score: 6
+Unit-owned data and stripped-helper strings. Score: 11
 
 IF `.data` lacks a global, REQUIRE the ELF OBJECT symbol (scope, size), TRY
 defining it in the unit with retail constness. IF `.rodata` has strings that
@@ -137,7 +137,7 @@ notes until a second object agrees.
 
 ## C16
 
-Genuine byte locals. Score: 4
+Genuine byte locals. Score: 6
 
 IF retail loads a byte (`lbz`) and converts it to float or subtracts it as a
 small integer, but a source local widened to `u32`/`s32` swaps registers or

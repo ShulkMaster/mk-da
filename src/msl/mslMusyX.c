@@ -174,13 +174,12 @@ static inline void mslSoundSetVolOperation(mslSound* sound, f32 volume) {
 
 static inline void mslSlotRemove(mslSoundSlot* slot, mslSound* sound) {
   mslSound* next = sound->slotNext;
-  mslSound* previous;
 
   if (next == NULL) {
     return;
   }
-  previous = slot->head;
-  if (previous != sound) {
+  if (slot->head != sound) {
+    mslSound* previous = slot->head;
     while (previous != NULL && previous->slotNext != sound) {
       previous = previous->slotNext;
     }
@@ -222,26 +221,24 @@ static inline void mslRemovePendingPlayback(mslSound* sound) {
       }
     } while (removed != NULL);
   }
-  {
-    mslPlayback* preloaded;
-    preloaded = sound->preloadedPlayback;
-    if (preloaded != NULL && preloaded->streamFlags.activationPending) {
-      sound->preloadedPlayback = NULL;
-      if (preloaded->sound != NULL) {
-        if (preloaded->previous != NULL) {
-          preloaded->previous->next = preloaded->next;
-        }
-        if (preloaded->next != NULL) {
-          preloaded->next->previous = preloaded->previous;
-        }
-        if (preloaded->previous == NULL) {
-          preloaded->sound->playbackHead = preloaded->next;
-        }
-        preloaded->next = NULL;
-        preloaded->previous = NULL;
+  if (sound->preloadedPlayback != NULL &&
+      sound->preloadedPlayback->streamFlags.activationPending) {
+    mslPlayback* preloaded = sound->preloadedPlayback;
+    sound->preloadedPlayback = NULL;
+    if (preloaded->sound != NULL) {
+      if (preloaded->previous != NULL) {
+        preloaded->previous->next = preloaded->next;
       }
-      mslPlaybackPoolFreeOperation(sound->bank->system, preloaded);
+      if (preloaded->next != NULL) {
+        preloaded->next->previous = preloaded->previous;
+      }
+      if (preloaded->previous == NULL) {
+        preloaded->sound->playbackHead = preloaded->next;
+      }
+      preloaded->next = NULL;
+      preloaded->previous = NULL;
     }
+    mslPlaybackPoolFreeOperation(sound->bank->system, preloaded);
   }
 }
 
@@ -979,17 +976,20 @@ static void mslPlaybackProcess(mslSound* sound) {
   sound->flags.unk04 = streaming;
 }
 
-/* TODO: [near miss] 94.46%; sys/sound register allocation and prologue scheduling remain. */
+/* TODO: [near miss] 95.50%; sys/sound allocation and four extra Boolean instructions remain. */
 static void mslUpdateThread(mslSoundSystem* sys) {
   mslListenerState* mic = &sys->listenerState;
   mslSound* sound;
   mslBank* bank;
   u32 i;
   mslSoundSlot* slots;
-  if (mic->enabled != 0 && (mic->dirty & 0x7F)) {
-    if (!sndUpdateListener(&mic->listener, &mic->position, &mic->direction,
-                           &mic->heading, &mic->up, mic->volume, NULL)) {
-      printf("mslUpdateThread: sndUpdateListener failed for Mic %x\n", mic);
+  {
+    int needsListenerUpdate = mic->enabled != 0 && (mic->dirty & 0x7F);
+    if (needsListenerUpdate) {
+      if (!sndUpdateListener(&mic->listener, &mic->position, &mic->direction,
+                             &mic->heading, &mic->up, mic->volume, NULL)) {
+        printf("mslUpdateThread: sndUpdateListener failed for Mic %x\n", mic);
+      }
     }
   }
   mslUpdateBuses(sys);
@@ -1537,7 +1537,6 @@ int mslSoundIsValid(mslSound* sound) {
   return sound->sequenceCursor != NULL || sound->flags.awaitingPlay;
 }
 
-/* TODO: [near miss] 99.58%; preloaded and slot register allocation remain. */
 void mslSoundStop(mslSound* sound) {
   mslPlayback* playback;
   if (sound == NULL) {

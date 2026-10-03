@@ -9,16 +9,6 @@
 
 struct mslStream;
 
-/* 0x60-byte header skipped before ADPCM sample reads. */
-typedef struct mslStreamDataHeader {
-  u32 samples;
-  u32 bytes;
-  u32 frequency;
-  u8 unk0C[0x10];
-  SND_ADPCMSTREAM_INFO adpcmInfo;
-  u8 unk3C[0x24];
-} mslStreamDataHeader;
-
 /* User data of the stream's mfl async requests. */
 typedef struct mslStreamChannel {
   /* Cleared by mslStreamStop when it detaches the channel. */
@@ -67,25 +57,13 @@ typedef struct mslStream {
   OSTime lastTime;
   u32 elapsedTicks;
   u32 durationMs;
-  struct {
-    u8 ended : 1;
-    u8 unk7F : 7;
-  } playbackFlags;
+  u8 ended : 1;
+  u8 unk7F : 7;
   u8 unk19[3];
   u32 streamType;
   mslStreamChannel* channels[2];
   u8 unk28[8];
 } mslStream;
-
-/* 0x4A0 bytes (local streamMgr). */
-typedef struct mslStreamMgr {
-  mslStream streams[8];
-  s32 nextStream;
-  mslStreamChannel channels[7];
-  s32 nextChannel;
-  u32 bufferSize;
-  mlSysCalls *sysCalls;
-} mslStreamMgr;
 
 typedef struct mslStreamFile {
   mflFile* file;
