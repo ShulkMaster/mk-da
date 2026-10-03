@@ -10,6 +10,7 @@ extern "C" {
 extern void* gHeap;
 void* _mwMemMalloc(void*, u32, u32, const char*, const char*, s32);
 void _mwMemFree(void*, const char*, s32);
+void* _mwMemRealloc(void*, void*, u32, u32, const char*, const char*, s32);
 
 #ifdef __cplusplus
 }

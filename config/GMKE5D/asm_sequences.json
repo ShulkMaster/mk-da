@@ -536,6 +536,102 @@
       "address": "0x801E33F0",
       "size": "0x320",
       "assembly": "renderware/skingcnasm.s"
+    },
+    {
+      "name": "__cvt_fp2unsigned",
+      "address": "0x801872C4",
+      "size": "0x5C",
+      "assembly": "Runtime.PPCEABI.H/runtime.s"
+    },
+    {
+      "name": "__save_fpr",
+      "address": "0x80187320",
+      "size": "0x4C",
+      "assembly": "Runtime.PPCEABI.H/runtime.s"
+    },
+    {
+      "name": "__restore_fpr",
+      "address": "0x8018736C",
+      "size": "0x4C",
+      "assembly": "Runtime.PPCEABI.H/runtime.s"
+    },
+    {
+      "name": "__save_gpr",
+      "address": "0x801873B8",
+      "size": "0x4C",
+      "assembly": "Runtime.PPCEABI.H/runtime.s"
+    },
+    {
+      "name": "__restore_gpr",
+      "address": "0x80187404",
+      "size": "0x4C",
+      "assembly": "Runtime.PPCEABI.H/runtime.s"
+    },
+    {
+      "name": "__div2u",
+      "address": "0x80187450",
+      "size": "0xEC",
+      "assembly": "Runtime.PPCEABI.H/runtime.s"
+    },
+    {
+      "name": "__div2i",
+      "address": "0x8018753C",
+      "size": "0x138",
+      "assembly": "Runtime.PPCEABI.H/runtime.s"
+    },
+    {
+      "name": "__mod2u",
+      "address": "0x80187674",
+      "size": "0xE4",
+      "assembly": "Runtime.PPCEABI.H/runtime.s"
+    },
+    {
+      "name": "__shl2i",
+      "address": "0x80187758",
+      "size": "0x24",
+      "assembly": "Runtime.PPCEABI.H/runtime.s"
+    },
+    {
+      "name": "__shr2u",
+      "address": "0x8018777C",
+      "size": "0x24",
+      "assembly": "Runtime.PPCEABI.H/runtime.s"
+    },
+    {
+      "name": "__shr2i",
+      "address": "0x801877A0",
+      "size": "0x28",
+      "assembly": "Runtime.PPCEABI.H/runtime.s"
+    },
+    {
+      "name": "__cvt_sll_flt",
+      "address": "0x801877C8",
+      "size": "0xB4",
+      "assembly": "Runtime.PPCEABI.H/runtime.s"
+    },
+    {
+      "name": "__cvt_dbl_usll",
+      "address": "0x8018787C",
+      "size": "0xCC",
+      "assembly": "Runtime.PPCEABI.H/runtime.s"
+    },
+    {
+      "name": "GetR2__Fv",
+      "address": "0x80187948",
+      "size": "0x8",
+      "assembly": "Runtime.PPCEABI.H/__init_cpp_exceptions.s"
+    },
+    {
+      "name": "__setjmp",
+      "address": "0x801879C4",
+      "size": "0x104",
+      "assembly": "Runtime.PPCEABI.H/Gecko_setjmp.s"
+    },
+    {
+      "name": "longjmp",
+      "address": "0x80187AC8",
+      "size": "0x110",
+      "assembly": "Runtime.PPCEABI.H/Gecko_setjmp.s"
     }
   ],
   "units": [

@@ -13,6 +13,24 @@ Sections:
 	.sdata2     type:rodata align:32
 	.sbss2      type:bss align:32
 
+mwmem/mwMemTarget.cpp:
+	.text       start:0x80140D98 end:0x80140E54
+	.bss        start:0x803E3A70 end:0x803E3C70
+
+mwmem/mwMem.cpp:
+	.text       start:0x80140E54 end:0x80143448
+	.data       start:0x80292CC0 end:0x802930D8
+	.bss        start:0x803E3C70 end:0x803E3C80
+	.sdata      start:0x8041B5F0 end:0x8041B5F8
+	.sbss       start:0x8041C928 end:0x8041C958
+	.sdata2     start:0x8041FA58 end:0x8041FA68
+
+mwmem/mwMemHeap.c:
+	.text       start:0x80175334 end:0x80175E80
+	.data       start:0x80299288 end:0x80299468
+	.sbss       start:0x8041CAC8 end:0x8041CB10
+	.sdata2     start:0x8041FEB8 end:0x8041FEC8
+
 MSL_C.PPCEABI.bare.H/abort_exit.c:
 	.text       start:0x80177C38 end:0x80177D8C
 	.bss        start:0x803E63D8 end:0x803E64D8
@@ -951,6 +969,74 @@ renderware/nodePostLight.c:
 	.data       start:0x8029E328 end:0x8029E3D8
 	.sdata      start:0x8041B838 end:0x8041B840
 	.sdata2     start:0x804206D0 end:0x804206E0
+
+msl/mslMusyX.c:
+	.text       start:0x801F96B0 end:0x801FD7CC
+	.rodata     start:0x80246918 end:0x80247388
+	.data       start:0x8029E638 end:0x8029E678
+	.bss        start:0x803ED658 end:0x803F1FA0
+	.sbss       start:0x8041D078 end:0x8041D0A8
+	.sdata2     start:0x804207F8 end:0x80420850
+
+msl/mslMusyXStream.c:
+	.text       start:0x801FD7CC end:0x80200EA8
+	.rodata     start:0x80247388 end:0x802474B8
+	.bss        start:0x803F1FA0 end:0x803F2578
+	.sdata2     start:0x80420850 end:0x80420870
+
+msl/mslMusyXUtil.c:
+	.text       start:0x80200EA8 end:0x802011F8
+	.sdata      start:0x8041B8F0 end:0x8041B8F8
+	.sbss       start:0x8041D0A8 end:0x8041D0B0
+	.sdata2     start:0x80420870 end:0x804208C8
+
+mfl/filemgr.c:
+	.text       start:0x802011F8 end:0x8020120C
+	.sbss       start:0x8041D0B0 end:0x8041D0B8
+
+msl/mslMem.c:
+	.text       start:0x8020120C end:0x802013C0
+	.rodata     start:0x802474B8 end:0x80247508
+
+mfl/mflFile.c:
+	.text       start:0x802013C0 end:0x80202CE0
+	.rodata     start:0x80247508 end:0x80247518
+	.data       start:0x8029E678 end:0x8029E6A0
+	.sbss       start:0x8041D0B8 end:0x8041D0C8
+	.sdata2     start:0x804208C8 end:0x804208D0
+
+mfl/mflPools.c:
+	.text       start:0x80202CE0 end:0x80203468
+	.rodata     start:0x80247518 end:0x80247560
+	.sbss       start:0x8041D0C8 end:0x8041D0F8
+
+mfl/mflQueue.c:
+	.text       start:0x80203468 end:0x80203864
+	.sbss       start:0x8041D0F8 end:0x8041D100
+
+mfl/mflZip.c:
+	.text       start:0x80203864 end:0x80204218
+	.bss        start:0x803F2578 end:0x803F25E8
+	.sdata2     start:0x804208D0 end:0x804208F0
+
+mfl/mlSysCalls.c:
+	.text       start:0x80204218 end:0x80204454
+	.bss        start:0x803F25E8 end:0x803F2640
+
+mfl/mflPlatform.c:
+	.text       start:0x80204454 end:0x80204FC4
+	.sbss       start:0x8041D100 end:0x8041D120
+	.sdata2     start:0x804208F0 end:0x80420918
+
+msl/listpool.c:
+	.text       start:0x80204FC4 end:0x80205584
+	.rodata     start:0x80247560 end:0x80247A98
+
+msl/mslbus.c:
+	.text       start:0x80205584 end:0x80205D74
+	.rodata     start:0x80247A98 end:0x80247AD8
+	.bss        start:0x803F2640 end:0x803F2678
+	.sdata2     start:0x80420918 end:0x80420920
 
 musyx/runtime/seq.c:
 	.text       start:0x80205D74 end:0x80209C7C
