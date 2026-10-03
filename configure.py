@@ -692,7 +692,7 @@ config.libs = [
             Object(NonMatching, "renderware/nodeImmMangleTriangleIndices.c"),
             Object(Matching, "renderware/nodeImmRenderSetup.c"),
             Object(Matching, "renderware/nodeImmStash.c"),
-            Object(NonMatching, "renderware/nodeSubmitLine.c"),
+            Object(Matching, "renderware/nodeSubmitLine.c"),
             Object(Matching, "renderware/nodeSubmitTriangle.c"),
             Object(NonMatching, "renderware/nodeTransform.c"),
             Object(NonMatching, "renderware/p2altmdl.c"),

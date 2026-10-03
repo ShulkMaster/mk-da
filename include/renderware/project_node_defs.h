@@ -47,5 +47,6 @@ extern ProjectClusterDef RxClScrSpace2DVertices;
 extern ProjectClusterDef RxClMeshState;
 extern ProjectClusterDef RxClRenderState;
 extern ProjectClusterDef RxClIndices;
+extern ProjectClusterDef RxClLights;
 
 #endif
