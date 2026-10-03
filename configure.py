@@ -684,7 +684,7 @@ config.libs = [
             Object(NonMatching, "renderware/p2heap.c"),
             Object(NonMatching, "renderware/p2renderstate.c"),
             Object(Matching, "renderware/p2resort.c"),
-            Object(NonMatching, "renderware/babinwor.c"),
+            Object(Matching, "renderware/babinwor.c"),
             Object(Matching, "renderware/basector.c"),
         ],
     },
