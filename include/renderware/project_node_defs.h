@@ -24,7 +24,7 @@ typedef struct {
 
 typedef struct {
   char* unk00;
-  s32 (*unk04)(const void*, u8* const*);
+  s32 (*unk04)(u8*, u8*);
   u32 unk08;
   u32 unk0C;
   u32 unk10;

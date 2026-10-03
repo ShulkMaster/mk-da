@@ -1,4 +1,4 @@
-/* #audit 2026-10-03T05:46Z clean-room PASS (audit) */
+/* #audit 2026-10-03T05:52Z clean-room PASS (audit) */
 #include <string.h>
 #include <renderware/project_pipeline.h>
 
@@ -14,8 +14,8 @@ static inline u8* projectStashAcquireWord(u8* unk00, u32 unk04) {
   return unk00 + *(s32*)(*(u8**)(unk00 + 8) + unk04) * 0x1C + 0x14;
 }
 
-static s32 PL2ImmStashNodeBody(const void* unk00, u8* const* unk04) {
-  u8* unk08 = *unk04 + 0xC;
+static s32 PL2ImmStashNodeBody(u8* unk00, u8* unk04) {
+  u8* unk08 = *(u8**)unk04 + 0xC;
   u8* unk0C;
   u8* unk10;
   if (*(s32*)(*(u8**)_rxExecCtxGlobal + 0x10) == 3) {
