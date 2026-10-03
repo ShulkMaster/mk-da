@@ -740,6 +740,110 @@ dolphin/amcstubs/AmcExi2Stubs.c:
 dolphin/odenotstub/odenotstub.c:
 	.text       start:0x801B2EB8 end:0x801B2EC0
 
+renderware/babinary.c:
+	.text       start:0x801B2EC0 end:0x801B35B8
+
+renderware/bacolor.c:
+	.text       start:0x801B35B8 end:0x801B35E0
+	.sbss       start:0x8041CE80 end:0x8041CE88
+
+renderware/baerr.c:
+	.text       start:0x801B35E0 end:0x801B36F4
+	.sbss       start:0x8041CE88 end:0x8041CE90
+
+renderware/bafsys.c:
+	.text       start:0x801B36F4 end:0x801B381C
+	.sdata      start:0x8041B770 end:0x8041B778
+
+renderware/baimmedi.c:
+	.text       start:0x801B381C end:0x801B3918
+
+renderware/bamemory.c:
+	.text       start:0x801B5B74 end:0x801B637C
+	.sbss       start:0x8041CE98 end:0x8041CEA0
+
+renderware/baresour.c:
+	.text       start:0x801B637C end:0x801B6B18
+	.sbss       start:0x8041CEA0 end:0x8041CEA8
+
+renderware/bastream.c:
+	.text       start:0x801B6B18 end:0x801B74C0
+	.sdata      start:0x8041B778 end:0x8041B788
+	.sbss       start:0x8041CEA8 end:0x8041CEB0
+
+renderware/batkbin.c:
+	.text       start:0x801B74C0 end:0x801B7A74
+
+renderware/batkreg.c:
+	.text       start:0x801B7A74 end:0x801B7EF8
+	.sbss       start:0x8041CEB0 end:0x8041CEB8
+
+renderware/bavector.c:
+	.text       start:0x801B7EF8 end:0x801B887C
+	.sbss       start:0x8041CEB8 end:0x8041CEC0
+	.sdata2     start:0x80420440 end:0x8042046C
+
+renderware/resmem.c:
+	.text       start:0x801B887C end:0x801B8AE0
+
+renderware/rwstring.c:
+	.text       start:0x801B8AE0 end:0x801B8D78
+
+renderware/osintf.c:
+	.text       start:0x801B8D78 end:0x801B8DD8
+
+renderware/babbox.c:
+	.text       start:0x801B8DD8 end:0x801B8EA0
+
+renderware/baimras.c:
+	.text       start:0x801BF230 end:0x801BF3B4
+
+renderware/batypehf.c:
+	.text       start:0x801C343C end:0x801C34D8
+
+renderware/dltoken.c:
+	.text       start:0x801CE858 end:0x801CE940
+	.sdata      start:0x8041B7B0 end:0x8041B7B8
+	.sbss       start:0x8041CF80 end:0x8041CF88
+
+renderware/bapipe.c:
+	.text       start:0x801CFB00 end:0x801CFB80
+	.sbss       start:0x8041CF98 end:0x8041CFA0
+
+renderware/p2altmdl.c:
+	.text       start:0x801D5494 end:0x801D57BC
+	.bss        start:0x803ECFB0 end:0x803ECFC8
+
+renderware/p2clpcom.c:
+	.text       start:0x801D57BC end:0x801D7538
+	.bss        start:0x803ECFC8 end:0x803ECFF0
+	.sdata2     start:0x804205E8 end:0x80420604
+
+renderware/p2core.c:
+	.text       start:0x801D7538 end:0x801D7FC8
+	.sdata      start:0x8041B800 end:0x8041B808
+	.sbss       start:0x8041CFA0 end:0x8041CFA8
+
+renderware/p2heap.c:
+	.text       start:0x801DB03C end:0x801DC094
+	.data       start:0x8029DCD0 end:0x8029DCF8
+
+renderware/p2renderstate.c:
+	.text       start:0x801DC094 end:0x801DC554
+	.sdata2     start:0x80420608 end:0x80420610
+
+renderware/p2resort.c:
+	.text       start:0x801DC554 end:0x801DC814
+
+renderware/babinwor.c:
+	.text       start:0x801E4168 end:0x801E43D0
+	.sbss       start:0x8041CFD0 end:0x8041CFE8
+
+renderware/basector.c:
+	.text       start:0x801EA1CC end:0x801EA28C
+	.data       start:0x8029E028 end:0x8029E040
+	.sbss       start:0x8041D018 end:0x8041D020
+
 musyx/runtime/seq.c:
 	.text       start:0x80205D74 end:0x80209C7C
 	.data       start:0x8029E6A0 end:0x8029E6F0
@@ -891,6 +995,37 @@ hvqm4/HVQM4PlayerEx.c:
 	.rodata     start:0x80247EF8 end:0x80247FE0
 	.sdata      start:0x8041B920 end:0x8041B924
 	.sbss       start:0x8041D330 end:0x8041D33C
+
+movie/mwMoviePlayerGC.cpp:
+	extab       start:0x800057BC end:0x800057CC
+	extabindex  start:0x80005AC0 end:0x80005AD8
+	.text       start:0x802279B0 end:0x80227A44
+
+movie/seqfile.c:
+	extab       start:0x800057CC end:0x800057FC
+	extabindex  start:0x80005AD8 end:0x80005B20
+	.text       start:0x80227A44 end:0x80228584
+	.rodata     start:0x80247FE0 end:0x80248010
+	.sbss       start:0x8041D340 end:0x8041D344
+
+movie/errcode.c:
+	extab       start:0x800057FC end:0x80005804
+	extabindex  start:0x80005B20 end:0x80005B2C
+	.text       start:0x80228584 end:0x802286B8
+	.rodata     start:0x80248010 end:0x802481F0
+	.data       start:0x802A1B80 end:0x802A1BB8
+
+movie/movieplayer.cpp:
+	extab       start:0x80005804 end:0x80005830
+	extabindex  start:0x80005B2C end:0x80005B38
+	.text       start:0x802286B8 end:0x80228780
+	.rodata     start:0x802481F0 end:0x80248208
+
+movie/mwMemNewDelete.cpp:
+	extab       start:0x80005830 end:0x80005868
+	extabindex  start:0x80005B38 end:0x80005B5C
+	.text       start:0x80228780 end:0x80228844
+	.rodata     start:0x80248208 end:0x80248220
 
 hvqm4/HVQM4Adpcm.c:
 	.text       start:0x80228844 end:0x80228C84

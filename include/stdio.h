@@ -1,7 +1,6 @@
 #ifndef _STDIO
 #define _STDIO
 
-#include "types.h"
 #include <stdarg.h>
 #include <stddef.h>
 
@@ -118,8 +117,17 @@ enum __ReadProcActions { __GetChar, __UngetChar, __CheckForError };
 #define _IOLBF 1
 #define _IOFBF 2
 
+FILE* fopen(const char* filename, const char* mode);
+int fclose(FILE* file);
+char* fgets(char* s, int n, FILE* file);
+int fputs(const char* s, FILE* file);
+int feof(FILE* file);
+int fflush(FILE* file);
+long ftell(FILE* file);
+
 int puts(const char* s);
 int printf(const char*, ...);
+int sscanf(const char* s, const char* format, ...);
 size_t sprintf(char* s, const char* format, ...);
 size_t vprintf(const char* format, va_list arg);
 size_t vsprintf(char* s, const char* format, va_list arg);
