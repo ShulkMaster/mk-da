@@ -530,6 +530,12 @@
       "address": "0x801CEBB4",
       "size": "0x7C",
       "assembly": "renderware/gekkomul.s"
+    },
+    {
+      "name": "asmSkinLoop",
+      "address": "0x801E33F0",
+      "size": "0x320",
+      "assembly": "renderware/skingcnasm.s"
     }
   ],
   "units": [

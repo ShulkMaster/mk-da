@@ -930,6 +930,9 @@ renderware/p2renderstate.c:
 renderware/p2resort.c:
 	.text       start:0x801DC554 end:0x801DC814
 
+renderware/skingcnasm.c:
+	.text       start:0x801E33F0 end:0x801E3710
+
 renderware/babinwor.c:
 	.text       start:0x801E4168 end:0x801E43D0
 	.sbss       start:0x8041CFD0 end:0x8041CFE8
