@@ -1,19 +1,5 @@
-/* #audit 2026-10-03T04:18Z clean-room FIXED (audit) */
-#include <dolphin/types.h>
-
-typedef struct ResmemBlock14 ResmemBlock14;
-typedef struct {
-  ResmemBlock14* unk0;
-  ResmemBlock14* unk4;
-} ResmemHeap8;
-
-struct ResmemBlock14 {
-  ResmemHeap8* unk0;
-  ResmemBlock14* unk4;
-  ResmemBlock14* unk8;
-  u32 unkC;
-  u32 unk10;
-};
+/* #audit 2026-10-03T04:47Z clean-room PASS (audit) */
+#include <renderware/project_resources.h>
 
 s32 _rwResHeapInit(ResmemHeap8* unk0, s32 unk4) {
   s32 unkC;
