@@ -74,6 +74,7 @@ int mwMemHeapGetDefaultParams(mwMemHeapParams* params);
 int mwMemHeapSetParams(struct _mwMemHeap* heap, const mwMemHeapParams* params);
 int mwMemSystemGetDefaultParams(mwMemSystemParams* params);
 int mwMemSystemSetParams(const mwMemSystemParams* params);
+int mwMemSystemCreate(u32 size, const mwMemSystemParams* params);
 struct _memUsedHdr {
   struct _memUsedHdr* previous;
   struct _memUsedHdr* next;
@@ -146,6 +147,7 @@ void mwMemHeapGetMaxFreeBlock(struct _mwMemHeap* heap, u32* maxSize, u32* blockC
 int mwMemIsHeapValid(struct _mwMemHeap* heap);
 struct _mwMemHeap* mwMemSystemGetHeap(s32 heapKind);
 int mwMemSystemSetHeap(s32 heapKind, struct _mwMemHeap* heap);
+int mwMemHeapWipe(struct _mwMemHeap* heap);
 
 #ifdef __cplusplus
 }

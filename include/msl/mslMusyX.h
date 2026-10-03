@@ -312,14 +312,4 @@ typedef struct mslCompoundMode {
 f32 mslVolCompound(f32 master, f32 volume, mslCompoundMode mode);
 f32 mslPitchCompound(f32 master, f32 pitch);
 
-static inline void mslPlaybackPoolFree(mslSoundSystem* system, mslPlayback* playback) {
-  if (system == NULL || playback == NULL) {
-    printf("mslPlaybackPoolFree: NULL pointer!  msi=%x mp=%x\n", system, playback);
-  } else {
-    disableIRQ();
-    playback->streamFlags.unk80 = 0;
-    enableIRQ();
-  }
-}
-
 #endif

@@ -142,10 +142,12 @@ static inline void mslStreamHalt(mslStream* stream) {
   enableIRQ();
 }
 
-/* TODO: [near miss] 98.32%; stream/stereo register swap and entry branch shape remain. */
 void mslStreamProcess(mslPlayback* playback) {
   OSTime time = OSGetTime();
-  if (playback != NULL && playback->stream != NULL) {
+  if (playback == NULL || playback->stream == NULL) {
+    return;
+  }
+  {
     mslStream* stream = playback->stream;
     int stereo = ((playback->asset->flags >> 1) & 7) == 2;
     if (stream != NULL) {
@@ -164,8 +166,6 @@ void mslStreamProcess(mslPlayback* playback) {
           mslSoundSystem* system = playback->sound->bank->system;
           u8 volume;
           u8 pan;
-          u8 scaledPan;
-          u8 scaledVolume;
           if (stream->playback->streamFlags.ducked) {
             volume = mkMusyXVolume(system->volume * system->duckVolume);
             pan = mkMusyXPan(system->pan + system->duckPan);
@@ -176,15 +176,15 @@ void mslStreamProcess(mslPlayback* playback) {
           if (mflGetDiscErrorStatus()) {
             volume = 0;
           }
-          scaledPan = mslMusyXScalePan(stream->channels[0]->pan, pan);
-          scaledVolume = mslMusyXScale(stream->volume, volume);
-          sndStreamMixParameterEx(stream->channels[0]->streamID, scaledVolume,
-                                  scaledPan, 0, 0, 0);
+          sndStreamMixParameterEx(stream->channels[0]->streamID,
+                                  mslMusyXScale(stream->volume, volume),
+                                  mslMusyXScalePan(stream->channels[0]->pan, pan),
+                                  0, 0, 0);
           if (stereo) {
-            scaledPan = mslMusyXScalePan(stream->channels[1]->pan, pan);
-            scaledVolume = mslMusyXScale(stream->volume, volume);
-            sndStreamMixParameterEx(stream->channels[1]->streamID, scaledVolume,
-                                    scaledPan, 0, 0, 0);
+            sndStreamMixParameterEx(stream->channels[1]->streamID,
+                                    mslMusyXScale(stream->volume, volume),
+                                    mslMusyXScalePan(stream->channels[1]->pan, pan),
+                                    0, 0, 0);
           }
         }
       }
@@ -367,10 +367,9 @@ static inline void mslStreamFileRelease(mflFile* file) {
   }
 }
 
-/* TODO: [near miss] 99.90%; state and loop-word register staging remain. */
 mslStream* mslStreamStart(mslBank* bank, mslPlayback* playback, u8 volume, u8 pan, BOOL preload) {
   mslStream* stream = playback->stream;
-  s32 state;
+  enum { waitingForHeader = 2, preloading = 3 } state;
   mlAsyncRequest* request;
 
   if (stream == NULL) {
@@ -408,9 +407,10 @@ mslStream* mslStreamStart(mslBank* bank, mslPlayback* playback, u8 volume, u8 pa
     stream->channels[0]->pan = mkMusyXPan(0.0f);
     stream->channels[0]->loopsRemaining = playback->unk18;
     stream->channels[0]->unk38 = playback->unk1C;
-    state = 2;
     if (preload) {
-      state = 3;
+      state = preloading;
+    } else {
+      state = waitingForHeader;
     }
     stream->state = state;
     stream->channels[0]->seeking = 1;
@@ -441,9 +441,10 @@ mslStream* mslStreamStart(mslBank* bank, mslPlayback* playback, u8 volume, u8 pa
     stream->channels[0]->unk38 = playback->unk1C;
     stream->channels[1]->loopsRemaining = playback->unk18;
     stream->channels[1]->unk38 = playback->unk1C;
-    state = 2;
     if (preload) {
-      state = 3;
+      state = preloading;
+    } else {
+      state = waitingForHeader;
     }
     stream->state = state;
     stream->channels[0]->seeking = 1;
@@ -469,7 +470,15 @@ mslStream* mslStreamStart(mslBank* bank, mslPlayback* playback, u8 volume, u8 pa
   return stream;
 }
 
-/* TODO: [near miss] 95.82%; register allocation and file-loop scheduling remain. */
+static inline void closeStreamFiles(mslStreamFile* files, int count) {
+  int i;
+  for (i = 0; i < count; ++i) {
+    mflClose(files[i].file);
+    files[i].file = NULL;
+    files[i].unk04 = 0;
+  }
+}
+
 void mslStreamUnInit(void) {
   int i;
   mslStream* stream = streamMgr.streams;
@@ -493,22 +502,17 @@ void mslStreamUnInit(void) {
     }
   }
 
-  for (i = 0; i < 7; i++) {
-    mflClose(streamFile[i].file);
-    streamFile[i].file = NULL;
-    streamFile[i].unk04 = 0;
-  }
+  closeStreamFiles(streamFile, 7);
 }
 
-/* TODO: [near miss] 99.58%; register allocation and a literal dependency remain. */
+/* TODO: [near miss] 99.57%; counter/volume registers and literal pool order remain. */
 void mslStreamInit(void) {
   mslStreamChannel* channel;
-  u8 span;
   mslStream* stream;
   f32 requestedSize = 41148.0f;
+  u8 auxb;
   u8 auxa;
   u32 i;
-  u8 pan;
 
   memset(&streamMgr, 0, sizeof(streamMgr));
   streamMgr.bufferSize = ((u32)requestedSize + 63) & ~63;
@@ -536,15 +540,11 @@ void mslStreamInit(void) {
     channel->unk38 = 0;
     channel->pendingQ = NULL;
     if (channel->buffer == NULL) {
-      u8 auxb;
-
       channel->buffer = mslHeapAlignedAlloc(MSLMFL_HEAP, channel->bufferSize, "stream channel buffer");
       auxb = mkMusyXVolume(0.0f);
       auxa = mkMusyXVolume(1.0f);
-      span = mkMusyXPan(0.0f);
-      pan = mkMusyXPan(0.0f);
       channel->streamID = sndStreamAllocEx(255, channel->buffer, channel->sampleCount,
-          48000, mkMusyXVolume(1.0f), pan, span, auxa, auxb, 0, 0x30001,
+          48000, mkMusyXVolume(1.0f), mkMusyXPan(0.0f), mkMusyXPan(0.0f), auxa, auxb, 0, 0x30001,
           mslStreamCallback, (u32)channel, NULL);
     }
     channel->attached = 0;
@@ -563,7 +563,7 @@ void mslStreamInit(void) {
   }
 }
 
-/* TODO: [near miss] 99.72%; state register allocation and one zero argument load remain. */
+/* TODO: [near miss] 99.81%; one ARAM offset zero load remains. */
 static void mslStreamDVDCallback(s32 result, void* user) {
   void* buffer;
   mslStreamChannel* channel = user;
@@ -619,7 +619,7 @@ static void mslStreamDVDCallback(s32 result, void* user) {
     }
     --stream->streamType;
     if (stream->streamType == 0) {
-      s32 state;
+      enum { activatingAfterRead = 4, preloadingAfterRead = 5 } state;
       u32 firstBytes;
       u32 secondBytes;
       u32 duration;
@@ -637,12 +637,13 @@ static void mslStreamDVDCallback(s32 result, void* user) {
         }
         stream->channels[1]->readOffset = secondBytes;
       }
-      state = 4;
       duration = stream->channels[0]->unk2C;
       stream->durationMs = duration;
       stream->elapsedTicks = 0;
       if (preloaded) {
-        state = 5;
+        state = preloadingAfterRead;
+      } else {
+        state = activatingAfterRead;
       }
       stream->state = state;
       stream->channels[0]->seeking = 1;
@@ -754,11 +755,7 @@ static inline void mslStreamChannelFill(mslStreamChannel* channel) {
   u32 halfBytes;
 
   readBytes = halfBytes = channel->bufferSize / 2;
-  if (channel->half) {
-    destination = (u8*)channel->buffer + halfBytes;
-  } else {
-    destination = channel->buffer;
-  }
+  destination = channel->half ? (u8*)channel->buffer + halfBytes : (u8*)channel->buffer;
   memset(destination, 0, halfBytes);
   if (channel->readOffset + readBytes > channel->readEnd) {
     if (channel->readEnd > channel->readOffset) {
@@ -828,7 +825,7 @@ static u32 mslStreamCallback(void* buffer1, u32 length1, void* buffer2,
   return channel->sampleCount / 2;
 }
 
-/* TODO: [near miss] 98.86%; entry zero sharing, pan narrowing and register allocation remain. */
+/* TODO: [near miss] 99.82%; two pan argument masks remain. */
 static int mslStreamActivate(mslStream* stream) {
   int rightActive = 1;
   int leftActive;
@@ -836,9 +833,7 @@ static int mslStreamActivate(mslStream* stream) {
   {
     mslStreamChannel* channel = stream->channels[0];
     u32 offset = 0;
-    if (channel->half) {
-      offset = channel->sampleCount >> 1;
-    }
+    offset = channel->half ? channel->sampleCount >> 1 : offset;
     sndStreamARAMUpdate(channel->streamID, offset, channel->sampleCount >> 1, 0, 0);
     channel->half ^= 1;
   }
@@ -858,11 +853,11 @@ static int mslStreamActivate(mslStream* stream) {
       pan = mkMusyXPan(settings->pan);
     }
     channelPan = channel->pan;
-    channelPan = mslMusyXScalePan(channelPan, pan);
+    channelPan = mslMusyXScalePan((u8)channelPan, pan);
     sndStreamMixParameterEx(channel->streamID, mslMusyXScale(streamVolume, volume), channelPan, 0, 0, 0);
     sndStreamFrq(channel->streamID, channel->frequency);
     sndStreamADPCMParameter(channel->streamID, &channel->adpcmInfo);
-    leftActive = sndStreamActivate(channel->streamID) != 0;
+    leftActive = !!sndStreamActivate(channel->streamID);
   }
   if (((stream->playback->asset->flags >> 1) & 7) == 2) {
     {
@@ -893,11 +888,11 @@ static int mslStreamActivate(mslStream* stream) {
         pan = mkMusyXPan(settings->pan);
       }
       channelPan = channel->pan;
-      channelPan = mslMusyXScalePan(channelPan, pan);
+      channelPan = mslMusyXScalePan((u8)channelPan, pan);
       sndStreamMixParameterEx(channel->streamID, mslMusyXScale(streamVolume, volume), channelPan, 0, 0, 0);
       sndStreamFrq(channel->streamID, channel->frequency);
       sndStreamADPCMParameter(channel->streamID, &channel->adpcmInfo);
-      rightActive = sndStreamActivate(channel->streamID) != 0;
+      rightActive = !!sndStreamActivate(channel->streamID);
     }
   }
   mslStreamChannelFill(stream->channels[0]);
