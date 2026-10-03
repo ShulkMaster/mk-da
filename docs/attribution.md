@@ -26,3 +26,17 @@ runtime (`Runtime.PPCEABI.H`).
 
 The Sonic Heroes code is distributed under the MIT License; see
 [MIT.lic](MIT.lic).
+
+## Pikmin
+
+Thanks to the projectPiki team, whose Pikmin decompilation provided the HVQM4
+video decoder (`hvqm4dec.c`). Source files copied from it carry this notice at
+the top of the file. Do not add it to headers.
+
+```c
+/*
+ * This project builds on work from the Pikmin decompilation project.
+ * Credit and thanks to the projectPiki contributors.
+ * https://github.com/projectPiki/pikmin
+ */
+```

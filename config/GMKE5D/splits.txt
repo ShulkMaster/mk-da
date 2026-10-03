@@ -862,3 +862,55 @@ musyx/runtime/hw_dolphin.c:
 
 musyx/runtime/hw_memory.c:
 	.text       start:0x80224C40 end:0x80224C94
+
+hvqm4/HVQM4Bufa.c:
+	extab       start:0x8000569C end:0x800056DC
+	extabindex  start:0x80005910 end:0x80005970
+	.text       start:0x80224C94 end:0x80225038
+	.rodata     start:0x80247D40 end:0x80247D80
+
+hvqm4/HVQM4Bufv.c:
+	extab       start:0x800056DC end:0x8000571C
+	extabindex  start:0x80005970 end:0x800059D0
+	.text       start:0x80225038 end:0x80225484
+	.rodata     start:0x80247D80 end:0x80247DC0
+
+hvqm4/hvqm4play.c:
+	extab       start:0x8000571C end:0x8000575C
+	extabindex  start:0x800059D0 end:0x80005A30
+	.text       start:0x80225484 end:0x80226498
+	.rodata     start:0x80247DC0 end:0x80247EF8
+	.bss        start:0x80419960 end:0x80419C70
+	.sdata      start:0x8041B918 end:0x8041B920
+	.sbss       start:0x8041D2D0 end:0x8041D330
+
+hvqm4/HVQM4PlayerEx.c:
+	extab       start:0x8000575C end:0x800057BC
+	extabindex  start:0x80005A30 end:0x80005AC0
+	.text       start:0x80226498 end:0x802279B0
+	.rodata     start:0x80247EF8 end:0x80247FE0
+	.sdata      start:0x8041B920 end:0x8041B924
+	.sbss       start:0x8041D330 end:0x8041D33C
+
+hvqm4/HVQM4Adpcm.c:
+	.text       start:0x80228844 end:0x80228C84
+	.data       start:0x802A1BB8 end:0x802A29A0
+	.sbss       start:0x8041D348 end:0x8041D350
+
+hvqm4/HVQM4Pcm16.c:
+	.text       start:0x80228C84 end:0x80228F0C
+
+hvqm4/HVQM4Adp8x.c:
+	.text       start:0x80228F0C end:0x8022901C
+	.data       start:0x802A29A0 end:0x802A35B0
+	.sbss       start:0x8041D350 end:0x8041D354
+
+hvqm4/HVQM4DecSnd.c:
+	.text       start:0x8022901C end:0x80229200
+
+hvqm4/hvqm4dec.c:
+	.text       start:0x80229200 end:0x8022E624
+	.rodata     start:0x80248220 end:0x80248238
+	.data       start:0x802A35B0 end:0x802A35BA
+	.bss        start:0x80419C70 end:0x8041A6B0
+	.sbss       start:0x8041D358 end:0x8041D360
