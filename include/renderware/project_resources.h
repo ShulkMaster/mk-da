@@ -21,5 +21,8 @@ s32 _rwResHeapInit(ResmemHeap8* unk00, s32 unk04);
 s32 _rwResHeapClose(ResmemHeap8* unk00);
 void* _rwResHeapAlloc(ResmemHeap8* unk00, u32 unk04);
 void _rwResHeapFree(void* unk00);
+s32 RwResourcesFreeResEntry(u8* unk00);
+s32 RwResourcesEmptyArena(void);
+void _rwResourcesPurge(void);
 
 #endif

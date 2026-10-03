@@ -20,5 +20,7 @@ typedef s32 (*ProjectRegistryRights)(void*, s32, s32, u32);
 s32 _rwPluginRegistryAddPlgnStrmRightsCB(u8* arg0, u32 arg1, ProjectRegistryRights arg2);
 
 u32 _rwPluginRegistryGetSize(u8* arg0, const void* arg1);
+u8* _rwPluginRegistryDeInitObject(u8* arg0, void* arg1);
+u8* _rwPluginRegistryInitObject(u8* arg0, void* arg1);
 
 #endif

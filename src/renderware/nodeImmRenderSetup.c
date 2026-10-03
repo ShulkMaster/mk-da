@@ -1,14 +1,11 @@
-/* #audit 2026-10-03T06:02Z clean-room PASS (audit) */
+/* #audit 2026-10-03T06:09Z clean-room FIXED (audit) */
 #include <renderware/project_pipeline.h>
 #include <renderware/project_renderstate.h>
 #include <renderware/project_node_defs.h>
 
 extern ProjectRenderState* RxRenderStateVectorCreate(s32 arg0);
 extern u8* RxPacketCreate(const u8* arg0);
-extern u8* RxClusterLockWrite(u8* arg0, u32 arg1, u8* arg2);
 extern u8* RxClusterSetExternalData(u8* arg0, void* arg1, u32 arg2, u32 arg3);
-extern u8* RxClusterInitializeData(u8* arg0, u32 arg1, u16 arg2);
-extern u8* _rxEmbeddedPacketBetweenNodes(u8* arg0, u8* arg1, u32 arg2);
 
 static inline void projectSetupForward(u8* unk00, u32 unk04) {
   u8* unk08 = *(u8**)_rxExecCtxGlobal;

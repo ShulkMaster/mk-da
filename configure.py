@@ -678,7 +678,7 @@ config.libs = [
             Object(NonMatching, "renderware/baframe.c"),
             Object(NonMatching, "renderware/baimage.c"),
             Object(Matching, "renderware/baimras.c"),
-            Object(NonMatching, "renderware/baraster.c"),
+            Object(Matching, "renderware/baraster.c"),
             Object(NonMatching, "renderware/baresamp.c"),
             Object(NonMatching, "renderware/basync.c"),
             Object(Matching, "renderware/batypehf.c"),
