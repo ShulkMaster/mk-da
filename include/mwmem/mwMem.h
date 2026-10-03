@@ -25,8 +25,8 @@ typedef struct mwMemHeapParams {
 
 /* Filled by mwMemHeapGetInfo: retail stores 0x34 bytes. */
 typedef struct mwMemHeapInfo {
-  u32 unk00;
-  u32 unk04;
+  const char* name;
+  u8* start;
   u32 unk08;
   u32 unk0C;
   u32 unk10;
@@ -110,9 +110,9 @@ struct _mwMemHeap {
   u8 unk2D;
   u8 unk2E;
   u8 unk2F;
-  u32 unk30;
+  const char* name;
   u32 unk34;
-  u32 unk38;
+  u8* start;
   u8* end;
   u32 unk40;
   u32 unk44;

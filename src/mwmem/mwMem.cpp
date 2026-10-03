@@ -3,9 +3,7 @@
 #include <dolphin/os.h>
 #include <dolphin/os/OSAlloc.h>
 
-struct _memFreeHdr;
-struct _memUsedHdr;
-struct _mwMemHeap;
+u32 mwMEM_VIRTUAL_HEAP_SIZE = 0x8F;
 
 _mwMemHeap* HeapList;
 _mwMemHeap* SystemHeap;
@@ -15,6 +13,7 @@ static _mwMemHeap* mwMemSystemOverflowHeap;
 static OSHeapHandle GameCubeSystemHeap;
 static u8 heapIndex;
 static void* OsSystemHeap;
+static int SystemInitialize;
 static void* systemDebugCallbackFunc[3];
 static void privResetHeap(_mwMemHeap*, int);
 enum mwMemEnumAlign {
@@ -43,7 +42,6 @@ static void privDeleteBlockFixedBlock(_mwMemHeap* heap, _memUsedHdr* block);
 static void privAllocHeap(_mwMemHeap* heap, _mwMemHeap* parent, unsigned int size,
                           const char* name, mwMemHeapType type,
                           unsigned int value60, unsigned int blockSize);
-static inline u32 mwMemUsedPayloadSize(_memUsedHdr* block, s32* extra);
 static inline u32 mwMemUsedBlockFootprint(_memUsedHdr* block);
 static inline u32 mwMemFixedBlockCount(_mwMemHeap* heap);
 static void privWipeHeap(_mwMemHeap *);
@@ -52,14 +50,57 @@ static int privInitSystemHeap(unsigned int size);
 static void privWipeHeapHierarchy(_mwMemHeap *);
 static inline mwMemEnumAlign mwMemAlignmentBits(s32 alignment);
 
-/* TODO: [borked] 0.00%; placeholder stub, body not started. */
-extern "C" void mwMemSystemCreate(void) {}
+extern "C" int mwMemSystemCreate(u32 size, const mwMemSystemParams* params) {
+  HeapList = NULL;
+  if (SystemInitialize == 0) {
+    mwMemSystemSetParams(params);
+    SystemInitialize = privInitSystemHeap(size);
+  }
+  return SystemInitialize;
+}
 
-/* TODO: [borked] 0.00%; placeholder stub, body not started. */
-extern "C" void mwMemHeapWipe(void) {}
+extern "C" int mwMemHeapWipe(_mwMemHeap* heap) {
+  if (HeapList == NULL) {
+    return 1;
+  }
+  if (heap == NULL) {
+    heap = HeapList;
+    do {
+      _mwMemHeap* next = heap->next;
+      if (heap != SystemHeap) {
+        privWipeHeapHierarchy(heap);
+      }
+      heap = next;
+    } while (heap != NULL);
+  } else {
+    privWipeHeapHierarchy(heap);
+  }
+  return 1;
+}
 
-/* TODO: [borked] 0.00%; placeholder stub, body not started. */
-static void privWipeHeapHierarchy(_mwMemHeap *) {}
+static void privWipeHeapHierarchy(_mwMemHeap* heap) {
+  if (heap != NULL && heap->marker == 0xBEABBEAB) {
+    if (heap->children == NULL) {
+      privWipeHeap(heap);
+    } else {
+      _mwMemHeap* current;
+      do {
+        current = heap;
+        while (current->children != NULL && current->children->unk6D == 0) {
+          while (current->children != NULL && current->children->unk6D == 0) {
+            current = current->children;
+          }
+          while (current->sibling != NULL && current->sibling->unk6D == 0) {
+            current = current->sibling;
+          }
+        }
+        if (current->unk6D == 0) {
+          privWipeHeap(current);
+        }
+      } while (current != heap);
+    }
+  }
+}
 
 extern "C" int mwMemSystemSetHeap(s32 heapKind, _mwMemHeap* heap) {
   if (mwMemIsHeapValid(heap) == 1) {
@@ -161,8 +202,8 @@ extern "C" int mwMemSystemGetDefaultParams(mwMemSystemParams* params) {
 extern "C" int mwMemHeapGetInfo(_mwMemHeap* heap, mwMemHeapInfo* info) {
   int result;
   if (mwMemIsHeapValid(heap) == 1 && info != NULL) {
-    info->unk00 = heap->unk30;
-    info->unk04 = heap->unk38;
+    info->name = heap->name;
+    info->start = heap->start;
     info->unk08 = (u32)heap->end;
     info->unk0C = heap->unk34;
     info->unk10 = heap->type;
@@ -181,10 +222,89 @@ extern "C" int mwMemHeapGetInfo(_mwMemHeap* heap, mwMemHeapInfo* info) {
   return result;
 }
 
-/* TODO: [borked] 0.47%; typed placeholder, body not started. */
+static inline u32 mwMemFixedHeapAllocationSize(const mwMemFixedHeapConfig* fixed) {
+  if (fixed != NULL) {
+    u32 mask = (1U << mwMemAlignmentBits(fixed->alignment)) - 1;
+    return fixed->count * (((fixed->blockSize + mask) & ~mask) + sizeof(_memUsedHdr)) + 0x7F;
+  }
+  return 0;
+}
+
+static inline int mwMemCopyHeapParams(_mwMemHeap* heap, mwMemHeapParams* params) {
+  if (mwMemIsHeapValid(heap) == 1 && params != NULL) {
+    params->allocationCallback = heap->allocationCallback;
+    params->unk04 = heap->unk64;
+    params->unk08 = heap->unk68;
+    params->unk0C = heap->unk2E;
+    params->unk0D = heap->unk2F;
+    params->unk0E = heap->unk6C;
+    params->unk10 = heap->unk40;
+    params->unk14 = heap->unk44;
+    return 1;
+  }
+  return 0;
+}
+
+static inline u32 mwMemFixedHeapBlockSize(const mwMemFixedHeapConfig* fixed) {
+  u32 mask = (1U << mwMemAlignmentBits(fixed->alignment)) - 1;
+  return (fixed->blockSize + mask) & ~mask;
+}
+
 extern "C" _mwMemHeap* _mwMemHeapCreate(const mwMemHeapConfig* config,
                                       const mwMemHeapParams* params,
-                                      const char* file, s32 line) {}
+                                      const char* file, s32 line) {
+  u32 usable;
+  _mwMemHeap* heap;
+  _mwMemHeap* parent;
+  mwMemHeapType type;
+  const char* name;
+  u32 extraSize;
+  if (config != NULL) {
+    type = (mwMemHeapType)config->type;
+    parent = config->parent;
+    u32 size = config->size;
+    name = config->name;
+    u32 extraHeaders = config->unk18;
+    if (type == 2) {
+      if (config->fixed != NULL) {
+        size = mwMemFixedHeapAllocationSize(config->fixed);
+      } else {
+        size = 0;
+      }
+    }
+    if (size == 0) {
+      return NULL;
+    }
+    usable = size + extraHeaders * sizeof(_memUsedHdr);
+    usable = (usable - sizeof(_mwMemHeap)) & ~15U;
+    heap = (_mwMemHeap*)_mwMemMallocVirtual(parent,
+        (usable + sizeof(_mwMemHeap) + 15) & ~15U, 16, name, file, line, 0);
+    u32 blockSize;
+    if (type == 2) {
+      mwMemFixedHeapConfig* fixed = config->fixed;
+      blockSize = mwMemFixedHeapBlockSize(fixed);
+      if (fixed->blockSize > fixed->unk0C) {
+        extraSize = fixed->unk0C;
+      } else {
+        extraSize = 0;
+      }
+    } else {
+      extraSize = 0;
+      blockSize = 0;
+    }
+    privAllocHeap(heap, parent, usable, name, type, extraSize, blockSize);
+    mwMemHeapSetParams(heap, params);
+    if (type == 2) {
+      mwMemHeapParams fixedParams;
+      mwMemCopyHeapParams(heap, &fixedParams);
+      fixedParams.unk04 = blockSize;
+      mwMemHeapSetParams(heap, &fixedParams);
+    }
+  } else {
+    heap = NULL;
+  }
+  return heap;
+}
 
 extern "C" void mwMemHeapGetMaxFreeBlock(_mwMemHeap* heap, u32* maxSize, u32* blockCount) {
   _memFreeHdr* block = heap->freeBlocks;
@@ -216,11 +336,12 @@ extern "C" int mwMemIsHeapValid(_mwMemHeap* heap) {
   return result;
 }
 
-/* TODO: [borked] 11.11%; placeholder stub, body not started. */
 extern "C" void* _mwMemMalloc(struct _mwMemHeap* heap, u32 size, s32 alignment,
-                              const char* label, const char* file, s32 line) {}
+                              const char* label, const char* file, s32 line) {
+  return _mwMemMallocVirtual(heap, size, alignment, label, file, line, 0);
+}
 
-/* TODO: [near miss] 98.86%; footprint arithmetic and incomplete string-pool offsets remain. */
+/* TODO: [near miss] 99.96%; one commuted addition remains. */
 extern "C" void* _mwMemMallocVirtual(_mwMemHeap* heap, u32 size, s32 alignment,
                                     const char* label, const char* file,
                                     s32 line, u32 flags) {
@@ -272,7 +393,7 @@ extern "C" void* _mwMemMallocVirtual(_mwMemHeap* heap, u32 size, s32 alignment,
   }
   if (result == NULL && heap->unk6C == 1) {
     MEMPRINT(">> OVERFLOW_HEAP: size: %f K heap: %s, file: %s L: %d\n",
-             (float)size / 1024.0f, (const char*)heap->unk30, file, line);
+             (float)size / 1024.0f, heap->name, file, line);
     heap->unk2D = 1;
     if (mwMemIsHeapValid(mwMemSystemOverflowHeap) == 1) {
       heap = mwMemSystemOverflowHeap;
@@ -282,7 +403,7 @@ extern "C" void* _mwMemMallocVirtual(_mwMemHeap* heap, u32 size, s32 alignment,
   if (result == NULL) {
     MEMPRINT(">> Out of RAM \n");
     MEMPRINT("      FAILURE:  cannot allocate: %f K  from heap: %s\n",
-             (float)size / 1024.0f, (const char*)heap->unk30);
+             (float)size / 1024.0f, heap->name);
   }
   if (result != NULL) {
     u32 offset = *((u8*)result - 1) + sizeof(_memUsedHdr);
@@ -303,6 +424,41 @@ extern "C" void* _mwMemMallocVirtual(_mwMemHeap* heap, u32 size, s32 alignment,
   return result;
 }
 
+/* TODO: [blocked] Retail body stripped; only diagnostic literals are known. */
+static void mwMemCopy(const char* file, s32 line, u32 sourceStart,
+                      u32 sourceEnd, u32 destinationStart, u32 destinationEnd) {
+  MEMPRINT("Error: mwMemCopy() file:%s line:%d \n", file, line);
+  MEMPRINT("        src start: 0x%08x   src end: 0x%08x\n", sourceStart, sourceEnd);
+  MEMPRINT("       dest start: 0x%08x  dest end: 0x%08x\n", destinationStart, destinationEnd);
+  MEMPRINT("       src and dest are overlapping, please use mwMemMove() \n");
+  MEMPRINT("       src and dest are overlapping, src == dest \n");
+  MEMPRINT("ERROR: mwMemCopy() file:%s line:%d \n\r", file, line);
+  MEMPRINT("ERROR: mwMemCopy() file:%s line:%d \n", file, line);
+}
+
+/* TODO: [blocked] Retail body stripped; only diagnostic literals are known. */
+static void mwMemSet(const char* file, s32 line) {
+  MEMPRINT("ERROR: mwMemSet() file:%s line:%d \n\r", file, line);
+}
+
+/* TODO: [blocked] Retail body stripped; only diagnostic literals are known. */
+static void mwMemMove(const char* file, s32 line, u32 sourceStart,
+                      u32 sourceEnd, u32 blockStart, u32 blockEnd,
+                      u32 destinationStart, u32 destinationEnd) {
+  MEMPRINT("ERROR: mwMemMove() file:%s line:%d \n\r", file, line);
+  MEMPRINT("       src pointer is inside a freed block!!! \n\r");
+  MEMPRINT("\n");
+  MEMPRINT("ERROR: mwMemMove() file:%s line:%d \n", file, line);
+  MEMPRINT("       src is spanning a dynamic memory segment \n");
+  MEMPRINT("             src start: 0x%08x   src end: 0x%08x\n", sourceStart, sourceEnd);
+  MEMPRINT("\t\t mem block start: 0x%08x   blk end: 0x%08x\n", blockStart, blockEnd);
+  MEMPRINT("       check src size and pointer \n");
+  MEMPRINT("       dest pointer is inside a freed block!!! \n\r");
+  MEMPRINT("       dest is spanning a dynamic memory segment \n");
+  MEMPRINT("            dest start: 0x%08x  dest end: 0x%08x\n", destinationStart, destinationEnd);
+  MEMPRINT("       check dest size and pointer \n");
+}
+
 extern "C" void* _mwMemCalloc(_mwMemHeap* heap, u32 count, u32 elementSize,
                               s32 alignment, const char* label,
                               const char* file, s32 line) {
@@ -321,13 +477,131 @@ extern "C" void* _mwMemCalloc(_mwMemHeap* heap, u32 count, u32 elementSize,
   return result;
 }
 
-/* TODO: [borked] 1.27%; placeholder stub, body not started. */
 extern "C" void* _mwMemRealloc(void* ptr, struct _mwMemHeap* heap, u32 size,
                                s32 alignment, const char* label,
-                               const char* file, s32 line) {}
+                               const char* file, s32 line) {
+  s32 alignmentBits;
+  u32 oldSize;
+  void* result;
+  if (ptr == NULL) {
+    result = _mwMemMalloc(heap, size, alignment, label, file, line);
+  } else if (size != 0) {
+    _memUsedHdr* block = (_memUsedHdr*)((u8*)ptr -
+                         (((u8*)ptr)[-1] + sizeof(_memUsedHdr)));
+    if (block != NULL) {
+      alignmentBits = block->flags & 0xF;
+      oldSize = block->size - block->unusedBytes;
+      s32 extra;
+      if (alignmentBits == 4 || alignmentBits == 0) {
+        extra = 0;
+      } else {
+        extra = 1 << alignmentBits;
+      }
+      oldSize -= extra;
+    } else {
+      oldSize = 0;
+    }
+    result = _mwMemMalloc(heap, size, alignment, label, file, line);
+    if (result != NULL) {
+      u32 copySize = size > oldSize ? oldSize : size;
+      result = memcpy(result, ptr, copySize);
+      _mwMemFree(ptr, NULL, 0);
+    }
+  } else {
+    result = NULL;
+    _mwMemFree(ptr, NULL, 0);
+  }
+  return result;
+}
 
-/* TODO: [borked] 0.55%; placeholder stub, body not started. */
-extern "C" void _mwMemFree(void* ptr, const char* file, s32 line) {}
+static inline _memUsedHdr* mwMemAllocationHeader(void* ptr) {
+  return (_memUsedHdr*)((u8*)ptr - (((u8*)ptr)[-1] + sizeof(_memUsedHdr)));
+}
+
+static inline _mwMemHeap* mwMemFindHeapForHeader(_memUsedHdr* block) {
+  if (HeapList == NULL) {
+    return NULL;
+  }
+  _mwMemHeap* heap = SystemHeap;
+  _mwMemHeap* previous = heap;
+  do {
+    if ((u8*)block >= heap->start && (u8*)block <= heap->end) {
+      previous = heap;
+      if (heap->children != NULL) {
+        heap = heap->children;
+      } else {
+        return heap;
+      }
+    } else {
+      _mwMemHeap* sibling = heap->sibling;
+      if (sibling != NULL) {
+        heap = sibling;
+      } else {
+        return previous;
+      }
+    }
+  } while (heap != NULL);
+  return NULL;
+}
+
+static inline void mwMemUnlinkUsedBlock(_mwMemHeap* heap, _memUsedHdr* block) {
+  _memUsedHdr* previous = block->previous;
+  if (previous == NULL && block->next == NULL) {
+    heap->usedBlocks = NULL;
+  } else if (previous == NULL && block->next != NULL) {
+    heap->usedBlocks = block->next;
+    heap->usedBlocks->previous = NULL;
+  } else if (previous != NULL && block->next == NULL) {
+    previous->next = NULL;
+  } else {
+    _memUsedHdr* next = block->next;
+    previous->next = next;
+    next->previous = previous;
+  }
+}
+
+/* TODO: [near miss] 99.94%; shared footprint addition operand order remains. */
+void _mwMemFree(void* ptr, const char* file, s32 line) {
+  if (ptr != NULL) {
+    _memUsedHdr* ownershipBlock = mwMemAllocationHeader(ptr);
+    _mwMemHeap* statisticsHeap = mwMemFindHeapForHeader(ownershipBlock);
+    u8* bytes = (u8*)ptr;
+    u32 footprint = mwMemUsedBlockFootprint(
+        (_memUsedHdr*)(bytes - (bytes[-1] + sizeof(_memUsedHdr))));
+    statisticsHeap->unk48 -= footprint;
+    if (statisticsHeap->unk48 > statisticsHeap->unk4C) {
+      statisticsHeap->unk4C = statisticsHeap->unk48;
+    }
+    statisticsHeap->unk54--;
+    if (statisticsHeap->unk54 > statisticsHeap->unk58) {
+      statisticsHeap->unk58 = statisticsHeap->unk54;
+    }
+    statisticsHeap->unk5C += footprint;
+    _mwMemHeap* heap;
+    _memUsedHdr* const block = mwMemAllocationHeader(ptr);
+    if (block != NULL) {
+      heap = mwMemFindHeapForHeader(block);
+      if (heap != NULL) {
+        if (heap->type == 2) {
+          privDeleteBlockFixedBlock(heap, block);
+        } else {
+          mwMemUnlinkUsedBlock(heap, block);
+          privReturnUsedBlockToFreeList(heap, block);
+          block->flags |= 0x20;
+          _memFreeHdr* freeBlock =
+              privCoalesceFreeBlocksBoundaryTags(heap, (_memFreeHdr*)block);
+          *(_memFreeHdr**)((u8*)freeBlock + freeBlock->size + 0xC) = freeBlock;
+          freeBlock->flags |= 0x20;
+          _memUsedHdr* following = (_memUsedHdr*)((u8*)freeBlock +
+                                   freeBlock->size + sizeof(*freeBlock));
+          if (heap->end != (u8*)following) {
+            following->flags |= 0x10;
+          }
+        }
+      }
+    }
+  }
+}
 
 /* ELF pool starts with the revision text followed by the heap name. */
 static int privInitSystemHeap(unsigned int size) {
@@ -359,10 +633,45 @@ static int privInitSystemHeap(unsigned int size) {
   return 1;
 }
 
-/* TODO: [borked] 0.00%; placeholder stub, body not started. */
-static void privWipeHeap(_mwMemHeap *) {}
+/* TODO: [near miss] 99.80%; padded-address register allocation remains. */
+static void privWipeHeap(_mwMemHeap* heap) {
+  u8* address;
+  int mask;
+  _mwMemHeap* child;
+  _memUsedHdr* block;
+  int release;
+  if (heap != NULL && heap->marker == 0xBEABBEAB) {
+    block = heap->usedBlocks;
+    while (block != NULL) {
+      mask = block->flags & 0xF;
+      address = (u8*)(block + 1);
+      mask = 1 << mask;
+      address += --mask;
+      address = (u8*)((u32)address & ~mask);
+      release = 1;
+      child = heap->children;
+      if (child != NULL) {
+        _mwMemHeap* entry = child;
+        while (entry != NULL) {
+          if ((void*)address == entry) {
+            release = 0;
+            break;
+          }
+          entry = entry->sibling;
+        }
+      }
+      if (release == 1) {
+        _mwMemFree(address, NULL, 0);
+        block = heap->usedBlocks;
+      } else {
+        block = block->next;
+      }
+    }
+    privResetHeap(heap, 1);
+  }
+}
 
-/* TODO: [near miss] 96.89%; register allocation and arithmetic scheduling remain. */
+/* TODO: [near miss] 98.15%; register allocation and arithmetic scheduling remain. */
 static void privResetHeap(_mwMemHeap* heap, int retainUsed) {
   _memUsedHdr* current;
   if (heap == NULL) {
@@ -371,13 +680,13 @@ static void privResetHeap(_mwMemHeap* heap, int retainUsed) {
   if (heap->type == 2) {
     _memUsedHdr* previous;
     heap->usedBlocks = previous = NULL;
-    heap->freeBlocks = (_memFreeHdr*)heap->unk38;
-    heap->freeTail = (_memFreeHdr*)heap->unk38;
+    heap->freeBlocks = (_memFreeHdr*)heap->start;
+    heap->freeTail = (_memFreeHdr*)heap->start;
     heap->unk6D = 1;
     _memFreeHdr* extent = heap->freeBlocks;
-    extent->previous = NULL;
-    extent->next = NULL;
-    extent->size = heap->end - ((u8*)heap->unk38 + 0x10);
+    extent->previous = (_memFreeHdr*)previous;
+    extent->next = (_memFreeHdr*)previous;
+    extent->size = heap->end - (heap->start + sizeof(_memFreeHdr));
     extent->unk0C[0] = 0;
     extent->flags = 0;
     extent->flags &= 0xF0;
@@ -387,10 +696,10 @@ static void privResetHeap(_mwMemHeap* heap, int retainUsed) {
     extent->flags |= 0x20;
     extent->unk0C[1] = 0;
     heap->unk48 = 0;
-    heap->unk50 = extent->size + 0x10;
+    heap->unk50 = extent->size + sizeof(_memFreeHdr);
     heap->unk54 = 0;
-    heap->unk5C = extent->size + 0x10;
-    current = (_memUsedHdr*)heap->unk38;
+    heap->unk5C = extent->size + sizeof(_memFreeHdr);
+    current = (_memUsedHdr*)heap->start;
     u32 count = mwMemFixedBlockCount(heap);
     for (u32 i = 0; i < count; i++) {
       current->previous = previous;
@@ -404,7 +713,7 @@ static void privResetHeap(_mwMemHeap* heap, int retainUsed) {
       *(_memUsedHdr**)((u8*)current + current->size + 0xC) = current;
       current->flags |= 0x20;
       _memUsedHdr* next = (_memUsedHdr*)((u8*)current + heap->unk64);
-      next = (_memUsedHdr*)((u8*)next + 0x10);
+      next = (_memUsedHdr*)((u8*)next + sizeof(_memUsedHdr));
       current->next = next;
       previous = current;
       current = next;
@@ -415,13 +724,13 @@ static void privResetHeap(_mwMemHeap* heap, int retainUsed) {
   } else {
     if (retainUsed == 0) {
       heap->usedBlocks = NULL;
-      heap->freeBlocks = (_memFreeHdr*)heap->unk38;
-      heap->freeTail = (_memFreeHdr*)heap->unk38;
+      heap->freeBlocks = (_memFreeHdr*)heap->start;
+      heap->freeTail = (_memFreeHdr*)heap->start;
       heap->unk6D = 1;
       _memFreeHdr* extent = heap->freeBlocks;
       extent->previous = NULL;
       extent->next = NULL;
-      extent->size = heap->end - ((u8*)heap->unk38 + 0x10);
+      extent->size = heap->end - (heap->start + sizeof(_memFreeHdr));
       extent->unk0C[0] = 0;
       extent->flags = 0;
       extent->flags &= 0xF0;
@@ -432,9 +741,9 @@ static void privResetHeap(_mwMemHeap* heap, int retainUsed) {
       extent->unk0C[1] = 0;
     }
     heap->unk48 = 0;
-    heap->unk50 = heap->end - (u8*)heap->unk38;
+    heap->unk50 = heap->end - heap->start;
     heap->unk54 = 0;
-    heap->unk5C = heap->end - (u8*)heap->unk38;
+    heap->unk5C = heap->end - heap->start;
     current = heap->usedBlocks;
     while (current != NULL) {
       u32 footprint = mwMemUsedBlockFootprint(current);
@@ -458,9 +767,9 @@ static void privAllocHeap(_mwMemHeap* heap, _mwMemHeap* parent, unsigned int siz
                           unsigned int value60, unsigned int blockSize) {
   if (heap != NULL) {
     u8* start = (u8*)heap + 0x70;
-    heap->unk38 = (u32)start;
+    heap->start = start;
     heap->end = start + size;
-    heap->unk30 = (u32)name;
+    heap->name = name;
     heap->marker = 0xBEABBEAB;
     heap->unk2C = ++heapIndex;
     heap->unk34 = size;
@@ -470,8 +779,8 @@ static void privAllocHeap(_mwMemHeap* heap, _mwMemHeap* parent, unsigned int siz
     heap->allocationCallback = 0;
     heap->unk60 = value60;
     heap->unk64 = blockSize;
-    heap->freeBlocks = (_memFreeHdr*)heap->unk38;
-    heap->freeTail = (_memFreeHdr*)heap->unk38;
+    heap->freeBlocks = (_memFreeHdr*)heap->start;
+    heap->freeTail = (_memFreeHdr*)heap->start;
     privResetHeap(heap, 0);
     heap->unk4C = 0;
     heap->unk58 = 0;
@@ -695,13 +1004,12 @@ static inline void mwMemUnlinkFreeBlock(_mwMemHeap* heap, _memFreeHdr* block) {
   }
 }
 
-/* TODO: [near miss] 99.24%; register allocation remains. */
+/* TODO: [near miss] 99.61%; register allocation remains. */
 static _memFreeHdr* privCoalesceFreeBlocksBoundaryTags(_mwMemHeap* heap,
                                                       _memFreeHdr* block) {
   _memFreeHdr* following;
   u32 size;
   u32 previousFree;
-  _memFreeHdr* previous;
   u32 nextFree;
   size = block->size;
   nextFree = 0;
@@ -713,24 +1021,41 @@ static _memFreeHdr* privCoalesceFreeBlocksBoundaryTags(_mwMemHeap* heap,
   if (block->next == NULL && block->previous == NULL) {
   } else if (block->next != NULL && block->previous == NULL) {
     if (following == block->next) {
-      block->size = (size + 16) + block->next->size;
-      mwMemUnlinkFreeBlock(heap, block->next);
+      block->size = (size + sizeof(_memFreeHdr)) + block->next->size;
+      {
+        _memFreeHdr* nextHeader = block->next;
+        _memFreeHdr* savedPrevious = nextHeader->previous;
+        if (savedPrevious == NULL && nextHeader->next == NULL) {
+          heap->freeBlocks = NULL;
+          heap->freeTail = NULL;
+        } else if (savedPrevious == NULL && nextHeader->next != NULL) {
+          heap->freeBlocks = nextHeader->next;
+          heap->freeBlocks->previous = NULL;
+        } else if (savedPrevious != NULL && nextHeader->next == NULL) {
+          savedPrevious->next = NULL;
+          heap->freeTail = savedPrevious;
+        } else {
+          _memFreeHdr* savedNext = nextHeader->next;
+          savedPrevious->next = savedNext;
+          savedNext->previous = savedPrevious;
+        }
+      }
     }
   } else if (block->next == NULL && block->previous != NULL) {
-    previous = block->previous;
+    _memFreeHdr* previous = block->previous;
     if ((u8*)previous + previous->size + sizeof(*previous) == (u8*)block) {
-      previous->size = (size + 16) + previous->size;
+      previous->size = (size + sizeof(_memFreeHdr)) + previous->size;
       mwMemUnlinkFreeBlock(heap, block);
       block = block->previous;
     }
   } else {
     if (nextFree == 1) {
-      block->size = (size + 16) + following->size;
+      block->size = (size + sizeof(_memFreeHdr)) + following->size;
       mwMemUnlinkFreeBlock(heap, following);
     }
     if (previousFree == 1) {
-      previous = block->previous;
-      previous->size = (block->size + 16) + previous->size;
+      _memFreeHdr* previous = block->previous;
+      previous->size = (block->size + sizeof(_memFreeHdr)) + previous->size;
       mwMemUnlinkFreeBlock(heap, block);
       block = previous;
     }
@@ -862,25 +1187,21 @@ static inline void* mwMemTakeFixedBlock(_mwMemHeap* heap) {
   return result;
 }
 
-static inline u32 mwMemUsedPayloadSize(_memUsedHdr* block, s32* extra) {
-  s32 alignment = block->flags & 0xF;
-  *extra = alignment == 4 ? 0 : (1 << alignment);
-  return block->size - block->unusedBytes - *extra;
-}
-
 static inline u32 mwMemUsedBlockFootprint(_memUsedHdr* block) {
   if (block != NULL) {
-    u32 size;
-    s32 extra;
-    size = mwMemUsedPayloadSize(block, &extra);
-    u32 overhead = extra + 0x10;
-    return size + overhead;
+    s32 alignment = block->flags & 0xF;
+    u32 size = block->size - block->unusedBytes;
+    s32 extra = alignment == 4 ? 0 : (1 << alignment);
+    size -= extra;
+    u32 overhead = extra + sizeof(*block);
+    overhead += size;
+    return overhead;
   }
   return 0;
 }
 
 static inline u32 mwMemFixedBlockCount(_mwMemHeap* heap) {
-  u32 bytes = heap->end - (u8*)heap->unk38;
+  u32 bytes = heap->end - heap->start;
   return bytes / (heap->unk64 + sizeof(_memUsedHdr));
 }
 

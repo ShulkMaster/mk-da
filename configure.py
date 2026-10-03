@@ -656,8 +656,8 @@ config.libs = [
         ],
         "progress_category": "midway",
         "objects": [
-            Object(NonMatching, "msl/mslMusyX.c"),
-            Object(NonMatching, "msl/mslMusyXStream.c"),
+            Object(NonMatching, "msl/mslMusyX.c", extra_cflags=["-inline noauto,deferred", "-pragma \"inline_max_size(512)\""]),
+            Object(Matching, "msl/mslMusyXStream.c", extra_cflags=["-inline noauto,deferred", "-pragma \"inline_max_size(512)\""]),
             Object(Matching, "msl/mslMusyXUtil.c", extra_cflags=["-opt nopropagation"]),
             Object(Matching, "msl/mslMem.c"),
             Object(Matching, "msl/mslbus.c", extra_cflags=["-inline auto,deferred"]),
