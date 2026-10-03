@@ -55,7 +55,37 @@ static void (*MusyXDMACallback)(void);
 static u32 gSoundSystemCount;
 static u32 mslInitialized;
 
-static inline int mslSoundInSystem(mslSoundSystem* sys, mslSound* sound) {
+void mslUnknownVectorInitializer(mslListenerState* mic) {
+  SND_FVECTOR up = { 0.0f, 1.0f, 0.0f };
+  sndUpdateListener(&mic->listener, &mic->position, &mic->direction,
+                    &mic->heading, &up, mic->volume, NULL);
+}
+
+void mslPicker(void) {
+  printf("mslPicker");
+}
+
+void mslBusPrepRespond(s32 error) {
+  printf("mslBusPrepRespond: ERR code %d\n", error);
+}
+
+void mslBusAddSoundAt(s32 time) {
+  printf("mslBusAddSoundAt UNSUPPORTED time %d, using MSL_TIME_NOW instead\n", time);
+}
+
+void mslBankSoundGetID(void* sound) {
+  printf("mslBankSoundGetID invalid mbs %x\n", sound);
+}
+
+void mslBankSoundGetName(void) {
+  printf("mslBankSoundGetName NULL sound\n");
+}
+
+void mslBusPrepFailure(const char* name) {
+  printf("mslBusPrepRespond: Unable to create sound instance for \"%s\".\n", name);
+}
+
+int mslSoundInSystem(mslSoundSystem* sys, mslSound* sound) {
   u32* words = (u32*)sys->sounds;
   mslSound* end = sys->sounds + sys->soundCount;
   u32* start = (u32*)sys->sounds;
@@ -71,6 +101,115 @@ static inline int mslSoundInSystem(mslSoundSystem* sys, mslSound* sound) {
     return 0;
   }
   return 1;
+}
+
+void mslBankAddSound(mslSound* sound) {
+  printf("mslBankAddSound ms pointer out of bounds %x\n", sound);
+}
+
+mslPlayback* mslPlaybackPoolAlloc(mslSoundSystem* sys) {
+  mslPlayback* playback;
+  mslPlayback* last;
+  mslPlayback* candidate;
+
+  if (sys == NULL) {
+    printf("mslPlaybackPoolAlloc: NULL msi\n");
+    return NULL;
+  }
+  disableIRQ();
+  last = sys->playbacks + (sys->playbackCount - 1);
+  candidate = sys->nextFreePlayback;
+  if (candidate == NULL) {
+    for (candidate = sys->playbacks; candidate <= last; candidate++) {
+      if (!candidate->streamFlags.unk80) {
+        break;
+      }
+    }
+    if (candidate > last) {
+      playback = NULL;
+      goto done;
+    }
+  }
+  playback = candidate;
+  do {
+    candidate++;
+    if (candidate > last) {
+      candidate = sys->playbacks;
+    }
+  } while (candidate->streamFlags.unk80 && candidate != playback);
+  if (candidate == playback) {
+    candidate = NULL;
+  }
+  sys->nextFreePlayback = candidate;
+done:
+  if (playback != NULL) {
+    memset(playback, 0, sizeof(*playback));
+    playback->streamFlags.unk80 = 1;
+  }
+  enableIRQ();
+  return playback;
+}
+
+void mslPlaybackPoolFree(mslSoundSystem* system, mslPlayback* playback) {
+  if (system == NULL || playback == NULL) {
+    printf("mslPlaybackPoolFree: NULL pointer!  msi=%x mp=%x\n", system, playback);
+  } else {
+    disableIRQ();
+    playback->streamFlags.unk80 = 0;
+    enableIRQ();
+  }
+}
+
+void mslMicSetOrientation3(void* mic) {
+  printf("mslMicSetOrientation3: NULL mic\n");
+  printf("mslMicSetOrientation3: NOP; mic was not created with MSL_MIC_POSITION\n");
+}
+
+void mslMicSetOrientation2(void* mic) {
+  printf("mslMicSetOrientation2: NULL mic\n");
+  printf("mslMicSetOrientation2: NOP; mic was not created with MSL_MIC_POSITION\n");
+}
+
+void mslMicSetOrientation1(void* mic) {
+  printf("mslMicSetOrientation1: NULL mic\n");
+  printf("mslMicSetOrientation1: NOP; mic was not created with MSL_MIC_POSITION\n");
+}
+
+void mslMicSetPosition(void) {
+  printf("mslMicSetPosition: NULL mic\n");
+}
+
+void mslMicFree(void* mic) {
+  printf("mslMicFree %x already freed!\n", mic);
+  printf("mslMicFree: sndRemoveListener failed\n");
+}
+
+void mslMicNew(void) {
+  printf("mslMicNew: NULL mslSystem*\n");
+  printf("mslMicNew: no more free Mics\n");
+  printf("non-positional");
+  printf("position-only");
+  printf(" mics not yet supported; using POS and VOL\n");
+  printf("mslMicNew: sndAddListener failed\n");
+}
+
+void msl3DDynamicSoundPlay(void) {
+  printf("msl3DDynamicSoundPlay");
+  printf("Couldn't add 3D emmitter.\n");
+}
+
+void msl3DListenerDiagnostics(void) {
+  printf("Couldn't add listener.\n");
+  printf("Couldn't update listener\n");
+}
+
+void msl3DEmitterDiagnostics(void) {
+  printf("No emitter for this sound!\n");
+  printf("Couldn't update emitter\n");
+}
+
+void mslSoundNameDiagnostic(void) {
+  printf("<unknown>");
 }
 
 s32 mslTick(void) {
@@ -101,7 +240,6 @@ void mslSoundPlayAfterPrep(mslSound* sound) {
   mslSoundProcess(sound);
 }
 
-/* TODO: [near miss] 99.96%; TU literal layout remains. */
 void mslSoundSetPitch(mslSound* sound, f32 pitch) {
   mslPlayback* playback;
   if (!mslSoundInSystem(sound->bank->system, sound)) {
@@ -120,14 +258,25 @@ void mslSoundSetPitch(mslSound* sound, f32 pitch) {
   sound->mix.control.flags.pitchChanged = 0;
 }
 
-/* TODO: [near miss] 99.96%; TU literal layout remains. */
+void mslSoundSetPan(mslSound* sound) {
+  printf("mslSoundSetPan ms pointer out of bounds %x\n", sound);
+}
+
+f32 mslSoundGetVol(mslSound* sound) {
+  if (!mslSoundInSystem(sound->bank->system, sound)) {
+    printf("mslSoundGetVol ms pointer out of bounds %x\n", sound);
+    return 0.0f;
+  }
+  return mkFpVolume(sound->mix.volume);
+}
+
 void mslSoundSetVol(mslSound* sound, f32 volume) {
   mslPlayback* playback;
   if (sound == NULL) {
     return;
   }
   if (!mslSoundInSystem(sound->bank->system, sound)) {
-    printf("mslSoundSetVol: ms pointer out of bounds %x\n", sound);
+    printf("mslSoundSetVol ms pointer out of bounds %x\n", sound);
     return;
   }
   if (sound->bank->system->flags.volumeInDB) {
@@ -145,15 +294,16 @@ void mslSoundSetVol(mslSound* sound, f32 volume) {
   sound->mix.control.flags.volumeChanged = 0;
 }
 
-static inline f32 mslSoundGetVol(mslSound* sound) {
+void mslSoundUnPause(mslSound* sound) {
   if (!mslSoundInSystem(sound->bank->system, sound)) {
-    printf("mslSoundGetVol ms pointer out of bounds %x\n", sound);
-    return 0.0f;
+    printf("mslSoundUnPause ms pointer out of bounds %x\n", sound);
+    return;
   }
-  return mkFpVolume(sound->mix.volume);
+  if (sound != NULL && sound->bank != NULL && sound->bank->system != NULL) {
+    mslSoundSetVol(sound, sound->savedVolume);
+  }
 }
 
-/* TODO: [near miss] 99.95%; TU literal layout remains. */
 void mslSoundPause(mslSound* sound) {
   if (!mslSoundInSystem(sound->bank->system, sound)) {
     printf("mslSoundPause ms pointer out of bounds %x\n", sound);
@@ -191,49 +341,8 @@ static inline void mslSlotRemove(mslSoundSlot* slot, mslSound* sound) {
   }
 }
 
-/* TODO: [near miss] 99.07%; register allocation and literal layout remain. */
-void mslSoundStop(mslSound* sound) {
-  mslPlayback* playback;
+static inline void mslRemovePendingPlayback(mslSound* sound) {
   mslPlayback* removed;
-  mslSoundSlot* slot;
-  if (sound == NULL) {
-    return;
-  }
-  if (!mslSoundInSystem(sound->bank->system, sound)) {
-    printf("mslSoundStop ms pointer out of bounds %x\n", sound);
-    return;
-  }
-  playback = sound->playbackHead;
-  while (playback != NULL) {
-    if (playback->definition->flags & 2) {
-      mslStreamStop(playback);
-    } else {
-      if (playback->voice != 0xFFFFFFFF) {
-        sndFXKeyOff(playback->voice);
-      }
-      if ((playback->definition->flags & 1) &&
-          playback->secondVoice != 0xFFFFFFFF) {
-        sndFXKeyOff(playback->secondVoice);
-      }
-    }
-    playback->streamFlags.activationPending = 1;
-    playback = playback->next;
-  }
-  playback = sound->preloadedPlayback;
-  if (playback != NULL) {
-    if (playback->definition->flags & 2) {
-      mslStreamStop(playback);
-    } else {
-      if (playback->voice != 0xFFFFFFFF) {
-        sndFXKeyOff(playback->voice);
-      }
-      if ((playback->definition->flags & 1) &&
-          playback->secondVoice != 0xFFFFFFFF) {
-        sndFXKeyOff(playback->secondVoice);
-      }
-    }
-    playback->streamFlags.activationPending = 1;
-  }
   removed = sound->playbackHead;
   if (removed != NULL) {
     do {
@@ -277,11 +386,54 @@ void mslSoundStop(mslSound* sound) {
       mslPlaybackPoolFree(sound->bank->system, preloaded);
     }
   }
-  slot = sound->slot;
+}
+
+/* TODO: [near miss] 99.54%; preloaded/slot register allocation and literal layout remain. */
+void mslSoundStop(mslSound* sound) {
+  mslPlayback* playback;
+  if (sound == NULL) {
+    return;
+  }
+  if (!mslSoundInSystem(sound->bank->system, sound)) {
+    printf("mslSoundStop ms pointer out of bounds %x\n", sound);
+    return;
+  }
+  playback = sound->playbackHead;
+  while (playback != NULL) {
+    if (playback->definition->flags & 2) {
+      mslStreamStop(playback);
+    } else {
+      if (playback->voice != 0xFFFFFFFF) {
+        sndFXKeyOff(playback->voice);
+      }
+      if ((playback->definition->flags & 1) &&
+          playback->secondVoice != 0xFFFFFFFF) {
+        sndFXKeyOff(playback->secondVoice);
+      }
+    }
+    playback->streamFlags.activationPending = 1;
+    playback = playback->next;
+  }
+  playback = sound->preloadedPlayback;
+  if (playback != NULL) {
+    if (playback->definition->flags & 2) {
+      mslStreamStop(playback);
+    } else {
+      if (playback->voice != 0xFFFFFFFF) {
+        sndFXKeyOff(playback->voice);
+      }
+      if ((playback->definition->flags & 1) &&
+          playback->secondVoice != 0xFFFFFFFF) {
+        sndFXKeyOff(playback->secondVoice);
+      }
+    }
+    playback->streamFlags.activationPending = 1;
+  }
+  mslRemovePendingPlayback(sound);
   if (sound->slot->sound == sound) {
-    slot->sound = NULL;
+    sound->slot->sound = NULL;
   } else if (sound->slotNext != NULL) {
-    mslSlotRemove(slot, sound);
+    mslSlotRemove(sound->slot, sound);
   }
   sound->sequenceCursor = NULL;
   if (!mslSoundInSystem(sound->bank->system, sound)) {
@@ -310,7 +462,6 @@ void mslSoundStop(mslSound* sound) {
   enableIRQ();
 }
 
-/* TODO: [near miss] 99.96%; TU literal layout remains. */
 int mslSoundIsValid(mslSound* sound) {
   if (sound == NULL || !sound->activeFlags.active) {
     return 0;
@@ -327,49 +478,6 @@ int mslSoundIsPlaying(mslSound* sound) {
     return 0;
   }
   return sound->sequenceCursor != NULL;
-}
-
-static inline mslPlayback* mslPlaybackPoolAlloc(mslSoundSystem* sys) {
-  mslPlayback* playback;
-  mslPlayback* last;
-  mslPlayback* candidate;
-
-  if (sys == NULL) {
-    printf("mslPlaybackPoolAlloc: NULL msi\n");
-    return NULL;
-  }
-  disableIRQ();
-  last = sys->playbacks + (sys->playbackCount - 1);
-  candidate = sys->nextFreePlayback;
-  if (candidate == NULL) {
-    for (candidate = sys->playbacks; candidate <= last; candidate++) {
-      if (!candidate->streamFlags.unk80) {
-        break;
-      }
-    }
-    if (candidate > last) {
-      playback = NULL;
-      goto done;
-    }
-  }
-  playback = candidate;
-  do {
-    candidate++;
-    if (candidate > last) {
-      candidate = sys->playbacks;
-    }
-  } while (candidate->streamFlags.unk80 && candidate != playback);
-  if (candidate == playback) {
-    candidate = NULL;
-  }
-  sys->nextFreePlayback = candidate;
-done:
-  if (playback != NULL) {
-    memset(playback, 0, sizeof(*playback));
-    playback->streamFlags.unk80 = 1;
-  }
-  enableIRQ();
-  return playback;
 }
 
 static inline mslAdjustment* mslAdjustmentPoolAlloc(mslSoundSystem* sys) {
@@ -475,7 +583,6 @@ static inline s32 mslSlotFindFree(mslSoundSystem* sys) {
   return -1;
 }
 
-/* TODO: [near miss] 99.98%; TU literal layout remains. */
 mslSound* mslBankPlayVolPanPitch(mslBank* bank, s32 index, s32 slot, s32 priority, u32 flags, f32 volume, f32 pan, f32 pitch) {
   s32 keepEqualPriority = flags & 8;
   mslSoundSlot* slotInfo;
@@ -647,7 +754,48 @@ void mslStopAll(mslSoundSystem* sys) {
   mslEndAll(sys);
 }
 
-/* TODO: [near miss] 99.95%; TU literal layout remains. */
+void mslBankPlayQNamed(const char* name) {
+  printf("mslBankPlayQNamed (%s): no strings in bank file\n", name);
+}
+
+void mslBankPlayNamedPrep(const char* name) {
+  printf("mslBankPlayNamedPrep (%s): no strings in bank file\n", name);
+}
+
+void mslBankPlayNamed(const char* name) {
+  printf("mslBankPlayNamed (%s): no strings in bank file\n", name);
+}
+
+void mslBankSoundHasStream(void* sound) {
+  printf("mslBankSoundHasStream NULL sound\n");
+  printf("mslBankSoundHasStream invalid mbs %x\n", sound);
+}
+
+void mslBankSoundGetIDNullDiagnostic(void) {
+  printf("mslBankSoundGetID NULL sound\n");
+}
+
+void mslBankFindID(s32 id, s32 count, s32 index) {
+  printf("mslBankFindID NULL bank\n");
+  printf("mslBankFindID ID %d out of range (%d).\n", id, count);
+  printf("mslBankFindID ID %d yielded invalid index %d\n", id, index);
+}
+
+void mslBankGetIDs(s32 count) {
+  printf("mslBankGetIDs NULL bank\n");
+  printf("mslBankGetIDs found more than %d, punting rest\n", count);
+}
+
+void mslBankGetNames(void) {
+  printf("mslBankGetNames NULL bank\n");
+}
+
+void mslBankFindName(const char* name) {
+  printf("mslBankFindName NULL name\n");
+  printf("mslBankFindName NULL bank for \"%s\"\n", name);
+  printf("mslBankFindName \"%s\" Not Found\n", name);
+}
+
 void mslEndAll(mslSoundSystem* sys) {
   mslBank* bank = sys->banks;
   while (bank != NULL) {
@@ -665,17 +813,6 @@ void mslEndAll(mslSoundSystem* sys) {
   }
 }
 
-static inline void mslSoundUnPause(mslSound* sound) {
-  if (!mslSoundInSystem(sound->bank->system, sound)) {
-    printf("mslSoundUnPause ms pointer out of bounds %x\n", sound);
-    return;
-  }
-  if (sound != NULL && sound->bank != NULL && sound->bank->system != NULL) {
-    mslSoundSetVol(sound, sound->savedVolume);
-  }
-}
-
-/* TODO: [near miss] 99.95%; TU literal layout remains. */
 void mslUnPauseAll(void) {
   if (mslInitialized != 0) {
     u32 i;
@@ -695,7 +832,6 @@ void mslUnPauseAll(void) {
   }
 }
 
-/* TODO: [near miss] 99.95%; TU literal layout remains. */
 void mslPauseAll(void) {
   if (mslInitialized != 0) {
     u32 i;
@@ -715,20 +851,23 @@ void mslPauseAll(void) {
   }
 }
 
-/* TODO: [near miss] 97.85%; volatile register assignment remains. */
 s32 mslUnInit(mslSoundSystem* sys) {
   u32 i;
+  mslSoundSystem** system;
+  u32 count;
 
   mslStreamUnInit();
   sndQuit();
-  for (i = 0; i < gSoundSystemCount; i++) {
-    if (gSoundSystems[i] == sys) {
+  count = gSoundSystemCount;
+  for (i = 0, system = gSoundSystems; count > i; system++, i++) {
+    if (*system == sys) {
       break;
     }
   }
-  if (i < gSoundSystemCount) {
-    if (gSoundSystemCount - 1 > i) {
-      memmove(&gSoundSystems[i] + 1, &gSoundSystems[i], (gSoundSystemCount - 1 - i) * sizeof(gSoundSystems[0]));
+  if (i < count) {
+    u32 remaining = count - 1;
+    if (i < remaining) {
+      memmove(&gSoundSystems[i] + 1, &gSoundSystems[i], (remaining - i) * sizeof(gSoundSystems[0]));
     }
     gSoundSystemCount--;
   }
@@ -744,7 +883,7 @@ static inline BOOL mslSystemRegister(mslSoundSystem* sys) {
   return TRUE;
 }
 
-/* TODO: [near miss] 99.94%; string-pool and .bss offsets wait for the linker-stripped owners. */
+/* TODO: [near miss] 99.98%; six .bss offsets wait for the linker-stripped owners. */
 mslSoundSystem* mslInit(mslInitConfig* init, mslSysInitConfig* sysinit) {
   mslSoundSystem* sys;
 
@@ -959,12 +1098,13 @@ static inline mslSound* mslSlotPop(mslSoundSlot* slot) {
   return sound;
 }
 
-/* TODO: [near miss] 92.73%; register allocation (sys below bank) and literal layout remain. */
+/* TODO: [near miss] 94.43%; sys/sound register allocation and literal layout remain. */
 static void mslUpdateThread(mslSoundSystem* sys) {
   mslListenerState* mic = &sys->listenerState;
+  mslSound* sound;
   mslBank* bank;
   u32 i;
-  mslSoundSlot* slot;
+  mslSoundSlot* slots;
   if (mic->enabled != 0 && (mic->dirty & 0x7F)) {
     if (!sndUpdateListener(&mic->listener, &mic->position, &mic->direction,
                            &mic->heading, &mic->up, mic->volume, NULL)) {
@@ -975,7 +1115,7 @@ static void mslUpdateThread(mslSoundSystem* sys) {
   mslGlobalAdjustProcess(sys);
   bank = sys->banks;
   while (bank != NULL) {
-    mslSound* sound = bank->sounds;
+    sound = bank->sounds;
     while (sound != NULL) {
       mslSound* next;
       if (!mslSoundInSystem(sys, sound)) {
@@ -993,15 +1133,14 @@ static void mslUpdateThread(mslSoundSystem* sys) {
     }
     bank = bank->next;
   }
-  slot = sys->slots;
+  slots = sys->slots;
   for (i = 0; i < 64; i++) {
-    if (slot->sound == NULL && slot->head != NULL) {
-      mslSound* sound = mslSlotPop(slot);
-      slot->sound = sound;
+    if (slots[i].sound == NULL && slots[i].head != NULL) {
+      mslSound* sound = mslSlotPop(&slots[i]);
+      slots[i].sound = sound;
       sound->flags.awaitingPlay = 0;
       mslSoundProcess(sound);
     }
-    slot++;
   }
 }
 
@@ -1076,20 +1215,19 @@ static void mslPlaybackProcess(mslSound* sound) {
   sound->flags.unk04 = streaming;
 }
 
-/* TODO: [near miss] 98.84%; register coloring remains. */
+/* TODO: [near miss] 99.06%; register allocation remains. */
 static void mslSoundProcess(mslSound* sound) {
   u32 duration;
   OSTime delta;
-  mslSoundCommand* command;
   mslPlayback* playback;
   mslSoundSystem* sys;
+  mslSoundCommand* command;
   mslAdjustment* adjustment;
   mslSound* target;
   mslSoundCommandStream* stream;
   mslSound* nested;
   mslPlaybackDefinition* definition;
   mslSoundCommand* reference;
-  mslPlayback* preloaded;
   OSTime now;
   mslSoundMix mix;
   u8 pan;
@@ -1119,20 +1257,20 @@ static void mslSoundProcess(mslSound* sound) {
     sound->elapsedTicks = 0;
     command = sound->sequenceCursor;
     switch (command->opcode) {
-    case 1:
+    case 1: {
+      mslPlayback* preloaded;
       preloaded = sound->preloadedPlayback;
       if (preloaded == NULL) {
-        playback = mslPlaybackPoolAlloc(sound->bank->system);
-        preloaded = playback;
-        if (playback == NULL) {
+        preloaded = mslPlaybackPoolAlloc(sound->bank->system);
+        if (preloaded == NULL) {
           sound->flags.unk10 = 1;
           goto finish;
         }
-        playback->definition = sound->bank->unk38 + command->assetIndex;
-        playback->unk18 = command->unk10;
-        playback->unk1C = command->unk14;
-        playback->streamFlags.ducked = command->mix.control.flags.ducked;
-        playback->sound = sound;
+        preloaded->definition = sound->bank->unk38 + command->assetIndex;
+        preloaded->unk18 = command->unk10;
+        preloaded->unk1C = command->unk14;
+        preloaded->streamFlags.ducked = command->mix.control.flags.ducked;
+        preloaded->sound = sound;
         volume = command->mix.volume;
         if (sound->bank->system->flags.volumeInDB) {
           volume = mkMusyXVolume(dBToLinear(mkFpVolume(volume)));
@@ -1142,7 +1280,7 @@ static void mslSoundProcess(mslSound* sound) {
         sound->mix.volume = mslMusyXScale(sound->mix.volume, volume);
         sound->mix.pan = mslMusyXScalePan(sound->mix.pan, pan);
         sound->mix.pitch = mslMusyXScalePitch(sound->mix.pitch, pitch);
-        mslPlaybackStart(sound, playback);
+        mslPlaybackStart(sound, preloaded);
       } else {
         sound->preloadedPlayback = NULL;
         preloaded->sound = sound;
@@ -1158,6 +1296,7 @@ static void mslSoundProcess(mslSound* sound) {
       }
       preloaded->sound = sound;
       break;
+    }
     case 8:
       playback = mslSoundFindPlayback(sound, sound->bank->unk38 + command->assetIndex);
       if (playback != NULL) {
@@ -1176,9 +1315,9 @@ static void mslSoundProcess(mslSound* sound) {
       break;
     case 2:
       if (command->mix.control.flags.master || command->mix.control.flags.ducked) {
-        f32 startVolume;
-        f32 startPan;
         f32 startPitch;
+        f32 startPan;
+        f32 startVolume;
 
         sys = sound->bank->system;
         duration = command->unk14;
@@ -1214,9 +1353,9 @@ static void mslSoundProcess(mslSound* sound) {
         sys->adjustments = adjustment;
       } else {
         f32 startVolume;
-        f32 startPan;
         f32 startPitch;
         f32 rawVolume;
+        f32 startPan;
 
         reference = sound->commandStream->commands + command->assetIndex;
         if (reference->opcode != 1) {
@@ -1304,129 +1443,94 @@ static void mslSoundProcess(mslSound* sound) {
   }
 finish:
   mslPlaybackProcess(sound);
-  playback = sound->playbackHead;
-  if (playback != NULL) {
-    do {
-      if (playback->streamFlags.activationPending) {
-        if (playback->previous != NULL) {
-          playback->previous->next = playback->next;
-        }
-        if (playback->next != NULL) {
-          playback->next->previous = playback->previous;
-        }
-        if (playback->previous == NULL) {
-          playback->sound->playbackHead = playback->next;
-        }
-        playback->next = NULL;
-        playback->previous = NULL;
-        mslPlaybackPoolFree(sound->bank->system, playback);
-        playback = sound->playbackHead;
-      } else {
-        playback = playback->next;
-      }
-    } while (playback != NULL);
-  }
-  preloaded = sound->preloadedPlayback;
-  if (preloaded != NULL && preloaded->streamFlags.activationPending) {
-    sound->preloadedPlayback = NULL;
-    if (preloaded->sound != NULL) {
-      if (preloaded->previous != NULL) {
-        preloaded->previous->next = preloaded->next;
-      }
-      if (preloaded->next != NULL) {
-        preloaded->next->previous = preloaded->previous;
-      }
-      if (preloaded->previous == NULL) {
-        preloaded->sound->playbackHead = preloaded->next;
-      }
-      preloaded->next = NULL;
-      preloaded->previous = NULL;
-    }
-    mslPlaybackPoolFree(sound->bank->system, preloaded);
-  }
+  mslRemovePendingPlayback(sound);
   sound->flags.unk08 = 0;
 }
 
-/* TODO: [near miss] 98.72%; register coloring remains. */
+/* TODO: [near miss] 99.48%; saved-register allocation remains. */
 static void mslSoundPreload(mslSound* sound, mslSoundCommand* command) {
+  mslPlayback* candidate;
   u8 volume;
   u8 scaledPan;
   mslPlaybackDefinition* definition;
   mslBank* bank;
   mslPlayback* playback;
-  u8 scaledVolume;
 
   volume = command->mix.volume;
   if (sound->bank->system->flags.volumeInDB) {
     volume = mkMusyXVolume(dBToLinear(mkFpVolume(volume)));
   }
-  scaledVolume = mslMusyXScale(sound->mix.volume, volume);
-  sound->mix = command->mix;
-  sound->mix.volume = scaledVolume;
-  scaledPan = mslMusyXScalePan(sound->mix.pan, command->mix.pan);
-  bank = sound->bank;
-  playback = NULL;
-  definition = bank->unk38 + command->assetIndex;
-  if (definition->flags & 2) {
-    mslPlayback* last;
-    mslPlayback* candidate;
-    mslSoundSystem* sys;
+  {
+    u8 scaledVolume;
+    scaledVolume = mslMusyXScale(sound->mix.volume, volume);
+    sound->mix = command->mix;
+    sound->mix.volume = scaledVolume;
+    scaledPan = mslMusyXScalePan(sound->mix.pan, command->mix.pan);
+    bank = sound->bank;
+    playback = NULL;
+    definition = bank->unk38 + command->assetIndex;
+    if (definition->flags & 2) {
+      mslPlayback* last;
+      mslPlayback* first;
+      mslSoundSystem* sys;
 
-    sys = bank->system;
-    if (sys == NULL) {
-      printf("mslPlaybackPoolAlloc: NULL msi\n");
-      playback = NULL;
-    } else {
-      disableIRQ();
-      last = sys->playbacks + (sys->playbackCount - 1);
-      candidate = sys->nextFreePlayback;
-      if (candidate == NULL) {
-        for (candidate = sys->playbacks; candidate <= last; candidate++) {
-          if (!candidate->streamFlags.unk80) {
-            break;
+      sys = bank->system;
+      if (sys == NULL) {
+        printf("mslPlaybackPoolAlloc: NULL msi\n");
+        playback = NULL;
+      } else {
+        disableIRQ();
+        first = sys->playbacks;
+        last = first + (sys->playbackCount - 1);
+        candidate = sys->nextFreePlayback;
+        if (candidate == NULL) {
+          for (candidate = first; candidate <= last; candidate++) {
+            if (!candidate->streamFlags.unk80) {
+              break;
+            }
+          }
+          if (candidate > last) {
+            playback = NULL;
+            goto done;
           }
         }
-        if (candidate > last) {
-          playback = NULL;
-          goto done;
+        playback = candidate;
+        do {
+          candidate++;
+          if (candidate > last) {
+            candidate = first;
+          }
+        } while (candidate->streamFlags.unk80 && candidate != playback);
+        if (candidate == playback) {
+          candidate = NULL;
         }
-      }
-      playback = candidate;
-      do {
-        candidate++;
-        if (candidate > last) {
-          candidate = sys->playbacks;
+        sys->nextFreePlayback = candidate;
+      done:
+        if (playback != NULL) {
+          memset(playback, 0, sizeof(*playback));
+          playback->streamFlags.unk80 = 1;
         }
-      } while (candidate->streamFlags.unk80 && candidate != playback);
-      if (candidate == playback) {
-        candidate = NULL;
+        enableIRQ();
       }
-      sys->nextFreePlayback = candidate;
-    done:
-      if (playback != NULL) {
-        memset(playback, 0, sizeof(*playback));
-        playback->streamFlags.unk80 = 1;
-      }
-      enableIRQ();
-    }
 
-    if (playback == NULL) {
-      playback = NULL;
-    } else {
-      playback->definition = definition;
-      playback->unk18 = command->unk10;
-      playback->unk1C = command->unk14;
-      playback->asset = bank->assets + playback->definition->assetID;
-      playback->streamFlags.ducked = command->mix.control.flags.ducked;
-      playback->stream = mslStreamStart(bank, playback, scaledVolume, scaledPan, TRUE);
-      if (playback->stream == NULL) {
-        mslPlaybackPoolFree(bank->system, playback);
+      if (playback == NULL) {
         playback = NULL;
+      } else {
+        playback->definition = definition;
+        playback->unk18 = command->unk10;
+        playback->unk1C = command->unk14;
+        playback->asset = bank->assets + playback->definition->assetID;
+        playback->streamFlags.ducked = command->mix.control.flags.ducked;
+        playback->stream = mslStreamStart(bank, playback, scaledVolume, scaledPan, TRUE);
+        if (playback->stream == NULL) {
+          mslPlaybackPoolFree(bank->system, playback);
+          playback = NULL;
+        }
       }
     }
-  }
-  if (playback != NULL) {
-    sound->preloadedPlayback = playback;
+    if (playback != NULL) {
+      sound->preloadedPlayback = playback;
+    }
   }
 }
 

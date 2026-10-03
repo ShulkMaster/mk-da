@@ -7,7 +7,7 @@ often the rule has paid off.
 
 ## C05
 
-Declaration order and scope. Score: 14
+Declaration order and scope. Score: 23
 
 IF only registers differ and lifetimes look shifted, REQUIRE identical CFG and
 memory accesses, TRY one honest change of where a real local is declared
@@ -23,7 +23,7 @@ memory accesses, TRY one honest change of where a real local is declared
 
 ## C08
 
-In-place derivation. Score: 11
+In-place derivation. Score: 12
 
 IF retail derives a value in the same register it was loaded into, REQUIRE one
 meaning for the variable, TRY computing it in steps in one local (`margin =
@@ -80,7 +80,7 @@ running value stays the left operand.
 
 ## C09
 
-Statement order follows the retail schedule. Score: 6
+Statement order follows the retail schedule. Score: 8
 
 IF loads, stores or pointer advances are ordered differently, REQUIRE
 unchanged semantics (no aliasing between the moved accesses), TRY placing
@@ -164,7 +164,7 @@ around the reference body.
 
 ## U05
 
-Static inline boundaries. Score: 5
+Static inline boundaries. Score: 12
 
 IF a reference helper has no retail symbol but is live, or retail shows a
 fast path the shared helper cannot reproduce, REQUIRE the retail function set
