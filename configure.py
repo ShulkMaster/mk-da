@@ -675,7 +675,7 @@ config.libs = [
             Object(Matching, "renderware/osintf.c"),
             Object(Matching, "renderware/babbox.c"),
             Object(Matching, "renderware/baimras.c"),
-            Object(NonMatching, "renderware/batypehf.c"),
+            Object(Matching, "renderware/batypehf.c"),
             Object(NonMatching, "renderware/dltoken.c"),
             Object(NonMatching, "renderware/bapipe.c"),
             Object(NonMatching, "renderware/p2altmdl.c"),
