@@ -1,8 +1,10 @@
-/* #audit 2026-10-03T05:39Z clean-room FIXED (audit) */
+/* #audit 2026-10-03T05:47Z clean-room FIXED (audit) */
 #include <renderware/project_state.h>
 #include <renderware/project_pipeline.h>
 #include <renderware/project_renderstate.h>
 #include <renderware/project_heap.h>
+#include <renderware/project_error.h>
+#include <string.h>
 
 extern s32 RwFreeListDestroy(void* arg0);
 extern u8* RwFreeListCreate(s32 arg0, s32 arg1, s32 arg2);
@@ -46,8 +48,6 @@ s32 _rxPipelineOpen(void) {
   }
   return 0;
 }
-
-#include <string.h>
 
 u8* PipelineNodeDestroy(u8* arg0, u8* arg1) {
   typedef struct {
@@ -214,14 +214,18 @@ u8* RxClusterResizeData(u8* unk00, u32 unk04) {
   return unk00;
 }
 
-#include <string.h>
-
 u8* RxClusterLockWrite(u8* arg0, u32 arg1, u8* arg2) {
   u32* unk00 = *(u32**)(arg0 + 8);
   u32 unk04 = unk00[arg1];
   if (unk04 != 0xFFFFFFFF) {
-    u8* unk08 = (u8*)(unk04 * 0x1C + 0x14);
-    unk08 = (u8*)((u32)arg0 + (u32)unk08);
+    typedef struct {
+      u8 unk00[0x1C];
+    } Cluster1C;
+    typedef struct {
+      u8 unk00[0x14];
+      Cluster1C unk14[];
+    } Packet14;
+    u8* unk08 = (u8*)&((Packet14*)arg0)->unk14[unk04];
     if ((*(u8**)(unk08 + 0x14)) == 0) {
       u8* unk0C = (*(u8***)(arg0 + 0x10))[unk04];
       (*(u8**)(unk08 + 0x14)) = unk0C;
@@ -282,9 +286,6 @@ u8* RxPipelineExecute(u8* unk00, void* unk04, s32 unk08) {
   }
   return 0;
 }
-
-#include <renderware/project_error.h>
-#include <string.h>
 
 u8* RxPipelineCreate(void) {
   u8* unk00 = (*(u8* (**)(void*))(RwEngineInstance + 0x140))(

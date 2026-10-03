@@ -1,4 +1,4 @@
-/* #audit 2026-10-03T05:37Z clean-room PASS (audit) */
+/* #audit 2026-10-03T05:47Z clean-room FIXED (audit) */
 #include <renderware/project_pipeline.h>
 #include <renderware/project_state.h>
 
@@ -6,6 +6,13 @@ extern void _rxEmbeddedPacketBetweenPipelines(u8* arg0, u8* arg1);
 extern void _rxPacketDestroy(u8* arg0);
 
 static u32 _MaterialScatterNode(u8* arg0, void* arg1) {
+  typedef struct {
+    u8 unk00[0x1C];
+  } Cluster1C;
+  typedef struct {
+    u8 unk00[0x14];
+    Cluster1C unk14[];
+  } Packet14;
   u8* unk00;
   u8* unk04;
   s32 unk08;
@@ -22,8 +29,7 @@ static u32 _MaterialScatterNode(u8* arg0, void* arg1) {
   } else {
     *(void**)(unk00 + unk08 * 0x1C + 0x1C) =
         *(void**)(unk00 + unk08 * 0x1C + 0x18);
-    unk04 = (u8*)(**(s32**)(unk00 + 8) * 0x1C + 0x14);
-    unk04 = (u8*)((u32)unk00 + (u32)unk04);
+    unk04 = (u8*)&((Packet14*)unk00)->unk14[**(s32**)(unk00 + 8)];
   }
   unk0C = *(u8**)(*(u8**)(unk04 + 8) + 0x9C);
   if (unk0C != 0) {
