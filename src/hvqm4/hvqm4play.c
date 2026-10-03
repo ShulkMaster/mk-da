@@ -6,7 +6,7 @@
 #include <musyx/musyx.h>
 
 extern void ReportErrcode(s32 error);
-extern void mflTick(void);
+extern s32 mflTick(void);
 extern void* _mwMemMalloc(void* heap, u32 size, u32 alignment,
     const char* name, const char* file, s32 line);
 extern void* _mwMemCalloc(void* heap, u32 count, u32 size, u32 alignment,

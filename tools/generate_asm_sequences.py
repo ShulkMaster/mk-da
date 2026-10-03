@@ -182,6 +182,13 @@ def generate(manifest: Path, version: str, build_root: Path) -> tuple[Path, str]
             for label, symbol in sda_symbols.items()
         ):
             raise ValueError(f"{name}.sda_symbols: expected @N labels mapped to symbols")
+        # C++ inline asm resolves callees by source name, not by the retail mangled name.
+        branch_symbols = entry.get("branch_symbols", {})
+        if not isinstance(branch_symbols, dict) or not all(
+            SYMBOL_RE.fullmatch(str(retail)) and SYMBOL_RE.fullmatch(str(source))
+            for retail, source in branch_symbols.items()
+        ):
+            raise ValueError(f"{name}.branch_symbols: expected retail symbols mapped to names")
         # Exported labels inside the range become entry points at the same offset.
         entry_labels = {
             index - first: label
@@ -211,6 +218,9 @@ def generate(manifest: Path, version: str, build_root: Path) -> tuple[Path, str]
                     raise ValueError(f"{name}: unsupported SDA21 syntax: {assembly}")
                 lines.append(f"    {assembly};{suffix}")
             elif EXTERNAL_BRANCH_RE.fullmatch(assembly) or SYMBOL_HA_L_RE.fullmatch(assembly):
+                mnemonic, _, target = assembly.partition(" ")
+                if target.strip() in branch_symbols:
+                    assembly = f"{mnemonic} {branch_symbols[target.strip()]}"
                 lines.append(f"    {assembly};{suffix}")
             else:
                 # Raw words carry retail-resolved fields; refuse any relocation.

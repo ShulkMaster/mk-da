@@ -144,13 +144,7 @@ void ListNodeFree(ListPool* pool, ListNode* node) {
 }
 
 ListNode* ListNodeAllocIDrange(ListPool* pool, u32 value, u32 min, u32 max) {
-  union {
-    u32 value;
-    struct {
-      u16 index;
-      u16 serial;
-    } parts;
-  } id;
+  ListNodeId id;
   ListNode* node;
   u32 index;
   id.value = value;
@@ -204,13 +198,7 @@ ListNode* ListNodeAllocIDrange(ListPool* pool, u32 value, u32 min, u32 max) {
 }
 
 ListNode* ListNodeAllocID(ListPool* pool, u32 value) {
-  union {
-    u32 value;
-    struct {
-      u16 index;
-      u16 serial;
-    } parts;
-  } id;
+  ListNodeId id;
   ListNode* node;
   id.value = value;
   if (pool == NULL) {

@@ -632,6 +632,21 @@
       "address": "0x80187AC8",
       "size": "0x110",
       "assembly": "Runtime.PPCEABI.H/Gecko_setjmp.s"
+    },
+    {
+      "name": "ExPPC_LongJump__FP12ThrowContextPvPv",
+      "address": "0x80187BD8",
+      "size": "0x104",
+      "assembly": "Runtime.PPCEABI.H/Gecko_ExceptionPPC.s"
+    },
+    {
+      "name": "__throw",
+      "address": "0x80187CDC",
+      "size": "0x144",
+      "assembly": "Runtime.PPCEABI.H/Gecko_ExceptionPPC.s",
+      "branch_symbols": {
+        "ExPPC_ThrowHandler__FP12ThrowContext": "ExPPC_ThrowHandler"
+      }
     }
   ],
   "units": [

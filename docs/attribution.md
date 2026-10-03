@@ -29,6 +29,10 @@ runtime (`Runtime.PPCEABI.H`). PrimeDecomp's runtime work is credited above.
    (https://github.com/sabishii-bit/Gauntlet-Dark-Legacy-Decompilation)
 5. Resident Evil Code: Veronica X (https://github.com/AshfordFamily/recvx-decomp),
    whose copy of the Metrowerks MSL C++ sources supplied `NewHand.cpp`
+6. Pikmin 2 (https://github.com/projectPiki/pikmin2)
+7. SpongeBob SquarePants: Battle for Bikini Bottom (https://github.com/bfbbdecomp/bfbb)
+8. Super Smash Bros. Melee (https://github.com/doldecomp/melee)
+9. The Legend of Zelda: Twilight Princess (https://github.com/zeldaret/tp)
 
 The Sonic Heroes code is distributed under the MIT License; see
 [MIT.lic](MIT.lic).
