@@ -16,4 +16,9 @@ typedef s32 (*ProjectRegistrySize)(const void*, s32, s32);
 s32 _rwPluginRegistryAddPluginStream(u8* arg0, u32 arg1,
     ProjectRegistryRead arg2, ProjectRegistryWrite arg3, ProjectRegistrySize arg4);
 
+typedef s32 (*ProjectRegistryRights)(void*, s32, s32, u32);
+s32 _rwPluginRegistryAddPlgnStrmRightsCB(u8* arg0, u32 arg1, ProjectRegistryRights arg2);
+
+u32 _rwPluginRegistryGetSize(u8* arg0, const void* arg1);
+
 #endif
