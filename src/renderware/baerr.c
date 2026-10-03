@@ -1,4 +1,4 @@
-/* #audit 2026-10-03T04:06Z clean-room FIXED (audit) */
+/* #audit 2026-10-03T04:18Z clean-room FIXED (audit) */
 #include <dolphin/types.h>
 #include <stdarg.h>
 
@@ -16,8 +16,7 @@ void* _rwErrorOpen(void* arg0, s32 arg1) {
   return arg0;
 }
 
-void *_rwErrorClose(void *unk0)
-{
+void* _rwErrorClose(void* unk0) {
   errorModule.unk04--;
   return unk0;
 }

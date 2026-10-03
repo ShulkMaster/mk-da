@@ -1,4 +1,4 @@
-/* #audit 2026-10-03T04:06Z clean-room PASS (audit) */
+/* #audit 2026-10-03T04:18Z clean-room FIXED (audit) */
 #include <dolphin/types.h>
 
 typedef struct ResmemBlock14 ResmemBlock14;
@@ -66,11 +66,10 @@ void _rwResHeapFree(void* arg0) {
   }
 }
 
-void *_rwResHeapAlloc(ResmemHeap8 *unk0, u32 unk4)
-{
-  ResmemBlock14 *unk8 = NULL;
+void* _rwResHeapAlloc(ResmemHeap8* unk0, u32 unk4) {
+  ResmemBlock14* unk8 = NULL;
   u32 unk10;
-  ResmemBlock14 *unkC = unk0->unk4;
+  ResmemBlock14* unkC = unk0->unk4;
 
   while (unkC != NULL) {
     if ((~unkC->unk10 & 1) != 0) {
@@ -87,8 +86,8 @@ void *_rwResHeapAlloc(ResmemHeap8 *unk0, u32 unk4)
   }
   if (unk8->unkC > ((unk4 + 31) & ~31U) + 0x40) {
     u32 unk14 = (unk4 + 31) & ~31U;
-    ResmemBlock14 *unk1C;
-    ResmemBlock14 *unk18 = (ResmemBlock14 *)((u8 *)unk8 + unk14 + 0x20);
+    ResmemBlock14* unk1C;
+    ResmemBlock14* unk18 = (ResmemBlock14*)((u8*)unk8 + unk14 + 0x20);
     unk1C = unk8->unk4;
     if (unk1C != NULL && (~unk1C->unk10 & 1) != 0) {
       unk18->unk4 = unk1C->unk4;
@@ -112,5 +111,5 @@ void *_rwResHeapAlloc(ResmemHeap8 *unk0, u32 unk4)
     } while (unk0->unk4 != NULL && (unk0->unk4->unk10 & 1) != 0);
   }
   unk8->unk10 = 1;
-  return (u8 *)unk8 + 0x20;
+  return (u8*)unk8 + 0x20;
 }

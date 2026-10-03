@@ -1,21 +1,19 @@
-/* #audit 2026-10-03T04:06Z clean-room FIXED (audit) */
+/* #audit 2026-10-03T04:18Z clean-room FIXED (audit) */
 #include "renderware/project_state.h"
 #include <stdio.h>
 
-void *RwOsGetFileInterface(void)
-{
+void* RwOsGetFileInterface(void) {
   return RwEngineInstance + 0xC4;
 }
 
-static s32 rwfexist(const char *unk0)
-{
-  FILE *unk4;
+static s32 rwfexist(const char* unk0) {
+  FILE* unk4;
   s32 unk8;
 
-  unk4 = (*(FILE *(**)(const char *, const char *))(RwEngineInstance + 0xC8))(unk0, "rb");
+  unk4 = (*(FILE* (**)(const char*, const char*))(RwEngineInstance + 0xC8))(unk0, "rb");
   unk8 = unk4 != NULL;
   if (unk4 != NULL) {
-    (*(int (**)(FILE *))(RwEngineInstance + 0xCC))(unk4);
+    (*(int (**)(FILE*))(RwEngineInstance + 0xCC))(unk4);
   }
   return unk8;
 }
