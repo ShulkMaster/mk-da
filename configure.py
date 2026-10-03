@@ -702,7 +702,7 @@ config.libs = [
             Object(NonMatching, "renderware/p2define.c"),
             Object(NonMatching, "renderware/p2dep.c"),
             Object(NonMatching, "renderware/p2heap.c"),
-            Object(NonMatching, "renderware/p2renderstate.c"),
+            Object(Matching, "renderware/p2renderstate.c"),
             Object(Matching, "renderware/p2resort.c"),
             Object(Matching, "renderware/skingcnasm.c"),
             Object(Matching, "renderware/babinwor.c"),

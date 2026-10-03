@@ -15,6 +15,7 @@ typedef struct {
 extern s32 _rxPipelineGlobalsOffset;
 
 ProjectRenderState* RxRenderStateVectorSetDefaultRenderStateVector(ProjectRenderState* arg0);
+ProjectRenderState* RxRenderStateVectorCreate(s32 arg0);
 void RxRenderStateVectorDestroy(ProjectRenderState* arg0);
 ProjectRenderState* RxRenderStateVectorLoadDriverState(ProjectRenderState* arg0);
 
