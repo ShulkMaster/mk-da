@@ -855,6 +855,9 @@ renderware/dltoken.c:
 	.sdata      start:0x8041B7B0 end:0x8041B7B8
 	.sbss       start:0x8041CF80 end:0x8041CF88
 
+renderware/gekkomul.c:
+	.text       start:0x801CE940 end:0x801CEC30
+
 renderware/bapipe.c:
 	.text       start:0x801CFB00 end:0x801CFB80
 	.sbss       start:0x8041CF98 end:0x8041CFA0
