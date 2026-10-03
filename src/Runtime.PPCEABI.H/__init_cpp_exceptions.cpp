@@ -6,12 +6,7 @@
 
 #include <dolphin/asm_sequences.inc>
 
-typedef struct __eti_init_info {
-  void* eti_start;
-  void* eti_end;
-  void* code_start;
-  unsigned long code_size;
-} __eti_init_info;
+#include <Runtime.PPCEABI.H/exception_fragment.h>
 
 extern __eti_init_info _eti_init_info[];
 

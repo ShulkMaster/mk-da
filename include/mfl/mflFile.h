@@ -22,7 +22,7 @@ typedef struct mflFile {
   u32 position;
   s32 bufferOffset;
   u32 bufferBytes;
-  u32 readSize;
+  s32 readSize;
   s32 readProgress;
   s32 blockIndex;
   s32 blockOffset;
@@ -85,6 +85,7 @@ s32 mflExist(const char* filename);
 s32 mflEof(void* file);
 char* mflGetS(char* buffer, s32 bytes, void* file);
 s32 mflClose(void* file);
+s32 mflSeek(void* file, s32 offset, s32 origin);
 s32 mflSeekEx(void* file, s32 offset, s32 origin, s32 priority);
 s32 mflReadEx(void* buffer, s32 elementSize, s32 elementCount, void* file,
               s32 priority);

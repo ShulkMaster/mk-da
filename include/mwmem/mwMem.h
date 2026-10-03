@@ -127,7 +127,7 @@ struct _mwMemHeap {
 };
 
 void* _mwMemMallocVirtual(struct _mwMemHeap* heap, u32 size, s32 alignment,
-                          const char* label, const char* file, s32 line, u8 flags);
+                          const char* label, const char* file, s32 line, u32 flags);
 void* _mwMemCalloc(struct _mwMemHeap* heap, u32 count, u32 elementSize,
                    s32 alignment, const char* label, const char* file, s32 line);
 
