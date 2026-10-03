@@ -44,9 +44,6 @@ static inline u8 saturate(int x)
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static void init_global_constants()
 {
   int i;
@@ -67,18 +64,12 @@ static void init_global_constants()
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static inline void set_border(_tagHVQData* p)
 {
   p->dcv = 0x7F;
   p->bnm = 0xFF;
 }
 
-/**
- * @TODO: Documentation
- */
 static void setHVQPlaneDesc(SeqObj* obj, int id, u8 h_samp, u8 v_samp)
 {
   HVQPlaneDesc* p = &((VideoState*)obj->ws)->pln[id];
@@ -111,9 +102,6 @@ static void setHVQPlaneDesc(SeqObj* obj, int id, u8 h_samp, u8 v_samp)
   p->imgUscan[2] = (p->imgUscan[1] = p->plane_width << 2) + 4;
 }
 
-/**
- * @TODO: Documentation
- */
 static inline void setCode(BitBuffer* const str, u8* top)
 {
   u32 size = read32(top, 0);
@@ -128,9 +116,6 @@ static inline void setCode(BitBuffer* const str, u8* top)
   str->shift = -1;
 }
 
-/**
- * @TODO: Documentation
- */
 static inline int getBit(BitBuffer* str)
 {
   u32 value;
@@ -148,9 +133,6 @@ static inline int getBit(BitBuffer* str)
   return value;
 }
 
-/**
- * @TODO: Documentation
- */
 static inline s16 getByte(BitBuffer* str)
 {
   u32 value;
@@ -171,9 +153,6 @@ static inline s16 getByte(BitBuffer* str)
   return value;
 }
 
-/**
- * @TODO: Documentation
- */
 static s16 _readTree(Tree* const dst, BitBuffer* const str)
 {
   int node;
@@ -202,9 +181,6 @@ static s16 _readTree(Tree* const dst, BitBuffer* const str)
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static inline void readTree(BitBufferWithTree* const code, int is_signed, int scale)
 {
   BitBuffer* str = &code->str;
@@ -220,9 +196,6 @@ static inline void readTree(BitBufferWithTree* const code, int is_signed, int sc
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static inline int decodeHuff(BitBufferWithTree* code)
 {
   Tree* tree     = code->tree;
@@ -248,9 +221,6 @@ static inline int decodeSOvfSym(BitBufferWithTree* buf, int range_min, int range
   return ret;
 }
 
-/**
- * @TODO: Documentation
- */
 static inline int decodeUOvfSym(BitBufferWithTree* code, int range_max)
 {
   int ret = 0;
@@ -264,9 +234,6 @@ static inline int decodeUOvfSym(BitBufferWithTree* code, int range_max)
   return ret;
 }
 
-/**
- * @TODO: Documentation
- */
 static void Ipic_BasisNumDec(VideoState* ws)
 {
   s16 label;
@@ -345,9 +312,6 @@ static inline int getDeltaDC(VideoState* ws, int c, int* runln)
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static void IpicDcvDec(VideoState* ws)
 {
   int c;
@@ -393,9 +357,6 @@ static void IpicDcvDec(VideoState* ws)
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static void MakeNest(VideoState* ws, int x, int y)
 {
   int h_block, nblocks_hb, v_block;
@@ -472,9 +433,6 @@ static void MakeNest(VideoState* ws, int x, int y)
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static void WeightImBlock(u8* block, int blockWidth, u8 c, u8 u, u8 d, u8 l, u8 r)
 {
   /*
@@ -576,12 +534,8 @@ static inline void dcBlock(u8* block, int blockWidth, u8 dc)
   block += blockWidth;
 }
 
-/**
- * @TODO: Documentation
- */
 static inline void OrgBlock(VideoState* ws, u8* block, int blockWidth, int p)
 {
-  // TODO: unrolled loop?
   // int i;
   BitBuffer* buf;
   u32* ptr;
@@ -743,9 +697,6 @@ static void IntraAotBlock(VideoState* ws, u8* blk, int blkWidth, u8 dcv, u8 nbas
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static s32 GetAotBasis(VideoState* ws, u8 basisOut[16], s32* pscl, u8* nestTop, int nestWidth, int p)
 {
   u16 code;
@@ -948,9 +899,6 @@ static s32 GetAotBasis(VideoState* ws, u8 basisOut[16], s32* pscl, u8* nestTop, 
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static void IpicBlockDec(VideoState* ws, u8* block, int blockWidth, StackState* inter)
 {
   if (inter->curr.bnm == 0) {
@@ -975,9 +923,6 @@ static void IpicBlockDec(VideoState* ws, u8* block, int blockWidth, StackState* 
   inter->low++;
 }
 
-/**
- * @TODO: Documentation
- */
 static void IpicLineDec(VideoState* ws, u8* block, int blockWidth, StackState* inter, int lineWidth)
 {
   int i;
@@ -999,9 +944,6 @@ static void IpicLineDec(VideoState* ws, u8* block, int blockWidth, StackState* i
   inter->low += 2;
 }
 
-/**
- * @TODO: Documentation
- */
 static void IpicPlaneDec(VideoState* ws, int p, u8* outbuf)
 {
   StackState inter;
@@ -1039,9 +981,6 @@ static void IpicPlaneDec(VideoState* ws, int p, u8* outbuf)
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static void initMCHandler(VideoState* ws, MCHandler* mch, u8* lin_top, u8* forw, u8* back)
 {
   int i;
@@ -1073,9 +1012,6 @@ static void initMCHandler(VideoState* ws, MCHandler* mch, u8* lin_top, u8* forw,
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static inline void resetMCHandler(VideoState* state, MCHandler* mch, u8* lin_top)
 {
   int i;
@@ -1392,9 +1328,6 @@ static inline void reset_PB_dc(VideoState* ws, MCHandler* mch)
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static void decode_PB_cc(VideoState* ws, MCHandler* mc, int proctype, int mcbtype)
 {
   u8 cc;
@@ -1499,9 +1432,6 @@ static inline s32 GetMCAotSumOne(VideoState* ws, s32 sum[16], u8* nestTop, int n
   return (sum[0] + sum[1] + sum[2] + sum[3] + sum[4] + sum[5] + sum[6] + sum[7] + sum[8] + sum[9] + sum[10] + sum[11] + sum[12] + sum[13] + sum[14] + sum[15]) >> 4;
 }
 
-/**
- * @TODO: Documentation
- */
 static void PrediAotBlock(VideoState* ws, u8* blk, u8* mblk, int blkWidth, u8 nbasis, u8* nestPtr, int nestWidth, int p, int mx, int my)
 {
   s32 sum[16];
@@ -1692,9 +1622,6 @@ static void PrediAotBlock(VideoState* ws, u8* blk, u8* mblk, int blkWidth, u8 nb
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static s32 GetMCAotBasis(VideoState* ws, u8 basisOut[16], s32* pscl, u8* nestTop, int nestWidth, int p)
 {
   // the only difference to GetAotBasis() seems to be the ">> 4 & 0xF"
@@ -1885,9 +1812,6 @@ static s32 GetMCAotBasis(VideoState* ws, u8 basisOut[16], s32* pscl, u8* nestTop
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static void MCBlockDecMCNest(VideoState* ws, MCHandler* mch, int tx, int ty)
 {
   int c, i;
@@ -1931,9 +1855,6 @@ static void MCBlockDecMCNest(VideoState* ws, MCHandler* mch, int tx, int ty)
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static void MCBlockDecDCNest(VideoState* ws, MCHandler* mch)
 {
   int c;
@@ -2001,9 +1922,6 @@ static inline void getMVector(int* vec, BitBufferWithTree* code, int fcode)
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static inline void initMCBproc(BitBufferWithTree* code, RLDecoder* flag)
 {
   if (code->str.ptr) {
@@ -2012,9 +1930,6 @@ static inline void initMCBproc(BitBufferWithTree* code, RLDecoder* flag)
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static inline int getMCBproc(BitBufferWithTree* code, RLDecoder* flag)
 {
   if (flag->runlng == 0) {
@@ -2025,9 +1940,6 @@ static inline int getMCBproc(BitBufferWithTree* code, RLDecoder* flag)
   return flag->status;
 }
 
-/**
- * @TODO: Documentation
- */
 static inline void initMCBtype(BitBufferWithTree* code, RLDecoder* flag)
 {
   if (code->str.ptr) {
@@ -2037,9 +1949,6 @@ static inline void initMCBtype(BitBufferWithTree* code, RLDecoder* flag)
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static inline int getMCBtype(BitBufferWithTree* code, RLDecoder* flag)
 {
   static const u32 mcbtypetrans[2][3] = {
@@ -2060,9 +1969,6 @@ static inline int getMCBtype(BitBufferWithTree* code, RLDecoder* flag)
   return flag->status;
 }
 
-/**
- * @TODO: Documentation
- */
 static void spread_PB_descMap(SeqObj* obj, MCHandler* mch)
 {
   VideoState* ws = (VideoState*)obj->ws;
@@ -2089,9 +1995,6 @@ static void spread_PB_descMap(SeqObj* obj, MCHandler* mch)
   }
 }
 
-/**
- * @TODO: Documentation
- */
 static void BpicPlaneDec(SeqObj* seqObj, u8* lin_top, u8* forw, u8* back)
 {
   VideoState* ws;
@@ -2145,17 +2048,11 @@ static void BpicPlaneDec(SeqObj* seqObj, u8* lin_top, u8* forw, u8* back)
   }
 }
 
-/**
- * @TODO: Documentation
- */
 void HVQM4InitDecoder()
 {
   init_global_constants();
 }
 
-/**
- * @TODO: Documentation
- */
 void HVQM4InitSeqObj(SeqObj* obj, VideoInfo* header)
 {
   obj->frame_width  = header->width;
@@ -2164,9 +2061,6 @@ void HVQM4InitSeqObj(SeqObj* obj, VideoInfo* header)
   obj->v_samp       = header->v_sampling_rate;
 }
 
-/**
- * @TODO: Documentation
- */
 u32 HVQM4BuffSize(SeqObj* obj)
 {
   const int nblocks_h    = obj->frame_width / 4;
@@ -2179,9 +2073,6 @@ u32 HVQM4BuffSize(SeqObj* obj)
   return sizeof(VideoState) + (y_blocks + unblocks_v * 2) * sizeof(u16);
 }
 
-/**
- * @TODO: Documentation
- */
 void HVQM4SetBuffer(SeqObj* obj, void* buf)
 {
   VideoState* ws;
@@ -2248,9 +2139,6 @@ void HVQM4SetBuffer(SeqObj* obj, void* buf)
   }
 }
 
-/**
- * @TODO: Documentation
- */
 void HVQM4DecodeIpic(SeqObj* obj, void* code, void* outbuf)
 {
   VideoState* ws;
@@ -2301,17 +2189,11 @@ void HVQM4DecodeIpic(SeqObj* obj, void* code, void* outbuf)
   }
 }
 
-/**
- * @TODO: Documentation
- */
 void HVQM4DecodePpic(SeqObj* obj, void* code, void* outbuf, void* ref1)
 {
   HVQM4DecodeBpic(obj, code, outbuf, ref1, outbuf);
 }
 
-/**
- * @TODO: Documentation
- */
 void HVQM4DecodeBpic(SeqObj* obj, void* code, void* outbuf, void* ref2, void* ref1)
 {
   VideoState* ws;
