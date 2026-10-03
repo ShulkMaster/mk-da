@@ -758,6 +758,13 @@ renderware/bafsys.c:
 renderware/baimmedi.c:
 	.text       start:0x801B381C end:0x801B3918
 
+renderware/bamatrix.c:
+	.text       start:0x801B3918 end:0x801B5B74
+	.rodata     start:0x80246230 end:0x80246240
+	.data       start:0x8029C8B8 end:0x8029C8D8
+	.sbss       start:0x8041CE90 end:0x8041CE98
+	.sdata2     start:0x80420430 end:0x80420440
+
 renderware/bamemory.c:
 	.text       start:0x801B5B74 end:0x801B637C
 	.sbss       start:0x8041CE98 end:0x8041CEA0
@@ -795,11 +802,53 @@ renderware/osintf.c:
 renderware/babbox.c:
 	.text       start:0x801B8DD8 end:0x801B8EA0
 
+renderware/baframe.c:
+	.text       start:0x801BC664 end:0x801BD218
+	.data       start:0x8029C930 end:0x8029C948
+	.sbss       start:0x8041CED0 end:0x8041CED8
+	.sdata2     start:0x804204A8 end:0x804204B0
+
+renderware/baimage.c:
+	.text       start:0x801BD218 end:0x801BF230
+	.data       start:0x8029C948 end:0x8029C960
+	.sbss       start:0x8041CED8 end:0x8041CEE0
+	.sdata2     start:0x804204B0 end:0x804204C8
+
 renderware/baimras.c:
 	.text       start:0x801BF230 end:0x801BF3B4
 
+renderware/baraster.c:
+	.text       start:0x801BF3B4 end:0x801BF9E8
+	.data       start:0x8029C960 end:0x8029C978
+	.sbss       start:0x8041CEE0 end:0x8041CEE8
+
+renderware/baresamp.c:
+	.text       start:0x801BF9E8 end:0x801C0688
+	.sdata2     start:0x804204C8 end:0x804204F0
+
+renderware/basync.c:
+	.text       start:0x801C0688 end:0x801C1450
+
 renderware/batypehf.c:
 	.text       start:0x801C343C end:0x801C34D8
+
+renderware/palquant.c:
+	.text       start:0x801C34D8 end:0x801C597C
+	.bss        start:0x803EC970 end:0x803ECD70
+	.sdata2     start:0x804204F8 end:0x80420510
+
+renderware/dl2drend.c:
+	.text       start:0x801C597C end:0x801C6D84
+	.data       start:0x8029C9A8 end:0x8029C9F8
+	.bss        start:0x803ECD70 end:0x803ECD90
+	.sdata2     start:0x80420510 end:0x80420528
+
+renderware/dlrendst.c:
+	.text       start:0x801CBAF8 end:0x801CCA4C
+	.data       start:0x8029D078 end:0x8029D220
+	.bss        start:0x803ECE28 end:0x803ECFB0
+	.sbss       start:0x8041CF70 end:0x8041CF78
+	.sdata2     start:0x80420550 end:0x80420560
 
 renderware/dltoken.c:
 	.text       start:0x801CE858 end:0x801CE940
@@ -809,6 +858,42 @@ renderware/dltoken.c:
 renderware/bapipe.c:
 	.text       start:0x801CFB00 end:0x801CFB80
 	.sbss       start:0x8041CF98 end:0x8041CFA0
+
+renderware/nodeCullTriangle.c:
+	.text       start:0x801D2518 end:0x801D2DB4
+	.data       start:0x8029D5D0 end:0x8029D6C8
+	.sdata      start:0x8041B7D8 end:0x8041B7E0
+
+renderware/nodeImmMangleLineIndices.c:
+	.text       start:0x801D3204 end:0x801D3594
+	.data       start:0x8029D770 end:0x8029D808
+	.sdata      start:0x8041B7E0 end:0x8041B7F0
+
+renderware/nodeImmMangleTriangleIndices.c:
+	.text       start:0x801D3594 end:0x801D3A74
+	.data       start:0x8029D808 end:0x8029D8A0
+	.sdata      start:0x8041B7F0 end:0x8041B800
+
+renderware/nodeImmRenderSetup.c:
+	.text       start:0x801D3A74 end:0x801D3E7C
+	.data       start:0x8029D8A0 end:0x8029D9D0
+
+renderware/nodeImmStash.c:
+	.text       start:0x801D3E7C end:0x801D40A4
+	.data       start:0x8029D9D0 end:0x8029DA70
+
+renderware/nodeSubmitLine.c:
+	.text       start:0x801D40A4 end:0x801D43A0
+	.data       start:0x8029DA70 end:0x8029DB28
+
+renderware/nodeSubmitTriangle.c:
+	.text       start:0x801D43A0 end:0x801D4654
+	.data       start:0x8029DB28 end:0x8029DBE8
+
+renderware/nodeTransform.c:
+	.text       start:0x801D4654 end:0x801D5494
+	.data       start:0x8029DBE8 end:0x8029DCD0
+	.sdata2     start:0x804205C8 end:0x804205E8
 
 renderware/p2altmdl.c:
 	.text       start:0x801D5494 end:0x801D57BC
@@ -823,6 +908,13 @@ renderware/p2core.c:
 	.text       start:0x801D7538 end:0x801D7FC8
 	.sdata      start:0x8041B800 end:0x8041B808
 	.sbss       start:0x8041CFA0 end:0x8041CFA8
+
+renderware/p2define.c:
+	.text       start:0x801D7FC8 end:0x801D9A78
+	.sdata      start:0x8041B808 end:0x8041B810
+
+renderware/p2dep.c:
+	.text       start:0x801D9A78 end:0x801DB03C
 
 renderware/p2heap.c:
 	.text       start:0x801DB03C end:0x801DC094
@@ -843,6 +935,16 @@ renderware/basector.c:
 	.text       start:0x801EA1CC end:0x801EA28C
 	.data       start:0x8029E028 end:0x8029E040
 	.sbss       start:0x8041D018 end:0x8041D020
+
+renderware/nodeMaterialScatter.c:
+	.text       start:0x801EF6BC end:0x801EF880
+	.data       start:0x8029E280 end:0x8029E328
+
+renderware/nodePostLight.c:
+	.text       start:0x801EF880 end:0x801EFD78
+	.data       start:0x8029E328 end:0x8029E3D8
+	.sdata      start:0x8041B838 end:0x8041B840
+	.sdata2     start:0x804206D0 end:0x804206E0
 
 musyx/runtime/seq.c:
 	.text       start:0x80205D74 end:0x80209C7C
