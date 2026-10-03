@@ -1,13 +1,12 @@
-/* #audit 2026-10-03T05:47Z clean-room FIXED (audit) */
+/* #audit 2026-10-03T06:20Z clean-room FIXED (audit) */
 #include <renderware/project_state.h>
 #include <renderware/project_pipeline.h>
 #include <renderware/project_renderstate.h>
 #include <renderware/project_heap.h>
 #include <renderware/project_error.h>
+#include <renderware/project_memory.h>
 #include <string.h>
 
-extern s32 RwFreeListDestroy(void* arg0);
-extern u8* RwFreeListCreate(s32 arg0, s32 arg1, s32 arg2);
 
 s32 _rxHeapInitialSize = 0x1000;
 s32 _rxPipelineMaxNodes = 0x40;

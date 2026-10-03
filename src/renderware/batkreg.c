@@ -1,15 +1,14 @@
-/* #audit 2026-10-03T05:05Z clean-room FIXED (audit) */
+/* #audit 2026-10-03T06:20Z clean-room FIXED (audit) */
 #include <dolphin/types.h>
 #include <renderware/project_state.h>
 #include <renderware/project_registry.h>
 #include <renderware/project_error.h>
+#include <renderware/project_memory.h>
 
 extern u32 _rwGetNumEngineInstances(void);
 extern void* RwFreeListForAllUsed(void* arg0, void (*arg1)(u8*, void*), void* arg2);
-extern s32 RwFreeListDestroy(void* arg0);
 
 static void* toolkitRegEntries;
-extern void* RwFreeListCreate(s32 arg0, s32 arg1, s32 arg2);
 
 s32 _rwPluginRegistryOpen(void) {
   toolkitRegEntries = RwFreeListCreate(0x3C, 0x14, 0);

@@ -1,11 +1,10 @@
-/* #audit 2026-10-03T05:25Z clean-room FIXED (audit) */
+/* #audit 2026-10-03T06:20Z clean-room FIXED (audit) */
 #include <renderware/project_state.h>
 #include <renderware/project_error.h>
+#include <renderware/project_memory.h>
 #include <string.h>
 #include <stdio.h>
 
-extern void* RwFreeListCreate(s32 arg0, s32 arg1, s32 arg2);
-extern s32 RwFreeListDestroy(void* arg0);
 
 static s32 streamModule[2];
 
