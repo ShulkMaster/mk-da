@@ -4,7 +4,7 @@ Rules ordered by score. Format and scoring: [tier 1](playbook-1-core.md).
 
 ## C05
 
-Declaration order and scope. Score: 13
+Declaration order and scope. Score: 14
 
 IF only registers differ and lifetimes look shifted, REQUIRE identical CFG and
 memory accesses, TRY one honest change of where a real local is declared
@@ -16,11 +16,11 @@ memory accesses, TRY one honest change of where a real local is declared
   aligned base), `MCBlockDecMCNest` (GC/1.2.5 colors in declaration order:
   per-plane locals declared at function scope before `nestP`, which retail
   colors last), `gop_decode` (declaration order after output-pointer
-  staging).
+  staging), `vdisp_init` (next, framebuffer, p, end).
 
 ## C08
 
-In-place derivation. Score: 10
+In-place derivation. Score: 11
 
 IF retail derives a value in the same register it was loaded into, REQUIRE one
 meaning for the variable, TRY computing it in steps in one local (`margin =
@@ -29,7 +29,8 @@ width; margin = (640 - margin) & ~1;`).
 - Exemplars: `vDispThread_Entry`; `HVQM4DecodePcm16Ch1`/`Ch2`,
   `HVQM4DecodeAdp8xCh2` (`bytes = samples * 2; bytes *= track; code +=
   bytes;` keeps retail's shift/multiply operand order),
-  `HVQM4PlayerExCreate` (audio capacity becomes a byte count, then `&= ~127`).
+  `HVQM4PlayerExCreate` (audio capacity becomes a byte count, then `&= ~127`),
+  `vdisp_init` (next-page pointer set from the allocation, then advanced).
 
 ## C03
 

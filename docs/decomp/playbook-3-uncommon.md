@@ -4,6 +4,33 @@ Rules ordered by score. Flag changes are coordinator steps: send gate the
 evidence; agents never edit `configure.py`. Format and scoring:
 [tier 1](playbook-1-core.md).
 
+## U07
+
+Unit-owned data and stripped-helper strings. Score: 6
+
+IF `.data` lacks a global, REQUIRE the ELF OBJECT symbol (scope, size), TRY
+defining it in the unit with retail constness. IF `.rodata` has strings that
+no retail code references, the linker stripped their function: keep a stripped
+helper only under the user's stripped-code ruling; never emit named arrays
+for anonymous literals. IF the object owns codec or lookup tables, import
+only the ELF OBJECT ranges (size, address, relocation targets), check them
+byte for byte against the DOL, and never regenerate them from a formula or
+bring in unrelated upstream tables. An ordinary unused non-inline function
+in a header explains literals with no surviving code body, and its include
+position explains their numbering and pool order; values in its body that
+only the literals support (flags, line numbers) stay marked unproven.
+
+IF anonymous literals are emitted in the wrong order, the first use may come
+from a stripped out-of-line copy: a plain `static` helper that `-inline auto`
+expands at its call sites still emits a body (linker-stripped), and that
+body's position sets literal numbering. Split a helper only where retail
+evidence shows separate source regions (e.g. line-number groups).
+
+- Exemplars: `HVQM4_FILEVERSION` applied; Adp8x tables and `_dect`;
+  `mpeg_fullscreen` and `vdisp_init` (`close_sound` split from `close_movie`
+  emits "hvqm4play.c" first); `"DoMalloc movie"` in hvqm4play
+  pending a user ruling.
+
 ## U05
 
 Static inline boundaries. Score: 5
@@ -31,7 +58,7 @@ Never extend it to other functions.
 
 ## U11
 
-Genuine volatile on shared state. Score: 5
+Genuine volatile on shared state. Score: 4
 
 IF retail reloads a variable between a guard and its update with no call or
 store in between, REQUIRE the minimal repro to reuse the load on every
@@ -39,6 +66,8 @@ compiler version and flag, every honest non-volatile form to fail, the
 variable to be truly shared (thread or interrupt state), and a user ruling,
 TRY `volatile` on its declaration only (never on accesses), and cite the
 evidence in a note. Without that evidence, volatile stays a research trick.
+A qualifier that reproduces the reload proves the reload, not the original
+qualifier; keep the note's qualification.
 A user may also accept volatile from a strong dirty lead when a function
 escalates unmatched. Then the note must say so: "accepted after escalation
 because no honest form matched; revisit if a clean form is found", so later
@@ -49,8 +78,10 @@ MWCC keys load merging on the qualifier, so a `const`-qualified read
 the reload. That is a fake alias, not an alternative: reject it.
 
 - Exemplars: `_HVQM4PlayerExClose`, `HVQM4PlayerExCreate` (`static volatile
-  s32 lib_link_counter;`, one declaration closed both); `vdisp_init`
-  (`FrameBuffer`, accepted after escalation from a 90.33 -> 97.19 lead).
+  s32 lib_link_counter;`, one declaration closed both). Revisit worked once:
+  `vdisp_init`'s escalation-accepted `FrameBuffer` volatile was later
+  replaced by honest C (three real reads of `FrameBuffer[0]` for start, end
+  and cursor, plus C05 declaration order), so always reopen these.
 
 ## U02
 
@@ -91,22 +122,6 @@ order (GC/1.3.2 emits them reversed). Objdiff's per-symbol 100% does not
 check offsets.
 
 - Exemplars: HVQM4PlayerEx, hvqm4play applied.
-
-## U07
-
-Unit-owned data and stripped-helper strings. Score: 2
-
-IF `.data` lacks a global, REQUIRE the ELF OBJECT symbol (scope, size), TRY
-defining it in the unit with retail constness. IF `.rodata` has strings that
-no retail code references, the linker stripped their function: keep a stripped
-helper only under the user's stripped-code ruling; never emit named arrays
-for anonymous literals. IF the object owns codec or lookup tables, import
-only the ELF OBJECT ranges (size, address, relocation targets), check them
-byte for byte against the DOL, and never regenerate them from a formula or
-bring in unrelated upstream tables.
-
-- Exemplars: `HVQM4_FILEVERSION` applied; Adp8x tables and `_dect`; `"DoMalloc movie"` in hvqm4play
-  pending a user ruling.
 
 ## U12
 

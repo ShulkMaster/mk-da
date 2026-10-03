@@ -48,10 +48,6 @@ extern "C" {
  *
  * The decoder processes blocks in raster scan order, maintaining neighbor information for prediction.
  * Motion compensation uses bilinear interpolation for half-pixel positions.
- *
- * Initial code attempts + comments + function arguments/naming guides taken from
- * Bakuten Shoot Beyblade 2002 and http://github.com/Tilka/hvqm4
- * with very many thanks from all of the projectPiki decompilation team.
  */
 
 #define HVQM_PLANE_COUNT (3)

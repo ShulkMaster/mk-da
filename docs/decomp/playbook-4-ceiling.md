@@ -5,7 +5,7 @@ Apply before any tier 5 search or escalation. Format and scoring:
 
 ## R04
 
-Offline compiler pre-screen. Score: 6
+Offline compiler pre-screen. Score: 8
 
 IF a small localized residue remains, REQUIRE the exact TU command (`ninja -t
 commands <object>`), TRY compiling variants locally with the project's

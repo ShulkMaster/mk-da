@@ -49,7 +49,8 @@ Permuter honesty filter. Score: 6
 
 IF a candidate scores better, REQUIRE porting it by hand or through its
 `replace` edits and checking it with `try`, TRY keeping only honest C.
-Dirty candidates are welcome as leads: ask what each forcing construct does
+Dirty candidates are welcome as leads; strip and measure each component
+separately before porting anything: ask what each forcing construct does
 to lifetimes or order (a pragma that fixes CSE points at a reload, an alias
 points at a separate live value) and find the honest source that does the
 same. An alias that fixes coloring often marks the parameter copies of a

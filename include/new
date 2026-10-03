@@ -1,0 +1,20 @@
+#ifndef _NEW
+#define _NEW
+
+#include <exception>
+
+namespace std {
+
+class bad_alloc : public exception {
+public:
+  bad_alloc() throw() {}
+  virtual ~bad_alloc() throw() {}
+  virtual const char* what() const throw() { return "bad_alloc"; }
+};
+
+typedef void (*new_handler)();
+new_handler set_new_handler(new_handler new_p) throw();
+
+} // namespace std
+
+#endif

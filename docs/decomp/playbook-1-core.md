@@ -47,6 +47,9 @@ its score passes the lowest rule there.
   reuse of an unrelated variable, invented fields, wrong prototypes, local
   re-declarations where a real header exists, asm. Exception: the same
   construct in Pikmin's same function, copied verbatim and cited.
+- Raw placement: per-symbol 100% does not prove layout. Check raw offsets and
+  sizes of statics (`.sbss` order) and the order of anonymous literals in the
+  pool (a reversed pair leaves relocations wrong while each string matches).
 - Acceptance: judge per function and per instruction; check collateral on
   every function in the TU; use `functionRelocDiffs=data_value`; a unit goes
   Matching only after the coordinator's whole-object and retail-hash audit.

@@ -406,6 +406,7 @@ config.libs = [
             Object(Matching, "MSL_C.PPCEABI.bare.H/file_pos.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/locale.c", extra_cflags=["-inline deferred,auto", "-char signed"]),
             Object(Matching, "MSL_C.PPCEABI.bare.H/mbstring.c", extra_cflags=["-char signed"]),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/mem.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/mem_funcs.c", extra_cflags=["-char signed", "-inline deferred,auto"]),
             Object(Matching, "MSL_C.PPCEABI.bare.H/misc_io.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/printf.c", extra_cflags=["-char signed"]),
@@ -454,6 +455,8 @@ config.libs = [
             Object(Matching, "Runtime.PPCEABI.H/__mem.c"),
             Object(Matching, "Runtime.PPCEABI.H/__va_arg.c"),
             Object(Matching, "Runtime.PPCEABI.H/global_destructor_chain.c"),
+            Object(Matching, "Runtime.PPCEABI.H/NewMore.cp", extra_cflags=["-Cpp_exceptions on", "-RTTI on", "-str nopool"]),
+            Object(Matching, "Runtime.PPCEABI.H/NMWException.cp", extra_cflags=["-Cpp_exceptions on", "-RTTI on", "-str nopool"]),
             Object(Matching, "Runtime.PPCEABI.H/GCN_mem_alloc.c", extra_cflags=["-str nopool"]),
         ],
     },
@@ -649,6 +652,39 @@ config.libs = [
             Object(Matching, "musyx/runtime/dsp_import.c"),
         ]
     ),
+    {
+        # Retail extab entries show these objects were built with C++
+        # exceptions enabled; the compiler version is unconfirmed.
+        "lib": "hvqm4player",
+        "mw_version": "GC/1.3.2",
+        # Retail keeps each string literal as its own local .rodata object.
+        "cflags": [*cflags_base, "-Cpp_exceptions on", "-str reuse,readonly", "-use_lmw_stmw on"],
+        "progress_category": "hvqm4",
+        "objects": [
+            Object(Matching, "hvqm4/HVQM4Bufa.c"),
+            Object(Matching, "hvqm4/HVQM4Bufv.c"),
+            Object(
+                Matching,
+                "hvqm4/hvqm4play.c",
+                extra_cflags=["-i extern/musyx/include", "-DMUSY_TARGET=MUSY_TARGET_DOLPHIN"],
+            ),
+            Object(Matching, "hvqm4/HVQM4PlayerEx.c"),
+        ],
+    },
+    {
+        # Pikmin builds hvqm4dec.c with GC/1.2.5; the other objects are unconfirmed.
+        "lib": "hvqm4dec",
+        "mw_version": "GC/1.2.5",
+        "cflags": [*cflags_base, "-fp_contract off"],
+        "progress_category": "hvqm4",
+        "objects": [
+            Object(Matching, "hvqm4/HVQM4Adpcm.c"),
+            Object(Matching, "hvqm4/HVQM4Pcm16.c"),
+            Object(Matching, "hvqm4/HVQM4Adp8x.c"),
+            Object(Matching, "hvqm4/HVQM4DecSnd.c"),
+            Object(Matching, "hvqm4/hvqm4dec.c"),
+        ],
+    },
 ]
 
 
@@ -672,6 +708,7 @@ def link_order_callback(module_id: int, objects: List[str]) -> List[str]:
 config.progress_categories = [
     ProgressCategory("sdk", "Dolphin SDK"),
     ProgressCategory("musyx", "MusyX"),
+    ProgressCategory("hvqm4", "HVQM4"),
 ]
 config.progress_each_module = args.verbose
 # Optional extra arguments to `objdiff-cli report generate`

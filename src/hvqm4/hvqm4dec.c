@@ -1,9 +1,3 @@
-/*
- * This project builds on work from the Pikmin decompilation project.
- * Credit and thanks to the projectPiki contributors.
- * https://github.com/projectPiki/pikmin
- */
-
 #include "hvqm4.h"
 #include <stddef.h>
 
@@ -12,12 +6,6 @@
   do {                 \
     int pad[n];        \
   } while (0)
-
-/*
- * Initial code attempts + comments + function arguments/naming guides taken from
- * Bakuten Shoot Beyblade 2002 and http://github.com/Tilka/hvqm4
- * with very many thanks from all of the projectPiki decompilation team.
- */
 
 static s32 GetMCAotBasis(VideoState* ws, u8 basisOut[16], s32* pscl, u8* nestTop, int nestWidth, int p);
 
