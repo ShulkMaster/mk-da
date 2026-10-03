@@ -1,6 +1,7 @@
-/* #audit 2026-10-03T05:48Z clean-room PASS (audit) */
+/* #audit 2026-10-03T06:02Z clean-room PASS (audit) */
 #include <renderware/project_pipeline.h>
 #include <renderware/project_renderstate.h>
+#include <renderware/project_node_defs.h>
 
 extern ProjectRenderState* RxRenderStateVectorCreate(s32 arg0);
 extern u8* RxPacketCreate(const u8* arg0);
@@ -14,7 +15,7 @@ static inline void projectSetupForward(u8* unk00, u32 unk04) {
   if (*(s32*)(_rxExecCtxGlobal + 8) != 0) {
     u8* unk0C = _rxEmbeddedPacketBetweenNodes(unk08, unk00, unk04);
     if (unk0C != 0) {
-      u32 unk10 = (*(s32 (**)(u8*, void*))
+      u32 unk10 = (*(s32 (**)(u8*, u8*))
           (*(u8**)unk0C + 4))(unk0C, _rxExecCtxGlobal + 0x10);
       if (unk10 == 0) {
         *(u32*)(_rxExecCtxGlobal + 8) = unk10;
@@ -27,8 +28,8 @@ static inline void projectSetupForward(u8* unk00, u32 unk04) {
   }
 }
 
-static s32 _ImmRenderSetupNode(u8* unk00, u8* const* unk04) {
-  u8* unk08 = *unk04;
+static s32 _ImmRenderSetupNode(u8* unk00, u8* unk04) {
+  u8* unk08 = *(u8**)unk04;
   ProjectRenderState* unk0C;
   u8* unk10;
   u8* unk14;
@@ -103,11 +104,7 @@ static s32 _ImmRenderSetupNode(u8* unk00, u8* const* unk04) {
   return 1;
 }
 
-#include <renderware/project_node_defs.h>
-
-extern ProjectClusterDef RxClIndices;
-
-void* RxNodeDefinitionGetImmRenderSetup(void) {
+ProjectNodeDef* RxNodeDefinitionGetImmRenderSetup(void) {
   static ProjectNodeCluster N1clofinterest[6] = {
     {&RxClObjSpace3DVertices, 0, 0},
     {&RxClCamSpace3DVertices, 0, 0},
@@ -121,29 +118,13 @@ void* RxNodeDefinitionGetImmRenderSetup(void) {
   static u32 N1outcl2[6] = {1, 1, 1, 1, 1, 2};
   static char _ImmRenderSetupOut[] = "ImmRenderSetupOut";
   static char _ImmRenderSetupOutUnindexed[] = "ImmRenderSetupOutUnindexed";
-  static struct {
-    char* unk00;
-    u32* unk04;
-    u32 unk08;
-  } N1outputs[2] = {
+  static ProjectNodeOutput N1outputs[2] = {
     {_ImmRenderSetupOut, N1outcl1, 2},
     {_ImmRenderSetupOutUnindexed, N1outcl2, 2}
   };
   static char _ImmRenderSetup_csl[] = "ImmRenderSetup.csl";
-  static struct {
-    char* unk00;
-    s32 (*unk04)(u8*, u8* const*);
-    u32 unk08[6];
-    u32 unk20;
-    ProjectNodeCluster* unk24;
-    u32* unk28;
-    u32 unk2C;
-    void* unk30;
-    u32 unk34;
-    u32 unk38;
-    u32 unk3C;
-  } nodeImmRenderSetupCSL = {
-    _ImmRenderSetup_csl, _ImmRenderSetupNode, {0, 0, 0, 0, 0, 0},
+  static ProjectNodeDef nodeImmRenderSetupCSL = {
+    _ImmRenderSetup_csl, _ImmRenderSetupNode, 0, 0, 0, 0, 0, 0,
     6, N1clofinterest, N1inputreqs, 2, N1outputs, 0, 0, 0
   };
   return &nodeImmRenderSetupCSL;

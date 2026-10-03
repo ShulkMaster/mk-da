@@ -1,7 +1,8 @@
-/* #audit 2026-10-03T05:46Z clean-room FIXED (audit) */
+/* #audit 2026-10-03T06:02Z clean-room FIXED (audit) */
 #include <renderware/project_state.h>
 #include <renderware/project_pipeline.h>
 #include <renderware/project_renderstate.h>
+#include <renderware/project_node_defs.h>
 
 extern s32 RwRenderStateSet(s32 arg0, u32 arg1);
 extern s32 RwIm2DRenderPrimitive(s32 arg0, void* arg1, s32 arg2);
@@ -19,7 +20,7 @@ static inline u8* projectTriangleSlotAt(u8* unk00, u32 unk04) {
   return unk00 + *(s32*)(*(u8**)(unk00 + 8) + unk04) * 0x1C + 0x14;
 }
 
-static s32 SubmitTriangleNode(u8* unk00, void* unk04) {
+static s32 SubmitTriangleNode(u8* unk00, u8* unk04) {
   u8* unk08;
   u8* unk0C;
   u8* unk10;
@@ -71,7 +72,7 @@ static s32 SubmitTriangleNode(u8* unk00, void* unk04) {
     if (*(s32*)(_rxExecCtxGlobal + 8) != 0) {
       u8* unk28 = _rxEmbeddedPacketBetweenNodes(unk24, unk00, 0);
       if (unk28 != 0) {
-        u32 unk2C = (*(s32 (**)(u8*, void*))
+        u32 unk2C = (*(s32 (**)(u8*, u8*))
             (*(u8**)unk28 + 4))(unk28, _rxExecCtxGlobal + 0x10);
         if (unk2C == 0) {
           *(u32*)(_rxExecCtxGlobal + 8) = unk2C;
@@ -86,45 +87,23 @@ static s32 SubmitTriangleNode(u8* unk00, void* unk04) {
   return 1;
 }
 
-void* RxNodeDefinitionGetSubmitTriangle(void) {
-  extern u8 RxClScrSpace2DVertices[];
-  extern u8 RxClIndices[];
-  extern u8 RxClMeshState[];
-  extern u8 RxClRenderState[];
-  static struct {
-    u8* unk00;
-    u32 unk04;
-    u32 unk08;
-  } N1clofinterest[4] = {
-    {RxClScrSpace2DVertices, 0, 0},
-    {RxClIndices, 0, 0},
-    {RxClMeshState, 0, 0},
-    {RxClRenderState, 0, 0}
+ProjectNodeDef* RxNodeDefinitionGetSubmitTriangle(void) {
+  static ProjectNodeCluster N1clofinterest[4] = {
+    {&RxClScrSpace2DVertices, 0, 0},
+    {&RxClIndices, 0, 0},
+    {&RxClMeshState, 0, 0},
+    {&RxClRenderState, 0, 0}
   };
   static u32 N1inputreqs[4] = {1, 2, 1, 2};
   static u32 N1outcl1[4] = {1, 0, 1, 0};
   static char _SubmitOut[] = "SubmitOut";
-  static struct {
-    char* unk00;
-    u32* unk04;
-    u32 unk08;
-  } N1outputs[1] = {
+  static ProjectNodeOutput N1outputs[1] = {
     {_SubmitOut, N1outcl1, 0}
   };
   static char _SubmitTriangle_csl[] = "SubmitTriangle.csl";
-  static struct {
-    char* unk00;
-    s32 (*unk04)(u8*, void*);
-    u32 unk08[6];
-    u32 unk20;
-    void* unk24;
-    u32* unk28;
-    u32 unk2c;
-    void* unk30;
-    u32 unk34[3];
-  } nodeSubmitTriangleCSL = {
-    _SubmitTriangle_csl, SubmitTriangleNode, {0, 0, 0, 0, 0, 0},
-    4, N1clofinterest, N1inputreqs, 1, N1outputs, {0, 0, 0}
+  static ProjectNodeDef nodeSubmitTriangleCSL = {
+    _SubmitTriangle_csl, SubmitTriangleNode, 0, 0, 0, 0, 0, 0,
+    4, N1clofinterest, N1inputreqs, 1, N1outputs, 0, 0, 0
   };
   return &nodeSubmitTriangleCSL;
 }
