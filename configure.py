@@ -656,7 +656,7 @@ config.libs = [
     {
         "lib": "renderware",
         "mw_version": "GC/1.3.2",
-        "cflags": [*(flag for flag in cflags_base if flag != "-O4,p"), "-O2,p"],
+        "cflags": [*(flag for flag in cflags_base if flag not in ("-O4,p", "-fp_contract on")), "-O2,p", "-fp_contract off"],
         "progress_category": "renderware",
         "objects": [
             Object(NonMatching, "renderware/babinary.c"),
