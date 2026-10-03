@@ -93,6 +93,7 @@ section, keep its ID) when a score crosses a threshold.
 | Default constant loaded before a compare retail does first | C18 |
 | 0/1 result of a call shifted through a different register | C19 |
 | Index from a pointer difference with a signed divide | C20 |
+| Loop pointer, buffer and input colored in the wrong order | C24 |
 | Only coloring or scheduling left | R01, R04, tier 5 |
 
 ## Rule index
@@ -116,7 +117,8 @@ frame size (2), C07 named loaded words (2), C10 cache a field before dispatch
 (2), C14 named products against fused multiply-add (2), C15 conditional
 call target (2), C17 byte-pointer base for read-only inputs (2), C18 conditional expression
 for clamps (2), C19 boolean result form (2), C20 signed index from a pointer
-difference (2), R03 last-resort goto (2), U03 per-literal read-only
+difference (2), C24 indexed scan before a cursor local (2), R03 last-resort
+goto (2), U03 per-literal read-only
 strings (2), U04 reverse `.sbss` declaration order (3), U12 literal
 over-allocation (2).
 

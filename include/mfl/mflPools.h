@@ -19,6 +19,7 @@ typedef union mflPoolConfig {
 } mflPoolConfig;
 
 void mflInitializePools(mflPoolConfig config);
+mflQueue* mflQueueAlloc(void);
 mflFileCommand* mflFileCommandAlloc(void);
 void mflFileCommandFree(mflFileCommand* command);
 void mflFileCommandFreePending(void);

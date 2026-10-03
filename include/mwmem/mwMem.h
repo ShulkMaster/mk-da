@@ -62,6 +62,8 @@ typedef struct mwMemHeapConfig {
 extern "C" {
 #endif
 
+extern u32 mwMEM_VIRTUAL_HEAP_SIZE;
+
 struct _mwMemHeap* _mwMemHeapCreate(const mwMemHeapConfig* config,
                                    const mwMemHeapParams* params,
                                    const char* file, s32 line);
@@ -125,6 +127,13 @@ struct _mwMemHeap {
   u8 unk6C;
   u8 unk6D;
 };
+
+void* _mwMemMalloc(struct _mwMemHeap* heap, u32 size, s32 alignment,
+                    const char* label, const char* file, s32 line);
+void _mwMemFree(void* ptr, const char* file, s32 line);
+void* _mwMemRealloc(void* ptr, struct _mwMemHeap* heap, u32 size,
+                     s32 alignment, const char* label, const char* file,
+                     s32 line);
 
 void* _mwMemMallocVirtual(struct _mwMemHeap* heap, u32 size, s32 alignment,
                           const char* label, const char* file, s32 line, u32 flags);

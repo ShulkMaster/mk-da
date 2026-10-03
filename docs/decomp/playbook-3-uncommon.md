@@ -185,6 +185,22 @@ export). A type chosen only to stop CSE is forcing.
 - Exemplars: `_rwDlGetRenderState` (99.75 -> 100; signed compare at 0x88,
   audit PASS).
 
+## C24
+
+Indexed scan before a cursor local. Score: 2
+
+IF a loop walks a buffer through a pointer register and the loop pointer,
+the buffer and another input are colored in the wrong order (retail gives
+the walking pointer the lowest callee-saved register), REQUIRE that retail
+also keeps the index (the loop bound, a stored or passed position), TRY
+`buffer[index]` with no separate cursor local before any manual coloring
+search. MWCC strength-reduces the index into a pointer created after the
+parameters; an explicit cursor local is created before them and swaps the
+webs.
+
+- Exemplars: `mflGetS` (99.69 -> 100 in 3 tries after 60 manual tries and
+  185k permuter candidates on a cursor shape).
+
 ## R03
 
 Last-resort goto. Score: 2

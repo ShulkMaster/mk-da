@@ -114,6 +114,24 @@ typedef struct mslAdjustment {
   struct mslAdjustment* next;
 } mslAdjustment;
 
+/* mslInit's first argument (g_initDefault when NULL). */
+typedef struct mslInitConfig {
+  u32 unk00;
+  /* Zero selects dB volumes (mslSoundSystem.flags.volumeInDB). */
+  u32 flags;
+  /* Slots below this index are reserved for explicit slot requests. */
+  u32 tracks;
+} mslInitConfig;
+
+/* mslInit's second argument (g_sysinitDefault when NULL). */
+typedef struct mslSysInitConfig {
+  u32 unk00;
+  u32 flags;
+  u16 reservedVoices;
+  u16 voices;
+  u32 aramSize;
+} mslSysInitConfig;
+
 /* msi: returned by mslInit; mslSetVol/mslGetVol/mslStopAll take it. */
 typedef struct mslSoundSystem {
   struct {
@@ -270,6 +288,7 @@ void mslSoundSetPitch(mslSound* sound, f32 pitch);
 void mslSoundPlayAfterPrep(mslSound* sound);
 void mslStopAll(mslSoundSystem* sys);
 void mslEndAll(mslSoundSystem* sys);
+mslSoundSystem* mslInit(mslInitConfig* init, mslSysInitConfig* sysinit);
 s32 mslBankUnLoad(mslBank* bank);
 void mslPauseAll(void);
 void mslUnPauseAll(void);

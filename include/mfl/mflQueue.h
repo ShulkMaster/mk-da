@@ -17,7 +17,6 @@ typedef struct mflQueue {
   u8 unk0A : 7;
 } mflQueue;
 
-mflQueue* mflQueueAlloc(void);
 mflQueue* mflQueueGetCurrent(void);
 mflQueue* mflQueueSetCurrent(mflQueue* queue);
 mflQueue* mflQueueNew(void);

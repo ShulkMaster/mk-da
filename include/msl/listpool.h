@@ -14,12 +14,14 @@ typedef struct ListNode {
 
 /* Node handle: index and serial packed in one word (passed and returned in a
    single register). */
+struct ListNodeIdParts {
+  u16 index;
+  u16 serial;
+};
+
 typedef union ListNodeId {
   u32 value;
-  struct {
-    u16 index;
-    u16 serial;
-  } parts;
+  struct ListNodeIdParts parts;
 } ListNodeId;
 
 typedef struct ListPool {

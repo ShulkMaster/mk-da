@@ -1,17 +1,13 @@
 #include "hvqm4player.h"
 #include <dolphin/dvd.h>
 #include <dolphin/os.h>
+#include <mwmem/mwMem.h>
 #include <dolphin/vi.h>
 
 #include <musyx/musyx.h>
 
 extern void ReportErrcode(s32 error);
 extern s32 mflTick(void);
-extern void* _mwMemMalloc(void* heap, u32 size, u32 alignment,
-    const char* name, const char* file, s32 line);
-extern void* _mwMemCalloc(void* heap, u32 count, u32 size, u32 alignment,
-    const char* name, const char* file, s32 line);
-extern void _mwMemFree(void* ptr, const char* file, s32 line);
 extern GXRenderModeObj GXNtsc480Int, GXPal528Int, GXMpal480Int;
 extern OSThread* gPlayerThread;
 
