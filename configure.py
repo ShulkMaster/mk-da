@@ -1,17 +1,5 @@
 #!/usr/bin/env python3
 
-###
-# Generates build files for the project.
-# This file also includes the project configuration,
-# such as compiler flags and the object matching status.
-#
-# Usage:
-#   python3 configure.py
-#   ninja
-#
-# Append --help to see available options.
-###
-
 import argparse
 import json
 import subprocess
@@ -28,10 +16,9 @@ from tools.project import (
     is_windows,
 )
 
-# Game versions
 DEFAULT_VERSION = 0
 VERSIONS = [
-    "GMKE5D",  # 0: USA, revision 1
+    "GMKE5D",
 ]
 
 parser = argparse.ArgumentParser()
@@ -136,7 +123,6 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-# Fetch git submodules (extern/musyx) when the checkout was not cloned recursively.
 if not Path("extern/musyx/include").is_dir():
     try:
         subprocess.run(["git", "submodule", "update", "--init", "--recursive"], check=True)
@@ -147,7 +133,6 @@ config = ProjectConfig()
 config.version = str(args.version)
 version_num = VERSIONS.index(config.version)
 
-# Apply arguments
 config.build_dir = args.build_dir
 config.dtk_path = args.dtk
 config.objdiff_path = args.objdiff
@@ -160,11 +145,9 @@ config.ninja_path = args.ninja
 config.progress = args.progress
 if not is_windows():
     config.wrapper = args.wrapper
-# Don't build asm unless we're --non-matching
 if not config.non_matching:
     config.asm_dir = None
 
-# Tool versions
 config.binutils_tag = "2.42-2"
 config.compilers_tag = "20251118"
 config.dtk_tag = "v1.8.3"
@@ -172,7 +155,6 @@ config.objdiff_tag = "v3.6.1"
 config.sjiswrap_tag = "v1.2.2"
 config.wibo_tag = "1.0.3"
 
-# Project
 config.config_path = Path("config") / config.version / "config.yml"
 config.check_sha_path = Path("config") / config.version / "build.sha1"
 config.asflags = [
@@ -187,19 +169,15 @@ config.ldflags = [
     "-nodefaults",
 ]
 if args.debug:
-    config.ldflags.append("-g")  # Or -gdwarf-2 for Wii linkers
+    config.ldflags.append("-g")
 if args.map:
     config.ldflags.append("-mapunused")
-    # config.ldflags.append("-listclosure") # For Wii linkers
 
-# Use for any additional files that should cause a re-configure when modified
 config.reconfig_deps = []
 
-# Generate approved handwritten assembly from this version's retail split.
 asm_sequence_manifest = Path("config") / config.version / "asm_sequences.json"
 asm_sequence_config = json.loads(asm_sequence_manifest.read_text(encoding="utf-8"))
 asm_sequence_root = config.build_dir / config.version
-# Whole retail `.s` units are generated here and assembled by their Objects.
 asm_unit_root = asm_sequence_root / "units"
 asm_units = asm_sequence_config.get("units", [])
 config.reconfig_deps.append(asm_sequence_manifest)
@@ -248,12 +226,8 @@ config.custom_build_steps = {
     ],
 }
 
-# Optional numeric ID for decomp.me preset
-# Can be overridden in libraries or objects
 config.scratch_preset_id = None
 
-# Base flags, common to most GC/Wii games.
-# Generally leave untouched, with overrides added below.
 cflags_base = [
     "-nodefaults",
     "-proc gekko",
@@ -270,21 +244,18 @@ cflags_base = [
     "-RTTI off",
     "-fp_contract on",
     "-str reuse",
-    "-multibyte",  # For Wii compilers, replace with `-enc SJIS`
+    "-multibyte",
     "-i include",
     f"-i {config.build_dir}/{config.version}/include",
     f"-DBUILD_VERSION={version_num}",
     f"-DVERSION_{config.version}",
 ]
 
-# Debug flags
 if args.debug:
-    # Or -sym dwarf-2 for Wii compilers
     cflags_base.extend(["-sym on", "-DDEBUG=1"])
 else:
     cflags_base.append("-DNDEBUG=1")
 
-# Warning flags
 if args.warn == "all":
     cflags_base.append("-W all")
 elif args.warn == "off":
@@ -292,7 +263,6 @@ elif args.warn == "off":
 elif args.warn == "error":
     cflags_base.append("-W error")
 
-# Metrowerks library flags
 cflags_runtime = [
     *cflags_base,
     "-use_lmw_stmw on",
@@ -302,14 +272,12 @@ cflags_runtime = [
     "-inline auto",
 ]
 
-# REL flags
 cflags_rel = [
     *cflags_base,
     "-sdata 0",
     "-sdata2 0",
 ]
 
-# MusyX flags, shared with Prime through extern/musyx (mkda branch)
 cflags_musyx = [
     "-proc gekko",
     "-nodefaults",
@@ -327,11 +295,9 @@ cflags_musyx = [
     "-DMUSY_TARGET=MUSY_TARGET_DOLPHIN",
 ]
 
-# This linker reproduces the retail DOL; the game compiler remains unconfirmed.
 config.linker_version = "GC/1.3.2"
 
 
-# Helper function for Dolphin libraries
 def DolphinLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     return {
         "lib": lib_name,
@@ -342,7 +308,6 @@ def DolphinLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     }
 
 
-# Helper function for REL script objects
 def Rel(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     return {
         "lib": lib_name,
@@ -353,7 +318,6 @@ def Rel(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     }
 
 
-# Helper function for MusyX objects
 def MusyX(objects: List[Object], major: int = 2, minor: int = 0, patch: int = 0) -> Dict[str, Any]:
     return {
         "lib": "musyx",
@@ -370,24 +334,19 @@ def MusyX(objects: List[Object], major: int = 2, minor: int = 0, patch: int = 0)
     }
 
 
-Matching = True                   # Object matches and should be linked
-NonMatching = False               # Object does not match and should not be linked
-Equivalent = config.non_matching  # Object should be linked when configured with --non-matching
+Matching = True
+NonMatching = False
+Equivalent = config.non_matching
 
 
-# Object is only matching for specific versions
 def MatchingFor(*versions):
     return config.version in versions
 
 
 config.warn_missing_config = False
 config.warn_missing_source = False
-# The remaining objects continue to link from the original binary.
 config.libs = [
     {
-        # Sonic Heroes builds this library with GC/1.3; every object here
-        # matches retail under GC/1.3.2, while several (ansi_fp, printf, qsort,
-        # strtoul, e_pow, s_atan) do not under GC/1.3.
         "lib": "MSL_C.PPCEABI.bare.H",
         "mw_version": "GC/1.3.2",
         "cflags": cflags_runtime,
@@ -406,6 +365,7 @@ config.libs = [
             Object(Matching, "MSL_C.PPCEABI.bare.H/file_pos.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/locale.c", extra_cflags=["-inline deferred,auto", "-char signed"]),
             Object(Matching, "MSL_C.PPCEABI.bare.H/mbstring.c", extra_cflags=["-char signed"]),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/mem.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/mem_funcs.c", extra_cflags=["-char signed", "-inline deferred,auto"]),
             Object(Matching, "MSL_C.PPCEABI.bare.H/misc_io.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/printf.c", extra_cflags=["-char signed"]),
@@ -454,6 +414,8 @@ config.libs = [
             Object(Matching, "Runtime.PPCEABI.H/__mem.c"),
             Object(Matching, "Runtime.PPCEABI.H/__va_arg.c"),
             Object(Matching, "Runtime.PPCEABI.H/global_destructor_chain.c"),
+            Object(Matching, "Runtime.PPCEABI.H/NewMore.cp", extra_cflags=["-Cpp_exceptions on", "-RTTI on", "-str nopool"]),
+            Object(Matching, "Runtime.PPCEABI.H/NMWException.cp", extra_cflags=["-Cpp_exceptions on", "-RTTI on", "-str nopool"]),
             Object(Matching, "Runtime.PPCEABI.H/GCN_mem_alloc.c", extra_cflags=["-str nopool"]),
         ],
     },
@@ -649,43 +611,58 @@ config.libs = [
             Object(Matching, "musyx/runtime/dsp_import.c"),
         ]
     ),
+    {
+        "lib": "hvqm4player",
+        "mw_version": "GC/1.3.2",
+        "cflags": [*cflags_base, "-Cpp_exceptions on", "-str reuse,readonly", "-use_lmw_stmw on"],
+        "progress_category": "hvqm4",
+        "objects": [
+            Object(Matching, "hvqm4/HVQM4Bufa.c"),
+            Object(Matching, "hvqm4/HVQM4Bufv.c"),
+            Object(
+                Matching,
+                "hvqm4/hvqm4play.c",
+                extra_cflags=["-i extern/musyx/include", "-DMUSY_TARGET=MUSY_TARGET_DOLPHIN"],
+            ),
+            Object(Matching, "hvqm4/HVQM4PlayerEx.c"),
+        ],
+    },
+    {
+        "lib": "hvqm4dec",
+        "mw_version": "GC/1.2.5",
+        "cflags": [*cflags_base, "-fp_contract off"],
+        "progress_category": "hvqm4",
+        "objects": [
+            Object(Matching, "hvqm4/HVQM4Adpcm.c"),
+            Object(Matching, "hvqm4/HVQM4Pcm16.c"),
+            Object(Matching, "hvqm4/HVQM4Adp8x.c"),
+            Object(Matching, "hvqm4/HVQM4DecSnd.c"),
+            Object(Matching, "hvqm4/hvqm4dec.c"),
+        ],
+    },
 ]
 
 
-# Optional callback to adjust link order. This can be used to add, remove, or reorder objects.
-# This is called once per module, with the module ID and the current link order.
 def link_order_callback(module_id: int, objects: List[str]) -> List[str]:
-    # Don't modify the link order for matching builds
     if not config.non_matching:
         return objects
-    if module_id == 0:  # DOL
+    if module_id == 0:
         return objects + ["dummy.c"]
     return objects
 
 
-# Uncomment to enable the link order callback.
-# config.link_order_callback = link_order_callback
-
-
-# Optional extra categories for progress tracking
-# Adjust as desired for your project
 config.progress_categories = [
     ProgressCategory("sdk", "Dolphin SDK"),
     ProgressCategory("musyx", "MusyX"),
+    ProgressCategory("hvqm4", "HVQM4"),
 ]
 config.progress_each_module = args.verbose
-# Optional extra arguments to `objdiff-cli report generate`
 config.progress_report_args = [
-    # Marks relocations as mismatching if the target value is different
-    # Default is "functionRelocDiffs=none", which is most lenient
-    # "--config functionRelocDiffs=data_value",
 ]
 
 if args.mode == "configure":
-    # Write build.ninja and objdiff.json
     generate_build(config)
 elif args.mode == "progress":
-    # Print progress information
     calculate_progress(config)
 else:
     sys.exit("Unknown mode: " + args.mode)
