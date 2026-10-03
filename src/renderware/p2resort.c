@@ -1,5 +1,6 @@
-/* #audit 2026-10-03T04:15Z clean-room PASS (audit) */
+/* #audit 2026-10-03T08:33Z clean-room PASS (audit) */
 #include <dolphin/types.h>
+#include <renderware/project_sort.h>
 
 static void _repartition(u8* unk00, u8* unk04, u32 unk08, u32 unk0C, u32 unk10) {
   u32* unk2C;
