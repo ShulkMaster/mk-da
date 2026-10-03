@@ -1,29 +1,48 @@
-# Matching playbook, tier 4: ceilings and last resorts
+# Matching playbook, tier 4: rare and ceilings
 
-Apply before any tier 5 search or escalation. Format and scoring:
-[tier 1](playbook-1-core.md).
+Rules scored 0 or 1, plus the dead-end list. Apply before any tier 5 search
+or escalation. Format and scoring: [tier 1](playbook-1-core.md).
 
-## R04
+## C12
 
-Offline compiler pre-screen. Score: 8
+Assignment in the null test. Score: 1
 
-IF a small localized residue remains, REQUIRE the exact TU command (`ninja -t
-commands <object>`), TRY compiling variants locally with the project's
-mwcceppc and comparing the symbol's objdump against retail before spending
-`try` attempts.
+IF retail tests an allocation's return register before storing it to a field,
+and ours stores and then reloads the field, REQUIRE the field layout and the
+allocator prototype, TRY `if ((p->field = Allocate(...)) == NULL)`.
 
-- Exemplars: `HVQM4BufaCreate`, `vdisp_copy_frame`, `MCBlockDecMCNest`
-  (Opus tier, each closed on its first try).
+- Exemplar: `decv_init` (free-node allocations).
 
-## R03
+## U01
 
-Last-resort goto. Score: 2
+extab means C++ exceptions on. Score: 1
 
-IF the retail CFG jumps from inside a wait loop to a shared end-of-iteration
-block, REQUIRE three measured structured forms that fail, TRY one local
-`goto` to that block and cite the measurements (AGENTS.md exception).
+IF the object has extab/extabindex entries, REQUIRE the ELF SECTION symbols,
+TRY `-Cpp_exceptions on` at lib or object scope.
 
-- Exemplar: `gop_decode`.
+- Exemplar: hvqm4player lib applied.
+
+## U09
+
+Unsigned literal compares. Score: 1
+
+IF a mode chain compares with `cmplwi`, REQUIRE an unsigned field or unsigned
+literals in retail, TRY `== 4U` style literals.
+
+- Exemplar: `gop_decode` applied.
+
+## U10
+
+Remove obsolete reference dispatch support. Score: 1
+
+IF a reference helper or function table becomes unused after C03 restores
+retail's direct calls, REQUIRE no retail ELF symbol for it, no table data or
+`.rela.data` in the retail object, and no retail bytes that need it, TRY
+deleting the table and its typedef. Keep the call shape: when the
+reference calls a dispatch helper in that function, a `static inline` helper
+with direct dispatch may still be the original form (see C03).
+
+- Exemplar: hvqm4dec `_MotionComp` and `func[]` (`.data` reached 100%).
 
 ## R01
 

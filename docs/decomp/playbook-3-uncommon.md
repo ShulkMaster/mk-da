@@ -1,87 +1,8 @@
-# Matching playbook, tier 3: uncommon (flags, inline, layout)
+# Matching playbook, tier 3: uncommon
 
-Rules ordered by score. Flag changes are coordinator steps: send gate the
-evidence; agents never edit `configure.py`. Format and scoring:
-[tier 1](playbook-1-core.md).
-
-## U07
-
-Unit-owned data and stripped-helper strings. Score: 6
-
-IF `.data` lacks a global, REQUIRE the ELF OBJECT symbol (scope, size), TRY
-defining it in the unit with retail constness. IF `.rodata` has strings that
-no retail code references, the linker stripped their function: keep a stripped
-helper only under the user's stripped-code ruling; never emit named arrays
-for anonymous literals. IF the object owns codec or lookup tables, import
-only the ELF OBJECT ranges (size, address, relocation targets), check them
-byte for byte against the DOL, and never regenerate them from a formula or
-bring in unrelated upstream tables. An ordinary unused non-inline function
-in a header explains literals with no surviving code body, and its include
-position explains their numbering and pool order; values in its body that
-only the literals support (flags, line numbers) stay marked unproven.
-
-IF anonymous literals are emitted in the wrong order, the first use may come
-from a stripped out-of-line copy: a plain `static` helper that `-inline auto`
-expands at its call sites still emits a body (linker-stripped), and that
-body's position sets literal numbering. Split a helper only where retail
-evidence shows separate source regions (e.g. line-number groups).
-
-- Exemplars: `HVQM4_FILEVERSION` applied; Adp8x tables and `_dect`;
-  `mpeg_fullscreen` and `vdisp_init` (`close_sound` split from `close_movie`
-  emits "hvqm4play.c" first); `"DoMalloc movie"` in hvqm4play
-  pending a user ruling.
-
-## U05
-
-Static inline boundaries. Score: 5
-
-IF a reference helper has no retail symbol but is live, or retail shows a
-fast path the shared helper cannot reproduce, REQUIRE the retail function set
-(ELF symbols) and a measured rejection of the shared form, TRY `static inline`
-for live helpers (no out-of-line body), and a small one-purpose inline helper
-only when the shared form is measured worse; record the measurement.
-
-- Exemplars: `PrediAotBlock` (`GetMCAotSumOne`), `IntraAotBlock`
-  (`GetAotSumOne`); hvqm4dec cleanup applied (35 functions exactly).
-
-## U08
-
-Pikmin same-function exception. Score: 4
-
-IF the frame differs by a small fixed amount and Pikmin's same function uses
-`STACK_PAD_VAR` (or another forbidden construct), REQUIRE that exact
-construct in that function, TRY copying it verbatim and cite it in a note.
-Never extend it to other functions.
-
-- Exemplars: `_readTree` (`STACK_PAD_VAR(2)`), `MCBlockDecDCNest` (Pikmin's
-  unused `int j` sets the frame; removing it changes five rows).
-
-## U11
-
-Genuine volatile on shared state. Score: 4
-
-IF retail reloads a variable between a guard and its update with no call or
-store in between, REQUIRE the minimal repro to reuse the load on every
-compiler version and flag, every honest non-volatile form to fail, the
-variable to be truly shared (thread or interrupt state), and a user ruling,
-TRY `volatile` on its declaration only (never on accesses), and cite the
-evidence in a note. Without that evidence, volatile stays a research trick.
-A qualifier that reproduces the reload proves the reload, not the original
-qualifier; keep the note's qualification.
-A user may also accept volatile from a strong dirty lead when a function
-escalates unmatched. Then the note must say so: "accepted after escalation
-because no honest form matched; revisit if a clean form is found", so later
-agents know the ruling rests on the failure to match, not on positive
-evidence.
-MWCC keys load merging on the qualifier, so a `const`-qualified read
-(`*(const s32*)&g`, a const pointer local, or a const macro) also reproduces
-the reload. That is a fake alias, not an alternative: reject it.
-
-- Exemplars: `_HVQM4PlayerExClose`, `HVQM4PlayerExCreate` (`static volatile
-  s32 lib_link_counter;`, one declaration closed both). Revisit worked once:
-  `vdisp_init`'s escalation-accepted `FrameBuffer` volatile was later
-  replaced by honest C (three real reads of `FrameBuffer[0]` for start, end
-  and cursor, plus C05 declaration order), so always reopen these.
+Rules scored 2 or 3, ordered by score. Flag changes are coordinator steps:
+send gate the evidence; agents never edit `configure.py`. Format and
+scoring: [tier 1](playbook-1-core.md).
 
 ## U02
 
@@ -101,6 +22,68 @@ IF bytes match but DecompStudio shows `[order]`, REQUIRE retail addresses,
 TRY moving definitions into retail order with real forward declarations.
 
 - Exemplars: `_MotionComp_00/_10/_01/_11`; `GetAotBasis` applied.
+
+## C06
+
+Real aggregate for frame size. Score: 2
+
+IF the body is exact but retail's frame is larger, REQUIRE every loaded byte
+of the candidate aggregate to be consumed, TRY a real local array or struct
+the code reads (never an unused pad).
+
+- Exemplar: `HVQM4DecodeAdpcmCh2` (`u8 header[4]`, frame 0x30 -> 0x38).
+
+## C07
+
+Named loaded words. Score: 2
+
+IF a copy reorders loads and stores, REQUIRE that each loaded word is used,
+TRY naming every loaded word in a local so all loads precede the stores.
+
+- Exemplar: `IntraAotBlock` (OrgBlock `temp0..temp3`).
+
+## C10
+
+Cache a field before dispatch. Score: 2
+
+IF retail reads a field once before a switch or call chain, REQUIRE that the
+field is not written in between, TRY a real local holding it.
+
+- Exemplar: `HVQM4DecSoundDecode` (cached channel count).
+
+## C11
+
+Bounds in the loop's own units. Score: 2
+
+IF prologue scheduling differs while the loop body is exact, REQUIRE that a
+bound or end pointer is written in byte arithmetic the retail code does not
+need, TRY expressing it in the loop's element units (`end = out + (width >>
+1)` instead of `(u32*)(row + (width << 1 & ~3))`). The hidden term changes
+which prologue values are computed first.
+
+- Exemplar: `vdisp_copy_frame` (seven prologue rows, closed).
+
+## C13
+
+Name the real base quantity. Score: 2
+
+IF size arithmetic has the right operations but the wrong operand staging,
+REQUIRE a real base value in retail (pixel count, extent) and its type, TRY
+naming it first (`u32 pixels = width * height;`) and deriving the scaled
+sizes from it. Never a copy of an existing local.
+
+- Exemplar: `decv_init` (luma pixel count before the chroma expansion closed
+  it).
+
+## R03
+
+Last-resort goto. Score: 2
+
+IF the retail CFG jumps from inside a wait loop to a shared end-of-iteration
+block, REQUIRE three measured structured forms that fail, TRY one local
+`goto` to that block and cite the measurements (AGENTS.md exception).
+
+- Exemplar: `gop_decode`.
 
 ## U03
 
@@ -133,34 +116,3 @@ evidence, TRY keeping the request literal with the minimal verified type and
 a comment; do not invent trailing fields to make `sizeof` match.
 
 - Exemplar: `HVQM4DecSoundCreate` (allocates 0x20, context verified 0x18).
-
-## U01
-
-extab means C++ exceptions on. Score: 1
-
-IF the object has extab/extabindex entries, REQUIRE the ELF SECTION symbols,
-TRY `-Cpp_exceptions on` at lib or object scope.
-
-- Exemplar: hvqm4player lib applied.
-
-## U09
-
-Unsigned literal compares. Score: 1
-
-IF a mode chain compares with `cmplwi`, REQUIRE an unsigned field or unsigned
-literals in retail, TRY `== 4U` style literals.
-
-- Exemplar: `gop_decode` applied.
-
-## U10
-
-Remove obsolete reference dispatch support. Score: 1
-
-IF a reference helper or function table becomes unused after C03 restores
-retail's direct calls, REQUIRE no retail ELF symbol for it, no table data or
-`.rela.data` in the retail object, and no retail bytes that need it, TRY
-deleting the table and its typedef. Keep the call shape: when the
-reference calls a dispatch helper in that function, a `static inline` helper
-with direct dispatch may still be the original form (see C03).
-
-- Exemplar: hvqm4dec `_MotionComp` and `func[]` (`.data` reached 100%).

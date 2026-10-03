@@ -3,6 +3,30 @@
 Format and scoring: [tier 1](playbook-1-core.md). AGENTS.md "DecompStudio"
 covers tool access and profiles.
 
+## S03
+
+Permuter honesty filter. Score: 6
+
+IF a candidate scores better, REQUIRE porting it by hand or through its
+`replace` edits and checking it with `try`, TRY keeping only honest C.
+Dirty candidates are welcome as leads; strip and measure each component
+separately before porting anything: ask what each forcing construct does
+to lifetimes or order (a pragma that fixes CSE points at a reload, an alias
+points at a separate live value) and find the honest source that does the
+same. An alias that fixes coloring often marks the parameter copies of a
+lost inline helper: check whether the reference calls a helper there and
+restore that call shape (C03). Log the lead; only clean source is promoted.
+Reject: pragmas (`opt_propagation`, `optimization_level`), `new_var` copies
+of in-scope values, reuse of unrelated variables, unsequenced expressions,
+redundant same-value stores, duplicated stores, invented helpers. Use
+`alternatives:true` and `tuning_report:true` for the engine's own honesty
+findings, but audit by hand anyway: `honest_only` and `all_passes_honest`
+still returned pragma-bearing leads (`_HVQM4PlayerExThread`).
+
+- Exemplars: `vdisp_copy_frame` (helper and unused chain stripped from the
+  96.54% lead), `MCBlockDecMCNest` (the `new_var = tWidth` zero led to
+  Pikmin's `_MotionComp` call shape).
+
 ## S04
 
 Escalation ladder. Score: 5
@@ -42,27 +66,3 @@ result in history.
 
 - Exemplars: `vdisp_copy_frame` (75.8 -> 96.5), `vDispThread_Entry` lead,
   `MCBlockDecMCNest` (98.90 -> 99.69 declaration lead).
-
-## S03
-
-Permuter honesty filter. Score: 6
-
-IF a candidate scores better, REQUIRE porting it by hand or through its
-`replace` edits and checking it with `try`, TRY keeping only honest C.
-Dirty candidates are welcome as leads; strip and measure each component
-separately before porting anything: ask what each forcing construct does
-to lifetimes or order (a pragma that fixes CSE points at a reload, an alias
-points at a separate live value) and find the honest source that does the
-same. An alias that fixes coloring often marks the parameter copies of a
-lost inline helper: check whether the reference calls a helper there and
-restore that call shape (C03). Log the lead; only clean source is promoted.
-Reject: pragmas (`opt_propagation`, `optimization_level`), `new_var` copies
-of in-scope values, reuse of unrelated variables, unsequenced expressions,
-redundant same-value stores, duplicated stores, invented helpers. Use
-`alternatives:true` and `tuning_report:true` for the engine's own honesty
-findings, but audit by hand anyway: `honest_only` and `all_passes_honest`
-still returned pragma-bearing leads (`_HVQM4PlayerExThread`).
-
-- Exemplars: `vdisp_copy_frame` (helper and unused chain stripped from the
-  96.54% lead), `MCBlockDecMCNest` (the `new_var = tWidth` zero led to
-  Pikmin's `_MotionComp` call shape).

@@ -6,10 +6,14 @@ table sends you there, and always before a ceiling escalation.
 | Tier | File | Scope |
 |---|---|---|
 | 1 | this file | protocol, scoring, triage, rule index, stops |
-| 2 | [playbook-2-common.md](playbook-2-common.md) | C rules: source shape that closes most near misses |
-| 3 | [playbook-3-uncommon.md](playbook-3-uncommon.md) | U rules: compiler flags, inline boundaries, data and link layout |
-| 4 | [playbook-4-ceiling.md](playbook-4-ceiling.md) | R rules: coloring and scheduling ceilings, last resorts, dead ends |
+| 2 | [playbook-2-common.md](playbook-2-common.md) | rules scored 4 or more: try these first |
+| 3 | [playbook-3-uncommon.md](playbook-3-uncommon.md) | rules scored 2-3 |
+| 4 | [playbook-4-rare.md](playbook-4-rare.md) | rules scored 0-1, last resorts, dead ends |
 | 5 | [playbook-5-search.md](playbook-5-search.md) | S rules: permuter, seed rotation, escalation ladder |
+
+Tiers rank rules by score; the ID letter is the category: C source shape,
+U compiler flags, inline boundaries and data/link layout, R ceilings and
+last resorts, S search and escalation. IDs never change when a rule moves.
 
 Rule format: `ID | IF mismatch | REQUIRE evidence | TRY one change`. Missing
 evidence means skip the rule. These are diagnostics for this project's
@@ -28,8 +32,9 @@ application brings the function to 100%, add +2 instead. One function
 can credit several rules when each was needed. Edit only the number; put the
 symbol in the rule's exemplar list if it is the first or the clearest case.
 Measurements and diaries go to DecompStudio `history`, not here. Rules are
-listed by score inside each tier; promote a rule to a lower tier number when
-its score passes the lowest rule there.
+listed by score inside each tier. Tier thresholds: 2 holds scores of 4 or
+more, 3 holds 2-3, 4 holds 0-1 and the dead-end list; re-rack (move the
+section, keep its ID) when a score crosses a threshold.
 
 ## Protocol
 
@@ -84,28 +89,33 @@ its score passes the lowest rule there.
 
 ## Rule index
 
-Tier 2, common source shape:
-C01 compound-assignment reassociation, C02 signed extrema, C03 retail call
-boundary, C04 newer-version control flow, C05 declaration order and scope,
-C06 real aggregate for frame size, C07 named loaded words, C08 in-place
-derivation, C09 statement order follows retail schedule, C10 cache a field
-before dispatch, C11 bounds in the loop's own units, C12 assignment in the
-null test, C13 name the real base quantity.
+Scores in parentheses.
 
-Tier 3, uncommon (flags, inline, layout):
-U01 extab means C++ exceptions on, U02 lmw/stmw prologues, U03 per-literal
-read-only strings, U04 reverse `.sbss` order, U05 static inline boundaries,
-U06 function order, U07 unit-owned data and stripped-helper strings,
-U08 Pikmin same-function exception, U09 unsigned literal compares, U10 remove
-obsolete reference dispatch support, U11 genuine volatile on shared state, U12 literal over-allocation.
+Tier 2, common:
+C05 declaration order and scope (14), C08 in-place derivation (11), C03 retail
+call boundary (8), R04 offline compiler pre-screen (8), C01 compound-
+assignment reassociation (6), C09 statement order follows the retail schedule
+(6), U07 unit-owned data and stripped-helper strings (6), C04 newer-version
+control flow (5), U05 static inline boundaries (5), C02 signed extrema (4),
+U08 Pikmin same-function exception (4), U11 genuine volatile on shared state
+(4).
 
-Tier 4, ceilings and last resorts:
-R01 coloring checklist, R02 guarded global reload, R03 last-resort goto,
-R04 offline compiler pre-screen, R05 dead ends (do not repeat).
+Tier 3, uncommon:
+U02 lmw/stmw prologues (3), U06 function order (3), C06 real aggregate for
+frame size (2), C07 named loaded words (2), C10 cache a field before dispatch
+(2), C11 bounds in the loop's own units (2), C13 name the real base quantity
+(2), R03 last-resort goto (2), U03 per-literal read-only strings (2), U04
+reverse `.sbss` declaration order (2), U12 literal over-allocation (2).
+
+Tier 4, rare and ceilings:
+C12 assignment in the null test (1), U01 extab means C++ exceptions on (1),
+U09 unsigned literal compares (1), U10 remove obsolete reference dispatch
+support (1), R01 coloring checklist (0), R02 guarded global reload (0), R05
+dead ends (do not repeat).
 
 Tier 5, search and escalation:
-S01 permuter ng procedure, S02 neutral seed rotation, S03 permuter honesty
-filter, S04 escalation ladder.
+S03 permuter honesty filter (6), S04 escalation ladder (5), S02 neutral seed
+rotation (4), S01 permuter ng procedure (3).
 
 ## Stop
 
