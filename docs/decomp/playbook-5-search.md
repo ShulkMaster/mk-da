@@ -31,7 +31,8 @@ still returned pragma-bearing leads (`_HVQM4PlayerExThread`).
 
 Escalation ladder. Score: 5
 
-IF the owner has 100 combined history entries and about 300k ng compiles,
+IF the owner tier has spent the item's 100 combined attempts (30 per lease)
+and at least 120k ng compiles,
 REQUIRE a `soft_ceiling:` abandon with best score, counts and ruled-out
 forms, TRY the next tier: a fresh Opus agent (20 attempts), then a Fable
 agent (15 attempts). A final failure stays parked as `soft_ceiling` with its
@@ -57,12 +58,17 @@ seed-sensitive.
 Permuter ng procedure. Score: 3
 
 IF only coloring or scheduling remains, REQUIRE an established CFG, ABI and
-layout, TRY `submit {commands:[{op:"permute", symbol, engine:"ng",
-seconds:120}], wait:false}` plus `fence`, one run in flight per agent (runs
-queue machine-wide; the cap includes queueing), until a few hundred thousand
-candidates have compiled; then `engine:"rust"` or `mode:"call_args"` (rust
-only) for argument staging around calls. Log engine, compiled count and
-result in history.
+layout, TRY an early probe first (one ng run of up to 30 s right after the
+draft's CFG, ABI and layout are right; ng converges fast, so clean leads
+show up within a few thousand candidates), then `submit {commands:[{op:
+"permute", symbol, engine:"ng", seconds:120}], wait:false}` plus `fence`,
+one run in flight per agent (runs queue machine-wide; the cap includes
+queueing), until at least 120k candidates have compiled; then `engine:"rust"` or `mode:"call_args"` (rust
+only) for argument staging around calls. If ng runs keep stopping early on
+dirty zeros despite `dirty_zero_s`/`honest_share`/`unlicensed_factor`,
+finish the 120k with `engine:"rust"` (behavior-preserving transforms only;
+its compiles count toward the total). Log engine, compiled count and result
+in history.
 
 - Exemplars: `vdisp_copy_frame` (75.8 -> 96.5), `vDispThread_Entry` lead,
   `MCBlockDecMCNest` (98.90 -> 99.69 declaration lead).

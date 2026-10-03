@@ -118,6 +118,37 @@ evidence shows separate source regions (e.g. line-number groups).
   emits "hvqm4play.c" first); `"DoMalloc movie"` in hvqm4play
   pending a user ruling.
 
+## U13
+
+Library optimization level. Score: 6
+
+IF several functions in one library are exact in body but differ only in
+prologue, epilogue or load scheduling (or keep CTR loops and folded sign
+extensions retail lacks), REQUIRE independent research proofs from different
+objects that `#pragma scheduling off` or `optimization_level` closes them
+with unchanged honest source, TRY an offline sweep of `-O` levels over every
+function in the library (R04) and apply the level with zero regressions at
+lib scope; keep single-function flag leads (for example `-opt nocse`) as
+notes until a second object agrees.
+
+- Exemplars: renderware lib `-O2,p` (baerr, bafsys, baimmedi, baimras,
+  resmem, rwstring, osintf closed with existing source; `_rwResHeapAlloc`
+  `-opt nocse` held as a lead).
+
+## C16
+
+Genuine byte locals. Score: 4
+
+IF retail loads a byte (`lbz`) and converts it to float or subtracts it as a
+small integer, but a source local widened to `u32`/`s32` swaps registers or
+adds conversions, REQUIRE the byte-sized load in retail, TRY keeping a
+block-local `u8` for the loaded value and casting at the point of use (a
+signed delta gets its own explicit cast).
+
+- Exemplars: `_rwGeneratePerspClippedVertexZLO` (block-local `u8` plus a
+  direct interpolation expression), `_rwGeneratePerspClippedVertexXHI` (21
+  rows closed versus `u32`).
+
 ## C04
 
 Newer-version control flow. Score: 5
