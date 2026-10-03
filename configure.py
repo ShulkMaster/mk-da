@@ -633,9 +633,9 @@ config.libs = [
         "cflags": [*cflags_base, "-Cpp_exceptions on", "-str reuse,readonly", "-use_lmw_stmw on"],
         "progress_category": "movie",
         "objects": [
-            Object(NonMatching, "movie/mwMoviePlayerGC.cpp"),
+            Object(Matching, "movie/mwMoviePlayerGC.cpp"),
             Object(NonMatching, "movie/seqfile.c"),
-            Object(NonMatching, "movie/errcode.c"),
+            Object(Matching, "movie/errcode.c"),
             Object(NonMatching, "movie/movieplayer.cpp"),
             Object(NonMatching, "movie/mwMemNewDelete.cpp"),
         ],
