@@ -85,6 +85,14 @@ section, keep its ID) when a score crosses a threshold.
 | Retail strings with no code reference | U07 |
 | Redundant global reload in a guarded RMW | R02, U11 |
 | Shared end-of-iteration code needs a jump | R03 |
+| Scheduling-only residue across many objects of one library | U13 |
+| `fmadds` where retail has `fmuls` + `fadds` | C14 |
+| Indirect call through a pointer local adds `mr r12` | C15 |
+| Byte load converted to float/int with swapped registers | C16 |
+| Extra `addi` keeps a field address of a `void*` input | C17 |
+| Default constant loaded before a compare retail does first | C18 |
+| 0/1 result of a call shifted through a different register | C19 |
+| Index from a pointer difference with a signed divide | C20 |
 | Only coloring or scheduling left | R01, R04, tier 5 |
 
 ## Rule index
@@ -95,7 +103,8 @@ Tier 2, common:
 C05 declaration order and scope (14), C08 in-place derivation (11), C03 retail
 call boundary (8), R04 offline compiler pre-screen (8), C01 compound-
 assignment reassociation (6), C09 statement order follows the retail schedule
-(6), U07 unit-owned data and stripped-helper strings (6), C04 newer-version
+(6), U07 unit-owned data and stripped-helper strings (6), U13 library
+optimization level (6), C16 genuine byte locals (4), C04 newer-version
 control flow (5), U05 static inline boundaries (5), C02 signed extrema (4),
 U08 Pikmin same-function exception (4), U11 genuine volatile on shared state
 (4).
@@ -104,8 +113,12 @@ Tier 3, uncommon:
 U02 lmw/stmw prologues (3), U06 function order (3), C06 real aggregate for
 frame size (2), C07 named loaded words (2), C10 cache a field before dispatch
 (2), C11 bounds in the loop's own units (2), C13 name the real base quantity
-(2), R03 last-resort goto (2), U03 per-literal read-only strings (2), U04
-reverse `.sbss` declaration order (2), U12 literal over-allocation (2).
+(2), C14 named products against fused multiply-add (2), C15 conditional
+call target (2), C17 byte-pointer base for read-only inputs (2), C18 conditional expression
+for clamps (2), C19 boolean result form (2), C20 signed index from a pointer
+difference (2), R03 last-resort goto (2), U03 per-literal read-only
+strings (2), U04 reverse `.sbss` declaration order (3), U12 literal
+over-allocation (2).
 
 Tier 4, rare and ceilings:
 C12 assignment in the null test (1), U01 extab means C++ exceptions on (1),

@@ -512,6 +512,30 @@
       "address": "0x8018F5C8",
       "size": "0x1B8",
       "assembly": "dolphin/trk_minnow_dolphin/mpc_7xx_603e.s"
+    },
+    {
+      "name": "matrixASMMult",
+      "address": "0x801CE940",
+      "size": "0x1F8",
+      "assembly": "renderware/gekkomul.s"
+    },
+    {
+      "name": "vectorASMMultPoint",
+      "address": "0x801CEB38",
+      "size": "0x7C",
+      "assembly": "renderware/gekkomul.s"
+    },
+    {
+      "name": "vectorASMMultVector",
+      "address": "0x801CEBB4",
+      "size": "0x7C",
+      "assembly": "renderware/gekkomul.s"
+    },
+    {
+      "name": "asmSkinLoop",
+      "address": "0x801E33F0",
+      "size": "0x320",
+      "assembly": "renderware/skingcnasm.s"
     }
   ],
   "units": [
