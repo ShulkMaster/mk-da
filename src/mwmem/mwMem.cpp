@@ -216,8 +216,9 @@ extern "C" int mwMemIsHeapValid(_mwMemHeap* heap) {
   return result;
 }
 
-/* TODO: [borked] 0.00%; placeholder stub, body not started. */
-extern "C" void _mwMemMalloc(void) {}
+/* TODO: [borked] 11.11%; placeholder stub, body not started. */
+extern "C" void* _mwMemMalloc(struct _mwMemHeap* heap, u32 size, s32 alignment,
+                              const char* label, const char* file, s32 line) {}
 
 /* TODO: [near miss] 98.86%; footprint arithmetic and incomplete string-pool offsets remain. */
 extern "C" void* _mwMemMallocVirtual(_mwMemHeap* heap, u32 size, s32 alignment,
@@ -320,11 +321,13 @@ extern "C" void* _mwMemCalloc(_mwMemHeap* heap, u32 count, u32 elementSize,
   return result;
 }
 
-/* TODO: [borked] 0.00%; placeholder stub, body not started. */
-extern "C" void _mwMemRealloc(void) {}
+/* TODO: [borked] 1.27%; placeholder stub, body not started. */
+extern "C" void* _mwMemRealloc(void* ptr, struct _mwMemHeap* heap, u32 size,
+                               s32 alignment, const char* label,
+                               const char* file, s32 line) {}
 
-/* TODO: [borked] 0.00%; placeholder stub, body not started. */
-extern "C" void _mwMemFree(void) {}
+/* TODO: [borked] 0.55%; placeholder stub, body not started. */
+extern "C" void _mwMemFree(void* ptr, const char* file, s32 line) {}
 
 /* ELF pool starts with the revision text followed by the heap name. */
 static int privInitSystemHeap(unsigned int size) {

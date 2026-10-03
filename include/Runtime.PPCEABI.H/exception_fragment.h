@@ -8,4 +8,15 @@ struct __eti_init_info {
   unsigned long code_size;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int __register_fragment(struct __eti_init_info* info, char* TOC);
+void __unregister_fragment(int fragmentID);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

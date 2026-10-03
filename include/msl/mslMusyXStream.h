@@ -5,7 +5,7 @@
 #include <dolphin/os.h>
 #include <musyx/musyx.h>
 #include <msl/mslMusyX.h>
-#include <msl/mlSysCalls.h>
+#include <mfl/mlSysCalls.h>
 
 struct mslStream;
 

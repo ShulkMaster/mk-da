@@ -4,7 +4,7 @@
 
 static char printBuffer[512];
 
-extern "C" void MEMPRINT(const char* format, ...) {
+void MEMPRINT(const char* format, ...) {
   va_list args;
   va_start(args, format);
   vsprintf(printBuffer, format, args);

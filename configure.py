@@ -671,10 +671,10 @@ config.libs = [
         "progress_category": "midway",
         "objects": [
             Object(Matching, "mfl/filemgr.c"),
-            Object(NonMatching, "mfl/mflFile.c", extra_cflags=["-inline auto,deferred"]),
+            Object(Matching, "mfl/mflFile.c", extra_cflags=["-inline auto,deferred"]),
             Object(Matching, "mfl/mflPools.c"),
             Object(Matching, "mfl/mflQueue.c"),
-            Object(NonMatching, "mfl/mflZip.c", extra_cflags=["-inline auto,deferred", "-pragma \"inline_max_size(128)\""]),
+            Object(NonMatching, "mfl/mflZip.c", extra_cflags=["-inline noauto,deferred", "-pragma \"inline_max_size(512)\""]),
             Object(Matching, "mfl/mlSysCalls.c"),
             Object(Matching, "mfl/mflPlatform.c", extra_cflags=["-inline auto,deferred"]),
         ],
@@ -686,7 +686,7 @@ config.libs = [
         "progress_category": "midway",
         "objects": [
             Object(Matching, "mwmem/mwMemTarget.cpp"),
-            Object(NonMatching, "mwmem/mwMem.cpp", extra_cflags=["-inline auto,deferred", "-str reuse,pool,readonly"]),
+            Object(NonMatching, "mwmem/mwMem.cpp", extra_cflags=["-inline auto,deferred", "-str reuse,pool,noreadonly"]),
             Object(Matching, "mwmem/mwMemHeap.c", extra_cflags=["-O2,p", "-str reuse,pool,noreadonly"]),
         ],
     },

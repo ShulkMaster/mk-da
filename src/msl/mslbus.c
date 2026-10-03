@@ -1,5 +1,4 @@
 #include <msl/mslbus.h>
-#include <msl/mslMusyX.h>
 #include <stdio.h>
 
 static void mslSlaveUpdateSettings(mslBus* bus, mslBus* master);

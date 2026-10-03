@@ -72,8 +72,8 @@ mflFile* mflGcnDvdOpen(const char* filename, const char* mode) {
     SpoofExtensions(normalized);
     strcpy(savedName, normalized);
     if (DVDOpen(normalized, file->dvdInfo)) {
-      strncpy(file->filename, savedName, 0x100);
-      file->filename[0xFF] = '\0';
+      strncpy(file->filename, savedName, sizeof(file->filename));
+      file->filename[sizeof(file->filename) - 1] = '\0';
       file->flags.allocated = 1;
       file->flags.open = 1;
       file->flags.unk08 = 0;

@@ -19,8 +19,6 @@ struct _mwMemHeap* fixed_block_64_heap;
 struct _mwMemHeap* fixed_block_128_heap;
 struct _mwMemHeap* fixed_block_1024_heap;
 
-extern u32 mwMEM_VIRTUAL_HEAP_SIZE;
-
 static void reportHeapAllocationFailure(void) {
   MEMPRINT("allocaion Failure callback()\n");
 }

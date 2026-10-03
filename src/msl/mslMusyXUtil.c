@@ -18,7 +18,7 @@ f32 mkFpPitch(u16 pitch) {
 }
 
 f32 mkFpPan(u8 pan) {
-  return 2.0f * ((f32)pan / 127.0f) - 1.0f;
+  return 2.0f * (pan / 127.0f) - 1.0f;
 }
 
 f32 mkFpVolume(u8 volume) {

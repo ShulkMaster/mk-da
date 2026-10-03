@@ -3,7 +3,7 @@
 
 #include <dolphin/types.h>
 #include <mfl/mflFile.h>
-#include <msl/mlSysCalls.h>
+#include <mfl/mlSysCalls.h>
 
 typedef struct mflZipEntry {
   const char* name;

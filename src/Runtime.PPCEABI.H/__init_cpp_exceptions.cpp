@@ -7,13 +7,11 @@
 #include <dolphin/asm_sequences.inc>
 
 #include <Runtime.PPCEABI.H/exception_fragment.h>
+#include <Runtime.PPCEABI.H/global_destructor_chain.h>
 
 extern __eti_init_info _eti_init_info[];
 
 extern "C" {
-int __register_fragment(struct __eti_init_info* info, char* TOC);
-void __unregister_fragment(int fragmentID);
-void __destroy_global_chain(void);
 void __init_cpp_exceptions(void);
 void __fini_cpp_exceptions(void);
 }

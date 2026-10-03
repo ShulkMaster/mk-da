@@ -1,4 +1,5 @@
 #include <mfl/mflQueue.h>
+#include <mfl/mflPools.h>
 #include <msl/mslMusyXUtil.h>
 
 static mflQueue* mflQueueCurrent;

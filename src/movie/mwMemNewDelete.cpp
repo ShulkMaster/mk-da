@@ -1,8 +1,7 @@
 #include "movie/project_movie.h"
+#include <mwmem/mwMem.h>
 
-extern "C" void _mwMemFree(void*, const char*, s32);
 
-extern "C" void* _mwMemMalloc(void*, u32, u32, const char*, const char*, s32);
 
 void operator delete(void* ptr, _mwMemHeap*, mwMemFlags, const char*) {
   if (ptr != 0) {

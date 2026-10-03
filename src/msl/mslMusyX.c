@@ -6,26 +6,32 @@
 #include <string.h>
 #include <msl/mslMem.h>
 #include <msl/mslMusyXUtil.h>
-#include <msl/mflFile.h>
+#include <mfl/mflFile.h>
+#include <msl/mslbus.h>
+#include <dolphin/ai.h>
+#include <dolphin/ar.h>
+#include <dolphin/arq.h>
 
 static void mslSoundCheckPreload(mslSound* sound);
 static void mslSoundPreload(mslSound* sound, mslSoundCommand* command);
 static void mslSoundProcess(mslSound* sound);
 static void mslPlaybackAdjustImm(mslPlayback* playback, mslSoundMix* mix);
 static void mslPlaybackAdjustProcess(mslSound* sound);
+static void mslMusyXDMAWrapperCallback(void);
+s32 filemgr_init(void);
 static void mslPlaybackStart(mslSound* sound, mslPlayback* playback);
 static void mslUpdateThread(mslSoundSystem* sys);
 static void mslBankRemap(mslSoundSystem* sys, mslBank* bank, void* samples, const char* name);
 
-static u32 g_initDefault[3] = { 12, 1, 10 };
-static struct {
-  u32 unk00;
-  u32 unk04;
-  u16 unk08;
-  u16 unk0A;
-  u32 unk0C;
-} g_sysinitDefault = { 16, 0, 0, 47, 0x00FFC000 };
+static mslInitConfig g_initDefault = { 12, 1, 10 };
+static mslSysInitConfig g_sysinitDefault = { 16, 0, 0, 47, 0x00FFC000 };
 
+ListPool g_listPoolBank;
+ListPool g_listPoolBus;
+ListPool g_listPoolSound;
+u8 g_listMemBank[10 * sizeof(ListNode)];
+u8 g_listMemBus[64 * (sizeof(ListNode) + 0x38)];
+u8 g_listMemSound[500 * sizeof(ListNode)];
 static u32 aramMemArray[2];
 static mslSoundSystem* gSoundSystems[2];
 s32 mslErrorFlag;
@@ -50,10 +56,11 @@ static u32 gSoundSystemCount;
 static u32 mslInitialized;
 
 static inline int mslSoundInSystem(mslSoundSystem* sys, mslSound* sound) {
-  mslSound* end = sys->sounds + sys->soundCount;
   u32* words = (u32*)sys->sounds;
+  mslSound* end = sys->sounds + sys->soundCount;
+  u32* start = (u32*)sys->sounds;
   if (sound < sys->sounds || sound >= end) {
-    OSReport("Bad ms pointer: %08x  pool range %08x to %08x \n", sound, words,
+    OSReport("Bad ms pointer: %08x  pool range %08x to %08x \n", sound, start,
              end);
     while (words < (u32*)(sys->sounds + sys->soundCount)) {
       u32* row = words;
@@ -94,7 +101,7 @@ void mslSoundPlayAfterPrep(mslSound* sound) {
   mslSoundProcess(sound);
 }
 
-/* TODO: [near miss] 97.74%; diagnostic argument staging and TU literal layout remain. */
+/* TODO: [near miss] 99.96%; TU literal layout remains. */
 void mslSoundSetPitch(mslSound* sound, f32 pitch) {
   mslPlayback* playback;
   if (!mslSoundInSystem(sound->bank->system, sound)) {
@@ -113,7 +120,7 @@ void mslSoundSetPitch(mslSound* sound, f32 pitch) {
   sound->mix.control.flags.pitchChanged = 0;
 }
 
-/* TODO: [near miss] 97.95%; shared diagnostic argument staging and TU literal layout remain. */
+/* TODO: [near miss] 99.96%; TU literal layout remains. */
 void mslSoundSetVol(mslSound* sound, f32 volume) {
   mslPlayback* playback;
   if (sound == NULL) {
@@ -146,7 +153,7 @@ static inline f32 mslSoundGetVol(mslSound* sound) {
   return mkFpVolume(sound->mix.volume);
 }
 
-/* TODO: [near miss] 96.92%; shared diagnostic argument staging and TU literal layout remain. */
+/* TODO: [near miss] 99.95%; TU literal layout remains. */
 void mslSoundPause(mslSound* sound) {
   if (!mslSoundInSystem(sound->bank->system, sound)) {
     printf("mslSoundPause ms pointer out of bounds %x\n", sound);
@@ -158,7 +165,33 @@ void mslSoundPause(mslSound* sound) {
   }
 }
 
-/* TODO: [near miss] 97.09%; register allocation, slot guard and literal layout remain. */
+static inline void mslSlotRemove(mslSoundSlot* slot, mslSound* sound) {
+  mslSound* next = sound->slotNext;
+  mslSound* previous;
+
+  if (next == NULL) {
+    return;
+  }
+  previous = slot->head;
+  if (previous != sound) {
+    while (previous != NULL && previous->slotNext != sound) {
+      previous = previous->slotNext;
+    }
+    if (previous != NULL) {
+      previous->slotNext = next;
+      if (slot->tail == sound) {
+        slot->tail = previous;
+      }
+    }
+  } else {
+    slot->head = next;
+    if (slot->tail == sound) {
+      slot->tail = NULL;
+    }
+  }
+}
+
+/* TODO: [near miss] 99.07%; register allocation and literal layout remain. */
 void mslSoundStop(mslSound* sound) {
   mslPlayback* playback;
   mslPlayback* removed;
@@ -248,23 +281,7 @@ void mslSoundStop(mslSound* sound) {
   if (sound->slot->sound == sound) {
     slot->sound = NULL;
   } else if (sound->slotNext != NULL) {
-    mslSound* previous = slot->head;
-    if (previous != sound) {
-      while (previous != NULL && previous->slotNext != sound) {
-        previous = previous->slotNext;
-      }
-      if (previous != NULL) {
-        previous->slotNext = sound->slotNext;
-        if (slot->tail == sound) {
-          slot->tail = previous;
-        }
-      }
-    } else {
-      slot->head = sound->slotNext;
-      if (slot->tail == sound) {
-        slot->tail = NULL;
-      }
-    }
+    mslSlotRemove(slot, sound);
   }
   sound->sequenceCursor = NULL;
   if (!mslSoundInSystem(sound->bank->system, sound)) {
@@ -293,7 +310,7 @@ void mslSoundStop(mslSound* sound) {
   enableIRQ();
 }
 
-/* TODO: [near miss] 97.33%; diagnostic argument staging and TU literal layout remain. */
+/* TODO: [near miss] 99.96%; TU literal layout remains. */
 int mslSoundIsValid(mslSound* sound) {
   if (sound == NULL || !sound->activeFlags.active) {
     return 0;
@@ -458,7 +475,7 @@ static inline s32 mslSlotFindFree(mslSoundSystem* sys) {
   return -1;
 }
 
-/* TODO: [near miss] 99.23%; mslSoundInSystem argument staging and literal layout remain. */
+/* TODO: [near miss] 99.98%; TU literal layout remains. */
 mslSound* mslBankPlayVolPanPitch(mslBank* bank, s32 index, s32 slot, s32 priority, u32 flags, f32 volume, f32 pan, f32 pitch) {
   s32 keepEqualPriority = flags & 8;
   mslSoundSlot* slotInfo;
@@ -630,7 +647,7 @@ void mslStopAll(mslSoundSystem* sys) {
   mslEndAll(sys);
 }
 
-/* TODO: [near miss] 92.18%; empty Stop stub, diagnostic staging and literal layout remain. */
+/* TODO: [near miss] 99.95%; TU literal layout remains. */
 void mslEndAll(mslSoundSystem* sys) {
   mslBank* bank = sys->banks;
   while (bank != NULL) {
@@ -658,7 +675,7 @@ static inline void mslSoundUnPause(mslSound* sound) {
   }
 }
 
-/* TODO: [near miss] 97.04%; shared diagnostic argument staging and TU literal layout remain. */
+/* TODO: [near miss] 99.95%; TU literal layout remains. */
 void mslUnPauseAll(void) {
   if (mslInitialized != 0) {
     u32 i;
@@ -678,7 +695,7 @@ void mslUnPauseAll(void) {
   }
 }
 
-/* TODO: [near miss] 94.63%; pause callee, diagnostic staging and literal layout remain. */
+/* TODO: [near miss] 99.95%; TU literal layout remains. */
 void mslPauseAll(void) {
   if (mslInitialized != 0) {
     u32 i;
@@ -698,7 +715,7 @@ void mslPauseAll(void) {
   }
 }
 
-/* TODO: [near miss] 97.86%; volatile register assignment remains. */
+/* TODO: [near miss] 97.85%; volatile register assignment remains. */
 s32 mslUnInit(mslSoundSystem* sys) {
   u32 i;
 
@@ -719,8 +736,104 @@ s32 mslUnInit(mslSoundSystem* sys) {
   return 0;
 }
 
-/* TODO: [borked] 0.00%; placeholder stub, body not started. */
-void mslInit(void) {}
+static inline BOOL mslSystemRegister(mslSoundSystem* sys) {
+  if (gSoundSystemCount >= 2) {
+    return FALSE;
+  }
+  gSoundSystems[gSoundSystemCount++] = sys;
+  return TRUE;
+}
+
+/* TODO: [near miss] 99.94%; string-pool and .bss offsets wait for the linker-stripped owners. */
+mslSoundSystem* mslInit(mslInitConfig* init, mslSysInitConfig* sysinit) {
+  mslSoundSystem* sys;
+
+  if (init == NULL) {
+    printf("DEFAULT ");
+    init = &g_initDefault;
+  }
+  printf("Init: FLAGS=%d, Tracks=%d\n", init->flags, init->tracks);
+  if (sysinit == NULL) {
+    printf("DEFAULT ");
+    sysinit = &g_sysinitDefault;
+  } else {
+    if (sysinit->voices == 0) {
+      sysinit->voices = g_sysinitDefault.voices;
+    }
+    if (sysinit->aramSize == 0) {
+      sysinit->aramSize = g_sysinitDefault.aramSize;
+    }
+  }
+  printf("SysInit: FLAGS=%d, Voices %d-%d\n", sysinit->flags, sysinit->reservedVoices, sysinit->voices);
+  if (sysinit->reservedVoices != 0) {
+    sysinit->voices -= sysinit->reservedVoices;
+    sysinit->reservedVoices = 0;
+    printf("SysInit: UNSUPPORTED 'reserved' voices, using %d=%d\n", sysinit->reservedVoices, sysinit->voices);
+  }
+  mflFileSystemInit();
+  filemgr_init();
+  if (!mslInitialized) {
+    u8 voices = sysinit->voices + 1;
+    u32 aramSize = sysinit->aramSize;
+    SND_HOOKS hooks = { mslAlignedAlloc, mlHeapFree };
+
+    ARInit(aramMemArray, 2);
+    ARQInit();
+    AIInit(NULL);
+    sndSetHooks(&hooks);
+    sndInit(voices, 0, voices, 1, 1, aramSize);
+    MusyXDMACallback = AIRegisterDMACallback(mslMusyXDMAWrapperCallback);
+    MusyXDMAStackEnd = mslHeapAlignedAlloc(MSLMFL_HEAP, 0x10000, "MusyX DMA Stack");
+    MusyXDMAStack = (u8*)MusyXDMAStackEnd + 0x10000 - 4;
+    *(u32*)MusyXDMAStackEnd = 0xDEADBABE;
+    switch (OSGetSoundMode()) {
+    case OS_SOUND_MODE_MONO:
+      sndOutputMode(SND_OUTPUTMODE_MONO);
+      break;
+    default:
+      sndOutputMode(SND_OUTPUTMODE_SURROUND);
+      break;
+    }
+    sndVolume(mkMusyXVolume(0.95f), 0, 0xFC);
+    sndVolume(mkMusyXVolume(0.95f), 0, 0xFF);
+    sndMasterVolume(mkMusyXVolume(0.95f), 0, 1, 1);
+    mslStreamInit();
+    ListPoolAttach(&g_listPoolBank, g_listMemBank, 10, 0);
+    ListPoolAttach(&g_listPoolBus, g_listMemBus, 64, 0x38);
+    ListPoolAttach(&g_listPoolSound, g_listMemSound, 500, 0);
+    mslInitialized = 1;
+  }
+  sys = mslHeapAlloc(MSLMFL_HEAP, sizeof(mslSoundSystem), "mslSystem");
+  memset(sys, 0, sizeof(mslSoundSystem));
+  if (!mslSystemRegister(sys)) {
+    mlHeapFree(sys);
+    return NULL;
+  }
+  mslBusInitDefault();
+  sys->firstAutomaticSlot = init->tracks;
+  sys->volume = 1.0f;
+  sys->pan = 0.0f;
+  sys->pitch = 1.0f;
+  sys->duckVolume = 1.0f;
+  sys->duckPan = 0.0f;
+  sys->duckPitch = 1.0f;
+  sys->flags.volumeInDB = init->flags == 0;
+  sys->soundCount = 32;
+  sys->sounds = mslHeapAlloc(MSLMFL_HEAP, sys->soundCount * sizeof(mslSound), "Sound Pool");
+  sys->nextFreeSound = sys->sounds;
+  memset(sys->sounds, 0, sys->soundCount * sizeof(mslSound));
+  sys->playbackCount = 64;
+  sys->playbacks = mslHeapAlloc(MSLMFL_HEAP, sys->playbackCount * sizeof(mslPlayback), "Playback Pool");
+  sys->nextFreePlayback = sys->playbacks;
+  memset(sys->playbacks, 0, sys->playbackCount * sizeof(mslPlayback));
+  sys->adjustmentCount = 8;
+  sys->adjustmentPool = mslHeapAlloc(MSLMFL_HEAP, sys->adjustmentCount * sizeof(mslAdjustment), "Adjust Pool");
+  sys->nextFreeAdjustment = sys->adjustmentPool;
+  memset(sys->adjustmentPool, 0, sys->adjustmentCount * sizeof(mslAdjustment));
+  sys->slots = mslHeapAlloc(MSLMFL_HEAP, 64 * sizeof(mslSoundSlot), "Tracks");
+  memset(sys->slots, 0, 64 * sizeof(mslSoundSlot));
+  return sys;
+}
 
 static void mslBankRemap(mslSoundSystem* sys, mslBank* bank, void* samples, const char* name) {
   u32 i;
@@ -834,8 +947,6 @@ static void mslGlobalAdjustProcess(mslSoundSystem* sys) {
   }
 }
 
-#include <msl/mslbus.h>
-
 static inline mslSound* mslSlotPop(mslSoundSlot* slot) {
   mslSound* sound = slot->head;
   if (sound != NULL) {
@@ -848,7 +959,7 @@ static inline mslSound* mslSlotPop(mslSoundSlot* slot) {
   return sound;
 }
 
-/* TODO: [near miss] 91.20%; register allocation (sys below bank) and literal layout remain. */
+/* TODO: [near miss] 92.73%; register allocation (sys below bank) and literal layout remain. */
 static void mslUpdateThread(mslSoundSystem* sys) {
   mslListenerState* mic = &sys->listenerState;
   mslBank* bank;
@@ -965,7 +1076,7 @@ static void mslPlaybackProcess(mslSound* sound) {
   sound->flags.unk04 = streaming;
 }
 
-/* TODO: [near miss] 98.85%; register coloring remains. */
+/* TODO: [near miss] 98.84%; register coloring remains. */
 static void mslSoundProcess(mslSound* sound) {
   u32 duration;
   OSTime delta;
@@ -1236,7 +1347,7 @@ finish:
   sound->flags.unk08 = 0;
 }
 
-/* TODO: [near miss] 97.32%; register coloring remains. */
+/* TODO: [near miss] 98.72%; register coloring remains. */
 static void mslSoundPreload(mslSound* sound, mslSoundCommand* command) {
   u8 volume;
   u8 scaledPan;

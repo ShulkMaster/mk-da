@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <dolphin/os.h>
 #include <msl/mslMem.h>
-#include <msl/mflFile.h>
+#include <mfl/mflFile.h>
 
 static u32 mslStreamCallback(void* buffer1, u32 length1, void* buffer2,
                              u32 length2, u32 user);

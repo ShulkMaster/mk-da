@@ -1,7 +1,7 @@
 #include <mfl/mflFile.h>
 #include <mfl/mflPlatform.h>
 #include <mfl/mflPools.h>
-#include <msl/mlSysCalls.h>
+#include <mfl/mlSysCalls.h>
 #include <stdio.h>
 #include <string.h>
 #include <msl/mslMusyXUtil.h>
@@ -33,10 +33,10 @@ mflFileCommand* mflOpenAsync(const char* filename, const char* mode,
   if (request == NULL) {
     return NULL;
   }
-  strncpy(request->filename, filename, 0x100);
-  request->filename[0xFF] = 0;
-  strncpy(request->mode, mode, 4);
-  request->mode[3] = 0;
+  strncpy(request->filename, filename, sizeof(request->filename));
+  request->filename[sizeof(request->filename) - 1] = 0;
+  strncpy(request->mode, mode, sizeof(request->mode));
+  request->mode[sizeof(request->mode) - 1] = 0;
   request->argument0.filename = request->filename;
   request->argument1.mode = request->mode;
   request->callback = callback;
@@ -195,7 +195,7 @@ s32 mflTick(void) {
           break;
         case 6:
           command->argument0.value = mflGcnDvdSeek(file,
-              command->argument0.value, (u16)command->argument1.value);
+              command->argument0.value, command->argument1.value);
           command->state = 2;
           break;
         case 7:
@@ -237,8 +237,8 @@ static inline mflFileCommand* mflQueueExistCommand(const char* filename) {
   if (command == NULL) {
     return NULL;
   }
-  strncpy(command->filename, filename, 0x100);
-  command->filename[0xFF] = 0;
+  strncpy(command->filename, filename, sizeof(command->filename));
+  command->filename[sizeof(command->filename) - 1] = 0;
   command->argument0.filename = command->filename;
   command->callback = NULL;
   command->user = NULL;
@@ -363,7 +363,6 @@ static inline s32 mflReadBytes(char* buffer, s32 bytes, mflFile* file) {
   return result;
 }
 
-/* TODO: [near miss] 99.69%; register allocation remains. */
 char* mflGetS(char* buffer, s32 bytes, void* file) {
   bytes = mflReadBytes(buffer, bytes, file);
 
@@ -372,10 +371,8 @@ char* mflGetS(char* buffer, s32 bytes, void* file) {
   }
   if (bytes != 0) {
     s32 index;
-    const char* cursor;
-    for (index = 0, cursor = buffer; index < bytes; index++, cursor++) {
-      char value = *cursor;
-      if (value == '\n') {
+    for (index = 0; index < bytes; index++) {
+      if (buffer[index] == '\n') {
         mflSeek(file, index - bytes + 1, 1);
       }
     }

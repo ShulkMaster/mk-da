@@ -228,7 +228,7 @@ mflFile* mflFileAlloc(void) {
     result->flags.allocated = 1;
     result->buffer = mlAlignedHeapAlloc(MSLMFL_HEAP, 0x800);
     result->dvdInfo = DVDFileInfoPool +
-        ((u32)result - (u32)mflFilePool) / sizeof(*result);
+        (u32)((u8*)result - (u8*)mflFilePool) / sizeof(*result);
   }
   enableIRQ();
   return result;
@@ -237,10 +237,10 @@ mflFile* mflFileAlloc(void) {
 void mflInitializePools(mflPoolConfig config) {
   if (config.flags.files) {
     if (mflFilePool == 0) {
-      mflFilePool = mflFileNextFree = mlAlignedHeapAlloc(MSLMFL_HEAP, 0x13C0);
-      memset(mflFilePool, 0, 0x13C0);
-      DVDFileInfoPool = mlAlignedHeapAlloc(MSLMFL_HEAP, 0x3C0);
-      memset(DVDFileInfoPool, 0, 0x3C0);
+      mflFilePool = mflFileNextFree = mlAlignedHeapAlloc(MSLMFL_HEAP, 16 * sizeof(*mflFilePool));
+      memset(mflFilePool, 0, 16 * sizeof(*mflFilePool));
+      DVDFileInfoPool = mlAlignedHeapAlloc(MSLMFL_HEAP, 16 * sizeof(*DVDFileInfoPool));
+      memset(DVDFileInfoPool, 0, 16 * sizeof(*DVDFileInfoPool));
     }
   } else if (mflFilePool != 0) {
     mlHeapFree(mflFilePool);
@@ -253,12 +253,12 @@ void mflInitializePools(mflPoolConfig config) {
   }
   if (config.flags.zip) {
     if (mflZipArchivePool == 0) {
-      mflZipArchivePool = mflZipArchiveNextFree = mlHeapAlloc(MSLMFL_HEAP, 0xC0);
-      memset(mflZipArchivePool, 0, 0xC0);
+      mflZipArchivePool = mflZipArchiveNextFree = mlHeapAlloc(MSLMFL_HEAP, 8 * sizeof(*mflZipArchivePool));
+      memset(mflZipArchivePool, 0, 8 * sizeof(*mflZipArchivePool));
     }
     if (mflZFilePool == 0) {
-      mflZFilePool = mflZFileNextFree = mlAlignedHeapAlloc(MSLMFL_HEAP, 0xCF8);
-      memset(mflZFilePool, 0, 0xCF8);
+      mflZFilePool = mflZFileNextFree = mlAlignedHeapAlloc(MSLMFL_HEAP, 10 * sizeof(*mflZFilePool));
+      memset(mflZFilePool, 0, 10 * sizeof(*mflZFilePool));
     }
   } else {
     if (mflZipArchivePool != 0) {
@@ -274,8 +274,8 @@ void mflInitializePools(mflPoolConfig config) {
   }
   if (config.flags.commands) {
     if (mflFileCommandPool == 0) {
-      mflFileCommandPool = mflFileCommandNextFree = mlHeapAlloc(MSLMFL_HEAP, 0x13C0);
-      memset(mflFileCommandPool, 0, 0x13C0);
+      mflFileCommandPool = mflFileCommandNextFree = mlHeapAlloc(MSLMFL_HEAP, 16 * sizeof(*mflFileCommandPool));
+      memset(mflFileCommandPool, 0, 16 * sizeof(*mflFileCommandPool));
     }
   } else if (mflFileCommandPool != 0) {
     mlHeapFree(mflFileCommandPool);
@@ -284,8 +284,8 @@ void mflInitializePools(mflPoolConfig config) {
   }
   if (config.flags.queues) {
     if (mflQueuePool == 0) {
-      mflQueuePool = mflQueueNextFree = mlHeapAlloc(MSLMFL_HEAP, 0xC);
-      memset(mflQueuePool, 0, 0xC);
+      mflQueuePool = mflQueueNextFree = mlHeapAlloc(MSLMFL_HEAP, sizeof(*mflQueuePool));
+      memset(mflQueuePool, 0, sizeof(*mflQueuePool));
     }
   } else if (mflQueuePool != 0) {
     mlHeapFree(mflQueuePool);

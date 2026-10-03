@@ -63,6 +63,84 @@ static inline mflZipArchive* findArchiveByName(const char* name) {
   return NULL;
 }
 
+static inline mflZFile* openArchiveFile(const char* filename, const char* mode) {
+  char logName[256];
+  char archiveName[64];
+  char entryName[64];
+  const char* path = filename;
+  const char* separator;
+  u32 length;
+  mflZipArchive* archive = NULL;
+  mflZipArchive* node;
+  mflZipEntry* entry;
+  mflZFile* file;
+
+  archiveName[0] = 0;
+  entryName[0] = 0;
+  separator = strchr(filename, ':');
+  if (separator != NULL) {
+    length = separator - filename;
+    strncpy(archiveName, filename, length);
+    archiveName[length] = 0;
+    path = separator + 1;
+  }
+  Trim(entryName, path);
+  InsertUnderscores(entryName);
+  _strlwr(entryName);
+  SpoofExtensions(entryName);
+  if (archiveName[0] != 0) {
+    archive = findArchiveByName(archiveName);
+  }
+  if (archive != NULL) {
+    entry = mflZipArchiveEntrySearch(archive, entryName);
+  } else {
+    node = mflZipArchiveHead.next;
+    length = strlen(entryName);
+    if (length > 4) {
+      const char* suffix = entryName + length - 4;
+      if (strcmp(suffix, ".gsb") != 0 &&
+          strcmp(suffix, ".dsp") != 0 &&
+          strcmp(suffix, ".adp") != 0) {
+        node = node->next;
+      }
+    }
+    while (node != NULL) {
+      entry = mflZipArchiveEntrySearch(node, entryName);
+      if (entry != NULL) {
+        archive = node;
+        goto entryFound;
+      }
+      node = node->next;
+    }
+    entry = NULL;
+  }
+entryFound:
+  if (entry == NULL) {
+    return NULL;
+  }
+  file = mflZFileAlloc();
+  if (file == NULL) {
+    return NULL;
+  }
+  file->entry = entry;
+  file->archive = archive;
+  file->position = 0;
+  file->size = file->entry->size;
+  memcpy(file, archive->file, sizeof(mflFile));
+  strncpy(file->file.filename, entryName, 256);
+  file->file.filename[255] = 0;
+  file->file.flags.zip = 1;
+  file->file.flags.modeU = mode != NULL && strchr(mode, 'u') != NULL;
+  file->file.size = file->entry->offset + file->size;
+  if (mflFileLogging) {
+    strcpy(logName, archive->name);
+    strcat(logName, ":");
+    strcat(logName, entryName);
+    mflFileLog(logName);
+  }
+  return file;
+}
+
 /* TODO: [near miss] 97.81%; archive search result and suffix staging remain. */
 mflZFile* mflZOpen(const char* filename, const char* mode) {
   char logName[256];
@@ -143,11 +221,15 @@ entryFound:
   return file;
 }
 
-s32 mflZClose(mflZFile* file) {
+static inline s32 closeArchiveFile(mflZFile* file) {
   if (file != NULL) {
     mflZFileFree(file);
   }
   return 0;
+}
+
+s32 mflZClose(mflZFile* file) {
+  return closeArchiveFile(file);
 }
 
 s32 mflZRead(void* destination, s32 size, s32 count, mflZFile* file) {
@@ -165,7 +247,7 @@ s32 mflZRead(void* destination, s32 size, s32 count, mflZFile* file) {
   return bytes / size;
 }
 
-s32 mflZSeek(mflZFile* file, s32 offset, s32 origin) {
+static inline s32 seekArchiveFile(mflZFile* file, s32 offset, s32 origin) {
   switch (origin) {
   case 0:
     file->position = offset;
@@ -190,91 +272,23 @@ s32 mflZSeek(mflZFile* file, s32 offset, s32 origin) {
   return 0;
 }
 
+s32 mflZSeek(mflZFile* file, s32 offset, s32 origin) {
+  return seekArchiveFile(file, offset, origin);
+}
+
 s32 mflZTell(mflZFile* file) {
   return file->position;
 }
 
-/* TODO: [breakthrough] 86.25%; open-body register allocation and size return remain. */
+/* TODO: [near miss] 97.75%; inlined archive lookup and suffix staging remain. */
 u32 mflZSize(const char* filename) {
-  const char* mode = "rbu";
-  char logName[256];
-  char entryName[64];
-  char archiveName[64];
-  const char* path = filename;
-  const char* separator;
-  u32 length;
-  mflZipArchive* archive = NULL;
-  mflZipArchive* node;
-  mflZipEntry* entry;
-  mflZFile* file;
-
-  archiveName[0] = 0;
-  entryName[0] = 0;
-  separator = strchr(filename, ':');
-  if (separator != NULL) {
-    length = separator - filename;
-    strncpy(archiveName, filename, length);
-    archiveName[length] = 0;
-    path = separator + 1;
+  mflZFile* file = openArchiveFile(filename, "rb");
+  u32 size = 0;
+  if (file != NULL) {
+    size = file->size;
+    closeArchiveFile(file);
   }
-  Trim(entryName, path);
-  InsertUnderscores(entryName);
-  _strlwr(entryName);
-  SpoofExtensions(entryName);
-  if (archiveName[0] != 0) {
-    archive = findArchiveByName(archiveName);
-  }
-  if (archive != NULL) {
-    entry = mflZipArchiveEntrySearch(archive, entryName);
-  } else {
-    node = mflZipArchiveHead.next;
-    length = strlen(entryName);
-    if (length > 4) {
-      const char* suffix = entryName + length - 4;
-      if (strcmp(suffix, ".gsb") != 0 &&
-          strcmp(suffix, ".dsp") != 0 &&
-          strcmp(suffix, ".adp") != 0) {
-        node = node->next;
-      }
-    }
-    entry = NULL;
-    while (node != NULL) {
-      entry = mflZipArchiveEntrySearch(node, entryName);
-      if (entry != NULL) {
-        archive = node;
-        break;
-      }
-      node = node->next;
-    }
-  }
-  if (entry == NULL) {
-    return 0;
-  }
-  file = mflZFileAlloc();
-  if (file == NULL) {
-    return 0;
-  }
-  file->entry = entry;
-  file->archive = archive;
-  file->position = 0;
-  file->size = file->entry->size;
-  memcpy(file, archive->file, sizeof(mflFile));
-  strncpy(file->file.filename, entryName, 256);
-  file->file.filename[255] = 0;
-  file->file.flags.zip = 1;
-  file->file.flags.modeU = mode != NULL && strchr(mode, 'u') != NULL;
-  file->file.size = file->entry->offset + file->size;
-  if (mflFileLogging) {
-    strcpy(logName, archive->name);
-    strcat(logName, ":");
-    strcat(logName, entryName);
-    mflFileLog(logName);
-  }
-  {
-    u32 size = file->size;
-    mflZClose(file);
-    return size;
-  }
+  return size;
 }
 
 mlAsyncRequest* mflZReadAsync(void* destination, s32 size, s32 count,
@@ -296,7 +310,7 @@ mlAsyncRequest* mflZSeekAsync(mflZFile* file, s32 offset, s32 origin,
     return NULL;
   }
   request->file = &file->file;
-  request->argument0.value = mflZSeek(file, offset, origin);
+  request->argument0.value = seekArchiveFile(file, offset, origin);
   request->callback = callback;
   request->user = user;
   request->operation = 6;
