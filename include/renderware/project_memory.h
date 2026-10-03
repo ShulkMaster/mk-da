@@ -5,5 +5,7 @@
 
 u8* RwFreeListCreate(s32 unk00, s32 unk04, s32 unk08);
 s32 RwFreeListDestroy(void* unk00);
+u8* StalacMiteAlloc(u32 unk00);
+u8* StalacTiteAlloc(u32 unk00);
 
 #endif
