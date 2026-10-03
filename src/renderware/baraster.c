@@ -1,9 +1,10 @@
-/* #audit 2026-10-03T06:10Z clean-room FIXED (audit) */
+/* #audit 2026-10-03T06:17Z clean-room FIXED (audit) */
 #include <string.h>
 #include <renderware/project_state.h>
 #include <renderware/project_registry.h>
 #include <renderware/project_resources.h>
 #include <renderware/project_memory.h>
+#include <renderware/project_raster.h>
 
 static u32 rasterTKList[6] = {0x34, 0x34, 0, 0, 0, 0};
 static s32 rasterModule[2];
