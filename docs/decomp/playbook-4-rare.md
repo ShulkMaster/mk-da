@@ -89,3 +89,10 @@ Dead ends, do not repeat.
   volatile or opt-level evidence (`lib_link_counter`).
 - Asm stubs for coloring ceilings: rejected by the user and regress callers
   (`MCBlockDecMCNest` stub broke seven functions).
+- Renaming locals: identifier names never change MWCC coloring (retail-named
+  `ms`/`msi` in `mslUpdateThread` gave identical bytes). A "neutral across
+  declaration orders" result is not a name effect.
+- Moving inline helper boundaries around code that already colors right:
+  `privCoalesceFreeBlocksBoundaryTags` merge-case helpers (size + unlink,
+  whole-case helpers with state as parameters) were all byte-identical; only
+  helpers in the block where the mis-colored values are created moved a web.

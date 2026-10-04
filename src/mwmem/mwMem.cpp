@@ -671,21 +671,46 @@ static void privWipeHeap(_mwMemHeap* heap) {
   }
 }
 
-/* TODO: [near miss] 98.15%; register allocation and arithmetic scheduling remain. */
+static inline void mwMemPartitionFixedHeap(_mwMemHeap* heap) {
+  _memUsedHdr* current;
+  _memUsedHdr* previous = NULL;
+  current = (_memUsedHdr*)heap->start;
+  u32 count = mwMemFixedBlockCount(heap);
+  for (u32 i = 0; i < count; i++) {
+    current->previous = previous;
+    current->size = heap->unk64;
+    current->unusedBytes = 0;
+    current->allocationFlags = 0;
+    current->alignmentOffset = 0;
+    current->flags = 0;
+    current->flags &= 0xF0;
+    current->flags &= 0xEF;
+    *(_memUsedHdr**)((u8*)current + current->size + 0xC) = current;
+    current->flags |= 0x20;
+    _memUsedHdr* next = (_memUsedHdr*)((u8*)current + heap->unk64);
+    current->next = ++next;
+    previous = current;
+    current = next;
+  }
+  if (previous != NULL) {
+    previous->next = NULL;
+  }
+}
+
+/* TODO: [near miss] 99.18%; fixed-block count/successor registers and footprint addition remain. */
 static void privResetHeap(_mwMemHeap* heap, int retainUsed) {
   _memUsedHdr* current;
   if (heap == NULL) {
     return;
   }
   if (heap->type == 2) {
-    _memUsedHdr* previous;
-    heap->usedBlocks = previous = NULL;
+    heap->usedBlocks = NULL;
     heap->freeBlocks = (_memFreeHdr*)heap->start;
     heap->freeTail = (_memFreeHdr*)heap->start;
     heap->unk6D = 1;
     _memFreeHdr* extent = heap->freeBlocks;
-    extent->previous = (_memFreeHdr*)previous;
-    extent->next = (_memFreeHdr*)previous;
+    extent->previous = NULL;
+    extent->next = NULL;
     extent->size = heap->end - (heap->start + sizeof(_memFreeHdr));
     extent->unk0C[0] = 0;
     extent->flags = 0;
@@ -699,28 +724,7 @@ static void privResetHeap(_mwMemHeap* heap, int retainUsed) {
     heap->unk50 = extent->size + sizeof(_memFreeHdr);
     heap->unk54 = 0;
     heap->unk5C = extent->size + sizeof(_memFreeHdr);
-    current = (_memUsedHdr*)heap->start;
-    u32 count = mwMemFixedBlockCount(heap);
-    for (u32 i = 0; i < count; i++) {
-      current->previous = previous;
-      current->size = heap->unk64;
-      current->unusedBytes = 0;
-      current->allocationFlags = 0;
-      current->alignmentOffset = 0;
-      current->flags = 0;
-      current->flags &= 0xF0;
-      current->flags &= 0xEF;
-      *(_memUsedHdr**)((u8*)current + current->size + 0xC) = current;
-      current->flags |= 0x20;
-      _memUsedHdr* next = (_memUsedHdr*)((u8*)current + heap->unk64);
-      next = (_memUsedHdr*)((u8*)next + sizeof(_memUsedHdr));
-      current->next = next;
-      previous = current;
-      current = next;
-    }
-    if (previous != NULL) {
-      previous->next = NULL;
-    }
+    mwMemPartitionFixedHeap(heap);
   } else {
     if (retainUsed == 0) {
       heap->usedBlocks = NULL;
@@ -1022,23 +1026,21 @@ static _memFreeHdr* privCoalesceFreeBlocksBoundaryTags(_mwMemHeap* heap,
   } else if (block->next != NULL && block->previous == NULL) {
     if (following == block->next) {
       block->size = (size + sizeof(_memFreeHdr)) + block->next->size;
-      {
-        _memFreeHdr* nextHeader = block->next;
-        _memFreeHdr* savedPrevious = nextHeader->previous;
-        if (savedPrevious == NULL && nextHeader->next == NULL) {
-          heap->freeBlocks = NULL;
-          heap->freeTail = NULL;
-        } else if (savedPrevious == NULL && nextHeader->next != NULL) {
-          heap->freeBlocks = nextHeader->next;
-          heap->freeBlocks->previous = NULL;
-        } else if (savedPrevious != NULL && nextHeader->next == NULL) {
-          savedPrevious->next = NULL;
-          heap->freeTail = savedPrevious;
-        } else {
-          _memFreeHdr* savedNext = nextHeader->next;
-          savedPrevious->next = savedNext;
-          savedNext->previous = savedPrevious;
-        }
+      _memFreeHdr* nextHeader = block->next;
+      _memFreeHdr* savedPrevious = nextHeader->previous;
+      if (savedPrevious == NULL && nextHeader->next == NULL) {
+        heap->freeBlocks = NULL;
+        heap->freeTail = NULL;
+      } else if (savedPrevious == NULL && nextHeader->next != NULL) {
+        heap->freeBlocks = nextHeader->next;
+        heap->freeBlocks->previous = NULL;
+      } else if (savedPrevious != NULL && nextHeader->next == NULL) {
+        savedPrevious->next = NULL;
+        heap->freeTail = savedPrevious;
+      } else {
+        _memFreeHdr* savedNext = nextHeader->next;
+        savedPrevious->next = savedNext;
+        savedNext->previous = savedPrevious;
       }
     }
   } else if (block->next == NULL && block->previous != NULL) {
