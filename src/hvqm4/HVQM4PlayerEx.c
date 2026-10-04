@@ -2,6 +2,7 @@
 #include "hvqm4player.h"
 #include "hvqm4snd.h"
 #include <dolphin/os.h>
+#include <mwmem/mwMem.h>
 #include <dolphin/vi.h>
 #include <string.h>
 
@@ -85,8 +86,6 @@ struct HVQM4PlayerEx {
 };
 
 extern void* gHeap;
-extern void* _mwMemMalloc(void*, u32, u32, const char*, const char*, s32);
-extern void _mwMemFree(void*, const char*, s32);
 extern const char HVQM4_FILEVERSION[];
 extern SeqFile* SeqFileOpen(const char*, SeqFileCallback, HVQM4PlayerEx*, s32);
 extern s32 SeqFileRead(void*, u32, SeqFile*);

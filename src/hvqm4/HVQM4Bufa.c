@@ -1,10 +1,8 @@
 #include "hvqm4buf.h"
 #include <dolphin/os.h>
+#include <mwmem/mwMem.h>
 
 extern void* gHeap;
-extern void* _mwMemMalloc(void* heap, u32 size, u32 alignment,
-                          const char* name, const char* file, s32 line);
-extern void _mwMemFree(void* ptr, const char* file, s32 line);
 
 s32 HVQM4BufaGetSendNums(HVQM4Bufa* buf)
 {

@@ -1,0 +1,1241 @@
+#include <mwmem/mwMem.h>
+#include <string.h>
+#include <dolphin/os.h>
+#include <dolphin/os/OSAlloc.h>
+
+u32 mwMEM_VIRTUAL_HEAP_SIZE = 0x8F;
+
+_mwMemHeap* HeapList;
+_mwMemHeap* SystemHeap;
+static _mwMemHeap* newWrapperDefaultHeap;
+static mwMemSystemParams systemParams;
+static _mwMemHeap* mwMemSystemOverflowHeap;
+static OSHeapHandle GameCubeSystemHeap;
+static u8 heapIndex;
+static void* OsSystemHeap;
+static int SystemInitialize;
+static void* systemDebugCallbackFunc[3];
+static void privResetHeap(_mwMemHeap*, int);
+enum mwMemEnumAlign {
+  mwMemEnumAlign_unk0 = 0,
+  mwMemEnumAlign_unk4 = 4,
+  mwMemEnumAlign_unk5 = 5,
+  mwMemEnumAlign_unk6 = 6,
+  mwMemEnumAlign_unk7 = 7,
+  mwMemEnumAlign_unk8 = 8,
+  MW_MEM_ALIGN_FORCE_32BIT = 0x7FFFFFFF
+};
+enum mwMemHeapType { mwMemHeapType_unk0 };
+
+static void privReturnUsedBlockToFreeList(_mwMemHeap* heap, _memUsedHdr* used);
+static _memFreeHdr* privCoalesceFreeBlocksBoundaryTags(_mwMemHeap* heap,
+                                                      _memFreeHdr* block);
+static inline _memFreeHdr* mwMemFindFirstFit(_mwMemHeap* heap, u32 size);
+static inline _memFreeHdr* mwMemFindBestFit(_mwMemHeap* heap, u32 size);
+static inline void mwMemInitUsedHeader(_memUsedHdr* block, u32 capacity,
+                                      u32 requested, mwMemEnumAlign alignment,
+                                      u8 flags);
+static void* privMallocMem(unsigned int size, _mwMemHeap* heap,
+                           mwMemEnumAlign alignment, unsigned char flags);
+static inline void* mwMemTakeFixedBlock(_mwMemHeap* heap);
+static void privDeleteBlockFixedBlock(_mwMemHeap* heap, _memUsedHdr* block);
+static void privAllocHeap(_mwMemHeap* heap, _mwMemHeap* parent, unsigned int size,
+                          const char* name, mwMemHeapType type,
+                          unsigned int value60, unsigned int blockSize);
+static inline u32 mwMemUsedBlockFootprint(_memUsedHdr* block);
+static inline u32 mwMemFixedBlockCount(_mwMemHeap* heap);
+static void privWipeHeap(_mwMemHeap *);
+static inline int mwMemCanAllocateSystemHeap(u32 size);
+static int privInitSystemHeap(unsigned int size);
+static void privWipeHeapHierarchy(_mwMemHeap *);
+static inline mwMemEnumAlign mwMemAlignmentBits(s32 alignment);
+
+extern "C" int mwMemSystemCreate(u32 size, const mwMemSystemParams* params) {
+  HeapList = NULL;
+  if (SystemInitialize == 0) {
+    mwMemSystemSetParams(params);
+    SystemInitialize = privInitSystemHeap(size);
+  }
+  return SystemInitialize;
+}
+
+extern "C" int mwMemHeapWipe(_mwMemHeap* heap) {
+  if (HeapList == NULL) {
+    return 1;
+  }
+  if (heap == NULL) {
+    heap = HeapList;
+    do {
+      _mwMemHeap* next = heap->next;
+      if (heap != SystemHeap) {
+        privWipeHeapHierarchy(heap);
+      }
+      heap = next;
+    } while (heap != NULL);
+  } else {
+    privWipeHeapHierarchy(heap);
+  }
+  return 1;
+}
+
+static void privWipeHeapHierarchy(_mwMemHeap* heap) {
+  if (heap != NULL && heap->marker == 0xBEABBEAB) {
+    if (heap->children == NULL) {
+      privWipeHeap(heap);
+    } else {
+      _mwMemHeap* current;
+      do {
+        current = heap;
+        while (current->children != NULL && current->children->unk6D == 0) {
+          while (current->children != NULL && current->children->unk6D == 0) {
+            current = current->children;
+          }
+          while (current->sibling != NULL && current->sibling->unk6D == 0) {
+            current = current->sibling;
+          }
+        }
+        if (current->unk6D == 0) {
+          privWipeHeap(current);
+        }
+      } while (current != heap);
+    }
+  }
+}
+
+extern "C" int mwMemSystemSetHeap(s32 heapKind, _mwMemHeap* heap) {
+  if (mwMemIsHeapValid(heap) == 1) {
+    switch (heapKind) {
+    case 0:
+      return 0;
+    case 1:
+      mwMemSystemOverflowHeap = heap;
+      return 1;
+    case 2:
+      newWrapperDefaultHeap = heap;
+      return 1;
+    case 3:
+    default:
+      return 0;
+    }
+  }
+  return 0;
+}
+
+extern "C" _mwMemHeap* mwMemSystemGetHeap(s32 heapKind) {
+  switch (heapKind) {
+  case 0:
+    return SystemHeap;
+  case 1:
+    return mwMemSystemOverflowHeap;
+  case 2:
+    return newWrapperDefaultHeap;
+  case 3:
+  default:
+    return NULL;
+  }
+}
+
+extern "C" int mwMemHeapSetParams(_mwMemHeap* heap, const mwMemHeapParams* params) {
+  if (mwMemIsHeapValid(heap) == 1) {
+    if (params != NULL) {
+      heap->allocationCallback = params->allocationCallback;
+      heap->unk64 = params->unk04;
+      heap->unk68 = params->unk08;
+      heap->unk2E = params->unk0C;
+      heap->unk2F = params->unk0D;
+      heap->unk6C = params->unk0E;
+      heap->unk40 = params->unk10;
+      heap->unk44 = params->unk14;
+      return 1;
+    } else {
+      mwMemHeapParams defaults;
+      mwMemHeapGetDefaultParams(&defaults);
+      mwMemHeapSetParams(heap, &defaults);
+    }
+    return 1;
+  }
+  return 0;
+}
+
+extern "C" int mwMemHeapGetDefaultParams(mwMemHeapParams* params) {
+  int result;
+  if (params != NULL) {
+    params->allocationCallback = NULL;
+    params->unk04 = 0;
+    params->unk08 = 0;
+    params->unk0C = 0xAB;
+    params->unk0D = 0xDC;
+    params->unk0E = 1;
+    params->unk10 = 0;
+    params->unk14 = 0;
+    result = 1;
+  } else {
+    result = 0;
+  }
+  return result;
+}
+
+extern "C" int mwMemSystemSetParams(const mwMemSystemParams* params) {
+  if (params != NULL) {
+    systemParams.unk00 = params->unk00;
+    systemParams.unk04 = params->unk04;
+  } else {
+    mwMemSystemParams defaults;
+    mwMemSystemGetDefaultParams(&defaults);
+    mwMemSystemSetParams(&defaults);
+  }
+  return 1;
+}
+
+extern "C" int mwMemSystemGetDefaultParams(mwMemSystemParams* params) {
+  int result;
+  if (params != NULL) {
+    params->unk00 = 0;
+    params->unk04 = 0;
+    result = 1;
+  } else {
+    result = 0;
+  }
+  return result;
+}
+
+extern "C" int mwMemHeapGetInfo(_mwMemHeap* heap, mwMemHeapInfo* info) {
+  int result;
+  if (mwMemIsHeapValid(heap) == 1 && info != NULL) {
+    info->name = heap->name;
+    info->start = heap->start;
+    info->unk08 = (u32)heap->end;
+    info->unk0C = heap->unk34;
+    info->unk10 = heap->type;
+    info->unk14 = heap->unk2D;
+    info->unk18 = heap->unk2C;
+    info->unk1C = heap->unk48;
+    info->unk20 = heap->unk4C;
+    info->unk24 = heap->unk50;
+    info->unk28 = heap->unk54;
+    info->unk2C = heap->unk58;
+    info->unk30 = heap->unk5C;
+    result = 1;
+  } else {
+    result = 0;
+  }
+  return result;
+}
+
+static inline u32 mwMemFixedHeapAllocationSize(const mwMemFixedHeapConfig* fixed) {
+  if (fixed != NULL) {
+    u32 mask = (1U << mwMemAlignmentBits(fixed->alignment)) - 1;
+    return fixed->count * (((fixed->blockSize + mask) & ~mask) + sizeof(_memUsedHdr)) + 0x7F;
+  }
+  return 0;
+}
+
+static inline int mwMemCopyHeapParams(_mwMemHeap* heap, mwMemHeapParams* params) {
+  if (mwMemIsHeapValid(heap) == 1 && params != NULL) {
+    params->allocationCallback = heap->allocationCallback;
+    params->unk04 = heap->unk64;
+    params->unk08 = heap->unk68;
+    params->unk0C = heap->unk2E;
+    params->unk0D = heap->unk2F;
+    params->unk0E = heap->unk6C;
+    params->unk10 = heap->unk40;
+    params->unk14 = heap->unk44;
+    return 1;
+  }
+  return 0;
+}
+
+static inline u32 mwMemFixedHeapBlockSize(const mwMemFixedHeapConfig* fixed) {
+  u32 mask = (1U << mwMemAlignmentBits(fixed->alignment)) - 1;
+  return (fixed->blockSize + mask) & ~mask;
+}
+
+extern "C" _mwMemHeap* _mwMemHeapCreate(const mwMemHeapConfig* config,
+                                      const mwMemHeapParams* params,
+                                      const char* file, s32 line) {
+  u32 usable;
+  _mwMemHeap* heap;
+  _mwMemHeap* parent;
+  mwMemHeapType type;
+  const char* name;
+  u32 extraSize;
+  if (config != NULL) {
+    type = (mwMemHeapType)config->type;
+    parent = config->parent;
+    u32 size = config->size;
+    name = config->name;
+    u32 extraHeaders = config->unk18;
+    if (type == 2) {
+      if (config->fixed != NULL) {
+        size = mwMemFixedHeapAllocationSize(config->fixed);
+      } else {
+        size = 0;
+      }
+    }
+    if (size == 0) {
+      return NULL;
+    }
+    usable = size + extraHeaders * sizeof(_memUsedHdr);
+    usable = (usable - sizeof(_mwMemHeap)) & ~15U;
+    heap = (_mwMemHeap*)_mwMemMallocVirtual(parent,
+        (usable + sizeof(_mwMemHeap) + 15) & ~15U, 16, name, file, line, 0);
+    u32 blockSize;
+    if (type == 2) {
+      mwMemFixedHeapConfig* fixed = config->fixed;
+      blockSize = mwMemFixedHeapBlockSize(fixed);
+      if (fixed->blockSize > fixed->unk0C) {
+        extraSize = fixed->unk0C;
+      } else {
+        extraSize = 0;
+      }
+    } else {
+      extraSize = 0;
+      blockSize = 0;
+    }
+    privAllocHeap(heap, parent, usable, name, type, extraSize, blockSize);
+    mwMemHeapSetParams(heap, params);
+    if (type == 2) {
+      mwMemHeapParams fixedParams;
+      mwMemCopyHeapParams(heap, &fixedParams);
+      fixedParams.unk04 = blockSize;
+      mwMemHeapSetParams(heap, &fixedParams);
+    }
+  } else {
+    heap = NULL;
+  }
+  return heap;
+}
+
+extern "C" void mwMemHeapGetMaxFreeBlock(_mwMemHeap* heap, u32* maxSize, u32* blockCount) {
+  _memFreeHdr* block = heap->freeBlocks;
+  u32 largest = 0;
+  u32 count = 0;
+  while (block != NULL) {
+    if (block->size > largest) {
+      largest = block->size;
+    }
+    block = block->next;
+    count++;
+  }
+  *blockCount = count;
+  *maxSize = largest;
+}
+
+extern "C" int mwMemIsHeapValid(_mwMemHeap* heap) {
+  _mwMemHeap* entry = HeapList;
+  int result = 0;
+  if (heap != NULL) {
+    while (entry != NULL) {
+      if (entry == heap) {
+        result = 1;
+        break;
+      }
+      entry = entry->next;
+    }
+  }
+  return result;
+}
+
+extern "C" void* _mwMemMalloc(struct _mwMemHeap* heap, u32 size, s32 alignment,
+                              const char* label, const char* file, s32 line) {
+  return _mwMemMallocVirtual(heap, size, alignment, label, file, line, 0);
+}
+
+/* TODO: [near miss] 99.96%; one commuted addition remains. */
+extern "C" void* _mwMemMallocVirtual(_mwMemHeap* heap, u32 size, s32 alignment,
+                                    const char* label, const char* file,
+                                    s32 line, u32 flags) {
+  void* result;
+  u32 rounded;
+  mwMemEnumAlign mapped = mwMemAlignmentBits(alignment);
+  int valid = 1;
+  if (mapped < 4) {
+    valid = 0;
+  }
+  if (mapped > 8) {
+    valid = 0;
+  }
+  if (mapped >= 0xFF) {
+    valid = 0;
+  }
+  if (mapped == 0) {
+    valid = 1;
+  }
+  if (valid == 0) {
+    mapped = mwMemEnumAlign_unk4;
+  }
+  if (mwMemIsHeapValid(heap) == 0) {
+    MEMPRINT("Out of RAM\n");
+    return NULL;
+  }
+  if (mapped == mwMemEnumAlign_unk4) {
+    u32 mask = (1U << mapped) - 1;
+    rounded = (size + mask) & ~mask;
+  } else if (mapped == mwMemEnumAlign_unk0) {
+    rounded = size;
+  } else {
+    rounded = (size + (1U << mapped) + 15) & ~15U;
+  }
+  if (heap->allocationCallback != NULL) {
+    result = heap->allocationCallback(rounded, &heap, alignment, flags);
+    if (heap->type == 2) {
+      rounded = heap->unk64;
+    }
+  } else if (heap->type == 2) {
+    if (rounded <= heap->unk64) {
+      result = mwMemTakeFixedBlock(heap);
+      rounded = heap->unk64;
+    } else {
+      result = NULL;
+    }
+  } else {
+    result = privMallocMem(rounded, heap, mapped, flags);
+  }
+  if (result == NULL && heap->unk6C == 1) {
+    MEMPRINT(">> OVERFLOW_HEAP: size: %f K heap: %s, file: %s L: %d\n",
+             (float)size / 1024.0f, heap->name, file, line);
+    heap->unk2D = 1;
+    if (mwMemIsHeapValid(mwMemSystemOverflowHeap) == 1) {
+      heap = mwMemSystemOverflowHeap;
+      result = privMallocMem(rounded, heap, mapped, 0);
+    }
+  }
+  if (result == NULL) {
+    MEMPRINT(">> Out of RAM \n");
+    MEMPRINT("      FAILURE:  cannot allocate: %f K  from heap: %s\n",
+             (float)size / 1024.0f, heap->name);
+  }
+  if (result != NULL) {
+    u32 offset = *((u8*)result - 1) + sizeof(_memUsedHdr);
+    _memUsedHdr* block = (_memUsedHdr*)((u8*)result - offset);
+    u32 footprint = mwMemUsedBlockFootprint(block);
+    _mwMemHeap* selectedHeap = heap;
+    selectedHeap->unk48 += footprint;
+    if (selectedHeap->unk48 > selectedHeap->unk4C) {
+      selectedHeap->unk4C = selectedHeap->unk48;
+    }
+    selectedHeap->unk54++;
+    if (selectedHeap->unk54 > selectedHeap->unk58) {
+      selectedHeap->unk58 = selectedHeap->unk54;
+    }
+    selectedHeap->unk5C -= footprint;
+    selectedHeap->unk6D = 0;
+  }
+  return result;
+}
+
+/* TODO: [blocked] Retail body stripped; only diagnostic literals are known. */
+static void mwMemCopy(const char* file, s32 line, u32 sourceStart,
+                      u32 sourceEnd, u32 destinationStart, u32 destinationEnd) {
+  MEMPRINT("Error: mwMemCopy() file:%s line:%d \n", file, line);
+  MEMPRINT("        src start: 0x%08x   src end: 0x%08x\n", sourceStart, sourceEnd);
+  MEMPRINT("       dest start: 0x%08x  dest end: 0x%08x\n", destinationStart, destinationEnd);
+  MEMPRINT("       src and dest are overlapping, please use mwMemMove() \n");
+  MEMPRINT("       src and dest are overlapping, src == dest \n");
+  MEMPRINT("ERROR: mwMemCopy() file:%s line:%d \n\r", file, line);
+  MEMPRINT("ERROR: mwMemCopy() file:%s line:%d \n", file, line);
+}
+
+/* TODO: [blocked] Retail body stripped; only diagnostic literals are known. */
+static void mwMemSet(const char* file, s32 line) {
+  MEMPRINT("ERROR: mwMemSet() file:%s line:%d \n\r", file, line);
+}
+
+/* TODO: [blocked] Retail body stripped; only diagnostic literals are known. */
+static void mwMemMove(const char* file, s32 line, u32 sourceStart,
+                      u32 sourceEnd, u32 blockStart, u32 blockEnd,
+                      u32 destinationStart, u32 destinationEnd) {
+  MEMPRINT("ERROR: mwMemMove() file:%s line:%d \n\r", file, line);
+  MEMPRINT("       src pointer is inside a freed block!!! \n\r");
+  MEMPRINT("\n");
+  MEMPRINT("ERROR: mwMemMove() file:%s line:%d \n", file, line);
+  MEMPRINT("       src is spanning a dynamic memory segment \n");
+  MEMPRINT("             src start: 0x%08x   src end: 0x%08x\n", sourceStart, sourceEnd);
+  MEMPRINT("\t\t mem block start: 0x%08x   blk end: 0x%08x\n", blockStart, blockEnd);
+  MEMPRINT("       check src size and pointer \n");
+  MEMPRINT("       dest pointer is inside a freed block!!! \n\r");
+  MEMPRINT("       dest is spanning a dynamic memory segment \n");
+  MEMPRINT("            dest start: 0x%08x  dest end: 0x%08x\n", destinationStart, destinationEnd);
+  MEMPRINT("       check dest size and pointer \n");
+}
+
+extern "C" void* _mwMemCalloc(_mwMemHeap* heap, u32 count, u32 elementSize,
+                              s32 alignment, const char* label,
+                              const char* file, s32 line) {
+  mwMemEnumAlign alignmentBits = mwMemAlignmentBits(alignment);
+  u32 size = count * elementSize;
+  if (alignmentBits == 4) {
+    u32 mask = (1U << alignmentBits) - 1;
+    size = (size + mask) & ~mask;
+  } else {
+    size = (size + (1U << alignmentBits) + 15) & ~15U;
+  }
+  void* result = _mwMemMallocVirtual(heap, size, alignment, label, file, line, 0);
+  if (result != NULL) {
+    result = memset(result, 0, size);
+  }
+  return result;
+}
+
+extern "C" void* _mwMemRealloc(void* ptr, struct _mwMemHeap* heap, u32 size,
+                               s32 alignment, const char* label,
+                               const char* file, s32 line) {
+  s32 alignmentBits;
+  u32 oldSize;
+  void* result;
+  if (ptr == NULL) {
+    result = _mwMemMalloc(heap, size, alignment, label, file, line);
+  } else if (size != 0) {
+    _memUsedHdr* block = (_memUsedHdr*)((u8*)ptr -
+                         (((u8*)ptr)[-1] + sizeof(_memUsedHdr)));
+    if (block != NULL) {
+      alignmentBits = block->flags & 0xF;
+      oldSize = block->size - block->unusedBytes;
+      s32 extra;
+      if (alignmentBits == 4 || alignmentBits == 0) {
+        extra = 0;
+      } else {
+        extra = 1 << alignmentBits;
+      }
+      oldSize -= extra;
+    } else {
+      oldSize = 0;
+    }
+    result = _mwMemMalloc(heap, size, alignment, label, file, line);
+    if (result != NULL) {
+      u32 copySize = size > oldSize ? oldSize : size;
+      result = memcpy(result, ptr, copySize);
+      _mwMemFree(ptr, NULL, 0);
+    }
+  } else {
+    result = NULL;
+    _mwMemFree(ptr, NULL, 0);
+  }
+  return result;
+}
+
+static inline _memUsedHdr* mwMemAllocationHeader(void* ptr) {
+  return (_memUsedHdr*)((u8*)ptr - (((u8*)ptr)[-1] + sizeof(_memUsedHdr)));
+}
+
+static inline _mwMemHeap* mwMemFindHeapForHeader(_memUsedHdr* block) {
+  if (HeapList == NULL) {
+    return NULL;
+  }
+  _mwMemHeap* heap = SystemHeap;
+  _mwMemHeap* previous = heap;
+  do {
+    if ((u8*)block >= heap->start && (u8*)block <= heap->end) {
+      previous = heap;
+      if (heap->children != NULL) {
+        heap = heap->children;
+      } else {
+        return heap;
+      }
+    } else {
+      _mwMemHeap* sibling = heap->sibling;
+      if (sibling != NULL) {
+        heap = sibling;
+      } else {
+        return previous;
+      }
+    }
+  } while (heap != NULL);
+  return NULL;
+}
+
+static inline void mwMemUnlinkUsedBlock(_mwMemHeap* heap, _memUsedHdr* block) {
+  _memUsedHdr* previous = block->previous;
+  if (previous == NULL && block->next == NULL) {
+    heap->usedBlocks = NULL;
+  } else if (previous == NULL && block->next != NULL) {
+    heap->usedBlocks = block->next;
+    heap->usedBlocks->previous = NULL;
+  } else if (previous != NULL && block->next == NULL) {
+    previous->next = NULL;
+  } else {
+    _memUsedHdr* next = block->next;
+    previous->next = next;
+    next->previous = previous;
+  }
+}
+
+/* TODO: [near miss] 99.94%; shared footprint addition operand order remains. */
+void _mwMemFree(void* ptr, const char* file, s32 line) {
+  if (ptr != NULL) {
+    _memUsedHdr* ownershipBlock = mwMemAllocationHeader(ptr);
+    _mwMemHeap* statisticsHeap = mwMemFindHeapForHeader(ownershipBlock);
+    u8* bytes = (u8*)ptr;
+    u32 footprint = mwMemUsedBlockFootprint(
+        (_memUsedHdr*)(bytes - (bytes[-1] + sizeof(_memUsedHdr))));
+    statisticsHeap->unk48 -= footprint;
+    if (statisticsHeap->unk48 > statisticsHeap->unk4C) {
+      statisticsHeap->unk4C = statisticsHeap->unk48;
+    }
+    statisticsHeap->unk54--;
+    if (statisticsHeap->unk54 > statisticsHeap->unk58) {
+      statisticsHeap->unk58 = statisticsHeap->unk54;
+    }
+    statisticsHeap->unk5C += footprint;
+    _mwMemHeap* heap;
+    _memUsedHdr* const block = mwMemAllocationHeader(ptr);
+    if (block != NULL) {
+      heap = mwMemFindHeapForHeader(block);
+      if (heap != NULL) {
+        if (heap->type == 2) {
+          privDeleteBlockFixedBlock(heap, block);
+        } else {
+          mwMemUnlinkUsedBlock(heap, block);
+          privReturnUsedBlockToFreeList(heap, block);
+          block->flags |= 0x20;
+          _memFreeHdr* freeBlock =
+              privCoalesceFreeBlocksBoundaryTags(heap, (_memFreeHdr*)block);
+          *(_memFreeHdr**)((u8*)freeBlock + freeBlock->size + 0xC) = freeBlock;
+          freeBlock->flags |= 0x20;
+          _memUsedHdr* following = (_memUsedHdr*)((u8*)freeBlock +
+                                   freeBlock->size + sizeof(*freeBlock));
+          if (heap->end != (u8*)following) {
+            following->flags |= 0x10;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* ELF pool starts with the revision text followed by the heap name. */
+static int privInitSystemHeap(unsigned int size) {
+  static const char* heapName = "0.90 rev 0\0system heap" + 0xB;
+  heapIndex = 0;
+  void* hi = OSGetArenaHi();
+  OSSetArenaLo(OSInitAlloc(OSGetArenaLo(), hi, 1));
+  hi = OSGetArenaHi();
+  GameCubeSystemHeap = OSCreateHeap(OSGetArenaLo(), hi);
+  OSSetCurrentHeap(GameCubeSystemHeap);
+  OSCheckHeap(GameCubeSystemHeap);
+  if (mwMemCanAllocateSystemHeap(size) == 0) {
+    return 0;
+  }
+  u32 usable = (size - 0x71) & ~0xFU;
+  void* allocation = OSAllocFromHeap(GameCubeSystemHeap, usable + 0x70);
+  _mwMemHeap* heap = (_mwMemHeap*)(((u32)allocation + 15) & ~0xFU);
+  OsSystemHeap = allocation;
+  MEMPRINT("==> allocated SystemHeap size: %6.2f K\n", (float)usable / 1024.0f);
+  privAllocHeap(heap, NULL, usable, heapName, mwMemHeapType_unk0, 0, 0);
+  SystemHeap = heap;
+  mwMemHeapParams params;
+  mwMemHeapGetDefaultParams(&params);
+  mwMemHeapSetParams(heap, &params);
+  mwMemSystemSetHeap(1, heap);
+  systemDebugCallbackFunc[0] = NULL;
+  systemDebugCallbackFunc[1] = NULL;
+  systemDebugCallbackFunc[2] = NULL;
+  return 1;
+}
+
+/* TODO: [near miss] 99.80%; padded-address register allocation remains. */
+static void privWipeHeap(_mwMemHeap* heap) {
+  u8* address;
+  int mask;
+  _mwMemHeap* child;
+  _memUsedHdr* block;
+  int release;
+  if (heap != NULL && heap->marker == 0xBEABBEAB) {
+    block = heap->usedBlocks;
+    while (block != NULL) {
+      mask = block->flags & 0xF;
+      address = (u8*)(block + 1);
+      mask = 1 << mask;
+      address += --mask;
+      address = (u8*)((u32)address & ~mask);
+      release = 1;
+      child = heap->children;
+      if (child != NULL) {
+        _mwMemHeap* entry = child;
+        while (entry != NULL) {
+          if ((void*)address == entry) {
+            release = 0;
+            break;
+          }
+          entry = entry->sibling;
+        }
+      }
+      if (release == 1) {
+        _mwMemFree(address, NULL, 0);
+        block = heap->usedBlocks;
+      } else {
+        block = block->next;
+      }
+    }
+    privResetHeap(heap, 1);
+  }
+}
+
+static inline void mwMemPartitionFixedHeap(_mwMemHeap* heap) {
+  _memUsedHdr* current;
+  _memUsedHdr* previous = NULL;
+  current = (_memUsedHdr*)heap->start;
+  u32 count = mwMemFixedBlockCount(heap);
+  for (u32 i = 0; i < count; i++) {
+    current->previous = previous;
+    current->size = heap->unk64;
+    current->unusedBytes = 0;
+    current->allocationFlags = 0;
+    current->alignmentOffset = 0;
+    current->flags = 0;
+    current->flags &= 0xF0;
+    current->flags &= 0xEF;
+    *(_memUsedHdr**)((u8*)current + current->size + 0xC) = current;
+    current->flags |= 0x20;
+    _memUsedHdr* next = (_memUsedHdr*)((u8*)current + heap->unk64);
+    current->next = ++next;
+    previous = current;
+    current = next;
+  }
+  if (previous != NULL) {
+    previous->next = NULL;
+  }
+}
+
+/* TODO: [near miss] 99.18%; fixed-block count/successor registers and footprint addition remain. */
+static void privResetHeap(_mwMemHeap* heap, int retainUsed) {
+  _memUsedHdr* current;
+  if (heap == NULL) {
+    return;
+  }
+  if (heap->type == 2) {
+    heap->usedBlocks = NULL;
+    heap->freeBlocks = (_memFreeHdr*)heap->start;
+    heap->freeTail = (_memFreeHdr*)heap->start;
+    heap->unk6D = 1;
+    _memFreeHdr* extent = heap->freeBlocks;
+    extent->previous = NULL;
+    extent->next = NULL;
+    extent->size = heap->end - (heap->start + sizeof(_memFreeHdr));
+    extent->unk0C[0] = 0;
+    extent->flags = 0;
+    extent->flags &= 0xF0;
+    extent->flags |= 4;
+    extent->flags &= 0xEF;
+    *(_memFreeHdr**)((u8*)extent + extent->size + 0xC) = extent;
+    extent->flags |= 0x20;
+    extent->unk0C[1] = 0;
+    heap->unk48 = 0;
+    heap->unk50 = extent->size + sizeof(_memFreeHdr);
+    heap->unk54 = 0;
+    heap->unk5C = extent->size + sizeof(_memFreeHdr);
+    mwMemPartitionFixedHeap(heap);
+  } else {
+    if (retainUsed == 0) {
+      heap->usedBlocks = NULL;
+      heap->freeBlocks = (_memFreeHdr*)heap->start;
+      heap->freeTail = (_memFreeHdr*)heap->start;
+      heap->unk6D = 1;
+      _memFreeHdr* extent = heap->freeBlocks;
+      extent->previous = NULL;
+      extent->next = NULL;
+      extent->size = heap->end - (heap->start + sizeof(_memFreeHdr));
+      extent->unk0C[0] = 0;
+      extent->flags = 0;
+      extent->flags &= 0xF0;
+      extent->flags |= 4;
+      extent->flags &= 0xEF;
+      *(_memFreeHdr**)((u8*)extent + extent->size + 0xC) = extent;
+      extent->flags |= 0x20;
+      extent->unk0C[1] = 0;
+    }
+    heap->unk48 = 0;
+    heap->unk50 = heap->end - heap->start;
+    heap->unk54 = 0;
+    heap->unk5C = heap->end - heap->start;
+    current = heap->usedBlocks;
+    while (current != NULL) {
+      u32 footprint = mwMemUsedBlockFootprint(current);
+      heap->unk48 += footprint;
+      if (heap->unk48 > heap->unk4C) {
+        heap->unk4C = heap->unk48;
+      }
+      heap->unk54++;
+      if (heap->unk54 > heap->unk58) {
+        heap->unk58 = heap->unk54;
+      }
+      heap->unk5C -= footprint;
+      heap->unk6D = 0;
+      current = current->next;
+    }
+  }
+}
+
+static void privAllocHeap(_mwMemHeap* heap, _mwMemHeap* parent, unsigned int size,
+                          const char* name, mwMemHeapType type,
+                          unsigned int value60, unsigned int blockSize) {
+  if (heap != NULL) {
+    u8* start = (u8*)heap + 0x70;
+    heap->start = start;
+    heap->end = start + size;
+    heap->name = name;
+    heap->marker = 0xBEABBEAB;
+    heap->unk2C = ++heapIndex;
+    heap->unk34 = size;
+    heap->unk2D = 0;
+    heap->type = type;
+    heap->usedBlocks = NULL;
+    heap->allocationCallback = 0;
+    heap->unk60 = value60;
+    heap->unk64 = blockSize;
+    heap->freeBlocks = (_memFreeHdr*)heap->start;
+    heap->freeTail = (_memFreeHdr*)heap->start;
+    privResetHeap(heap, 0);
+    heap->unk4C = 0;
+    heap->unk58 = 0;
+    if (HeapList == NULL) {
+      heap->next = NULL;
+      heap->previous = NULL;
+      heap->parent = NULL;
+      heap->children = NULL;
+      heap->sibling = NULL;
+      HeapList = heap;
+    } else if (parent != NULL) {
+      heap->next = HeapList;
+      heap->previous = NULL;
+      HeapList->previous = heap;
+      HeapList = heap;
+      if (parent->children == NULL) {
+        parent->children = heap;
+        heap->children = NULL;
+        heap->sibling = NULL;
+        heap->parent = parent;
+      } else {
+        heap->parent = parent;
+        heap->children = NULL;
+        heap->sibling = parent->children;
+        parent->children = heap;
+      }
+    }
+  }
+}
+
+static void privDeleteBlockFixedBlock(_mwMemHeap* heap, _memUsedHdr* block) {
+  if (heap == NULL) {
+    return;
+  }
+  if (block == NULL) {
+    return;
+  }
+  _memUsedHdr* previous = block->previous;
+  if (previous == NULL && block->next == NULL) {
+    heap->usedBlocks = NULL;
+  } else if (previous == NULL && block->next != NULL) {
+    heap->usedBlocks = block->next;
+    heap->usedBlocks->previous = NULL;
+  } else if (previous != NULL && block->next == NULL) {
+    previous->next = NULL;
+  } else {
+    _memUsedHdr* next = block->next;
+    previous->next = next;
+    next->previous = previous;
+  }
+  _memFreeHdr* free = heap->freeBlocks;
+  if (free == NULL) {
+    heap->freeBlocks = (_memFreeHdr*)block;
+    block->next = NULL;
+    block->previous = NULL;
+  } else {
+    block->next = (_memUsedHdr*)free;
+    block->previous = NULL;
+    free->previous = (_memFreeHdr*)block;
+    heap->freeBlocks = (_memFreeHdr*)block;
+  }
+}
+
+extern "C" void* mwMemHeapStrategyCallback(u32 size, _mwMemHeap* heap,
+                                           s32 alignment, u32 flags) {
+  void* result;
+  if (heap->type == 2) {
+    if (size <= heap->unk64) {
+      result = mwMemTakeFixedBlock(heap);
+    } else {
+      result = NULL;
+    }
+  } else {
+    mwMemEnumAlign mapped;
+    switch (alignment) {
+    case 1:
+    case 4:
+      mapped = mwMemEnumAlign_unk4;
+      break;
+    case 5:
+      mapped = mwMemEnumAlign_unk5;
+      break;
+    case 6:
+      mapped = mwMemEnumAlign_unk6;
+      break;
+    case 7:
+      mapped = mwMemEnumAlign_unk7;
+      break;
+    case 2:
+    case 8:
+      mapped = mwMemEnumAlign_unk8;
+      break;
+    case 128:
+      mapped = mwMemEnumAlign_unk0;
+      break;
+    case MW_MEM_ALIGN_FORCE_32BIT:
+    case 0:
+    case 3:
+    case 16:
+    case 32:
+    case 64:
+    default:
+      mapped = mwMemEnumAlign_unk4;
+      break;
+    }
+  
+    result = privMallocMem(size, heap, mapped, flags);
+  }
+  return result;
+}
+
+static void* privMallocMem(unsigned int size, _mwMemHeap* heap,
+                           mwMemEnumAlign alignment, unsigned char flags) {
+  _memUsedHdr* used;
+  _memFreeHdr* next;
+  if (size == 0) {
+    size = 0x10;
+  }
+  if (heap->freeBlocks != NULL) {
+    _memFreeHdr* block;
+    switch (heap->type) {
+    case 0:
+    case 1:
+    case 4:
+      block = mwMemFindFirstFit(heap, size);
+      break;
+    case 2:
+      block = NULL;
+      break;
+    case 3:
+      block = mwMemFindBestFit(heap, size);
+      break;
+    case 0x7FFFFFFF:
+    default:
+      block = mwMemFindFirstFit(heap, size);
+      break;
+    }
+    if (block == NULL) {
+      return NULL;
+    }
+    u32 oldSize = block->size;
+    u32 capacity;
+    if (oldSize <= size + 0x20) {
+      _memFreeHdr* previous = block->previous;
+      if (previous == NULL && block->next == NULL) {
+        heap->freeBlocks = NULL;
+        heap->freeTail = NULL;
+      } else if (previous == NULL && block->next != NULL) {
+        heap->freeBlocks = block->next;
+        heap->freeBlocks->previous = NULL;
+      } else if (previous != NULL && block->next == NULL) {
+        previous->next = NULL;
+        heap->freeTail = previous;
+      } else {
+        next = block->next;
+        previous->next = next;
+        next->previous = previous;
+      }
+      capacity = block->size;
+      used = (_memUsedHdr*)block;
+      used->flags = 0;
+      _memUsedHdr* following = (_memUsedHdr*)((u8*)block + capacity + 0x10);
+      used->flags &= 0xEF;
+      used->flags &= 0xDF;
+      if (heap->end != (u8*)following) {
+        following->flags &= 0xEF;
+      }
+    } else {
+      used = (_memUsedHdr*)((u8*)block + oldSize - size);
+      block->size = oldSize - (size + 0x10);
+      _memUsedHdr* following = (_memUsedHdr*)((u8*)used + size + 0x10);
+      capacity = size;
+      block->flags &= 0xEF;
+      *(_memFreeHdr**)((u8*)block + block->size + 0xC) = block;
+      block->flags |= 0x20;
+      used->flags = 0;
+      used->flags |= 0x10;
+      used->flags &= 0xDF;
+      if ((u8*)following != heap->end) {
+        following->flags &= 0xEF;
+      }
+    }
+    if (heap->usedBlocks == NULL) {
+      mwMemInitUsedHeader(used, capacity, size, alignment, flags);
+      used->next = NULL;
+      used->previous = NULL;
+      heap->usedBlocks = used;
+    } else {
+      mwMemInitUsedHeader(used, capacity, size, alignment, flags);
+      used->next = heap->usedBlocks;
+      used->previous = NULL;
+      heap->usedBlocks->previous = used;
+      heap->usedBlocks = used;
+    }
+    u32 mask = (1u << alignment) - 1;
+    u8* data = (u8*)used + 0x10;
+    u8* aligned = (u8*)(((u32)data + mask) & ~mask);
+    u8 displacement = aligned - data;
+    used->alignmentOffset = displacement;
+    aligned[-1] = displacement;
+    return aligned;
+  }
+  return NULL;
+}
+
+static inline void mwMemUnlinkFreeBlock(_mwMemHeap* heap, _memFreeHdr* block) {
+  _memFreeHdr* previous = block->previous;
+  if (previous == NULL && block->next == NULL) {
+    heap->freeBlocks = NULL;
+    heap->freeTail = NULL;
+  } else if (previous == NULL && block->next != NULL) {
+    heap->freeBlocks = block->next;
+    heap->freeBlocks->previous = NULL;
+  } else if (previous != NULL && block->next == NULL) {
+    previous->next = NULL;
+    heap->freeTail = previous;
+  } else {
+    _memFreeHdr* next = block->next;
+    previous->next = next;
+    next->previous = previous;
+  }
+}
+
+/* TODO: [near miss] 99.61%; register allocation remains. */
+static _memFreeHdr* privCoalesceFreeBlocksBoundaryTags(_mwMemHeap* heap,
+                                                      _memFreeHdr* block) {
+  _memFreeHdr* following;
+  u32 size;
+  u32 previousFree;
+  u32 nextFree;
+  size = block->size;
+  nextFree = 0;
+  following = (_memFreeHdr*)((u8*)block + size + sizeof(*block));
+  previousFree = (block->flags >> 4) & 1;
+  if (heap->end != (u8*)following) {
+    nextFree = (following->flags >> 5) & 1;
+  }
+  if (block->next == NULL && block->previous == NULL) {
+  } else if (block->next != NULL && block->previous == NULL) {
+    if (following == block->next) {
+      block->size = (size + sizeof(_memFreeHdr)) + block->next->size;
+      _memFreeHdr* nextHeader = block->next;
+      _memFreeHdr* savedPrevious = nextHeader->previous;
+      if (savedPrevious == NULL && nextHeader->next == NULL) {
+        heap->freeBlocks = NULL;
+        heap->freeTail = NULL;
+      } else if (savedPrevious == NULL && nextHeader->next != NULL) {
+        heap->freeBlocks = nextHeader->next;
+        heap->freeBlocks->previous = NULL;
+      } else if (savedPrevious != NULL && nextHeader->next == NULL) {
+        savedPrevious->next = NULL;
+        heap->freeTail = savedPrevious;
+      } else {
+        _memFreeHdr* savedNext = nextHeader->next;
+        savedPrevious->next = savedNext;
+        savedNext->previous = savedPrevious;
+      }
+    }
+  } else if (block->next == NULL && block->previous != NULL) {
+    _memFreeHdr* previous = block->previous;
+    if ((u8*)previous + previous->size + sizeof(*previous) == (u8*)block) {
+      previous->size = (size + sizeof(_memFreeHdr)) + previous->size;
+      mwMemUnlinkFreeBlock(heap, block);
+      block = block->previous;
+    }
+  } else {
+    if (nextFree == 1) {
+      block->size = (size + sizeof(_memFreeHdr)) + following->size;
+      mwMemUnlinkFreeBlock(heap, following);
+    }
+    if (previousFree == 1) {
+      _memFreeHdr* previous = block->previous;
+      previous->size = (block->size + sizeof(_memFreeHdr)) + previous->size;
+      mwMemUnlinkFreeBlock(heap, block);
+      block = previous;
+    }
+  }
+  return block;
+}
+
+static void privReturnUsedBlockToFreeList(_mwMemHeap* heap, _memUsedHdr* used) {
+  _memFreeHdr* block = (_memFreeHdr*)used;
+  _memFreeHdr* entry = heap->freeBlocks;
+  if (entry == NULL) {
+    block->next = NULL;
+    block->previous = NULL;
+    block->unk0C[0] = 0;
+    heap->freeBlocks = block;
+    heap->freeTail = block;
+    return;
+  }
+  if (block < entry) {
+    block->previous = NULL;
+    block->next = entry;
+    block->unk0C[0] = 0;
+    entry->previous = block;
+    heap->freeBlocks = block;
+    return;
+  }
+  _memFreeHdr* previous;
+  _memFreeHdr* following = NULL;
+  previous = NULL;
+  while (entry != NULL) {
+    if (block < entry) {
+      following = entry;
+      break;
+    }
+    previous = entry;
+    entry = entry->next;
+  }
+  if (following != NULL) {
+    block->previous = following->previous;
+    block->next = following;
+    block->unk0C[0] = 0;
+    following->previous->next = block;
+    following->previous = block;
+  } else if (previous != NULL) {
+    block->previous = previous;
+    block->next = NULL;
+    block->unk0C[0] = 0;
+    previous->next = block;
+    heap->freeTail = block;
+  }
+}
+
+extern "C" u32 mwMemSystemGetAvailSize(void) {
+  OSInit();
+  u8* arenaHi = (u8*)OSGetArenaHi();
+  return arenaHi - (u8*)OSGetArenaLo() - 0x140;
+}
+
+static inline _memFreeHdr* mwMemFindFirstFit(_mwMemHeap* heap, u32 size) {
+  _memFreeHdr* node = heap->freeTail;
+  _memFreeHdr* result = NULL;
+  while (node != NULL) {
+    if (node->size >= size) {
+      result = node;
+      break;
+    }
+    node = node->previous;
+  }
+  return result;
+}
+
+static inline _memFreeHdr* mwMemFindBestFit(_mwMemHeap* heap, u32 size) {
+  _memFreeHdr* node = heap->freeTail;
+  _memFreeHdr* result = NULL;
+  u32 smallest = heap->unk34;
+  while (node != NULL) {
+    if (node->size >= size) {
+      if (node->size == size) {
+        result = node;
+        break;
+      }
+      if (node->size < smallest) {
+        smallest = node->size;
+        result = node;
+      }
+    }
+    node = node->previous;
+  }
+  return result;
+}
+
+static inline void mwMemInitUsedHeader(_memUsedHdr* block, u32 capacity,
+                                      u32 requested, mwMemEnumAlign alignment,
+                                      u8 flags) {
+  block->size = capacity;
+  block->unusedBytes = capacity - requested;
+  block->flags &= 0xF0;
+  block->flags |= alignment & 0xF;
+  block->allocationFlags = flags;
+}
+
+static inline void* mwMemTakeFixedBlock(_mwMemHeap* heap) {
+  _memFreeHdr* block = heap->freeBlocks;
+  void* result;
+  if (block == NULL) {
+    result = NULL;
+  } else {
+    result = (u8*)block + 0x10;
+    _memFreeHdr* nextFree = block->next;
+    if (nextFree != NULL) {
+      nextFree->previous = NULL;
+      heap->freeBlocks = nextFree;
+    } else {
+      heap->freeBlocks = NULL;
+    }
+    _memUsedHdr* used = (_memUsedHdr*)block;
+    _memUsedHdr* head = heap->usedBlocks;
+    if (head == NULL) {
+      heap->usedBlocks = used;
+      used->next = NULL;
+      used->previous = NULL;
+    } else {
+      heap->usedBlocks = used;
+      used->previous = NULL;
+      used->next = head;
+      head->previous = used;
+    }
+  }
+  return result;
+}
+
+static inline u32 mwMemUsedBlockFootprint(_memUsedHdr* block) {
+  if (block != NULL) {
+    s32 alignment = block->flags & 0xF;
+    u32 size = block->size - block->unusedBytes;
+    s32 extra = alignment == 4 ? 0 : (1 << alignment);
+    size -= extra;
+    u32 overhead = extra + sizeof(*block);
+    overhead += size;
+    return overhead;
+  }
+  return 0;
+}
+
+static inline u32 mwMemFixedBlockCount(_mwMemHeap* heap) {
+  u32 bytes = heap->end - heap->start;
+  return bytes / (heap->unk64 + sizeof(_memUsedHdr));
+}
+
+static inline int mwMemCanAllocateSystemHeap(u32 size) {
+  void* allocation = OSAllocFromHeap(GameCubeSystemHeap, size);
+  if (allocation == NULL) {
+    return 0;
+  }
+  OSFreeToHeap(GameCubeSystemHeap, allocation);
+  return 1;
+}
+
+#include <string.h>
+
+static inline mwMemEnumAlign mwMemAlignmentBits(s32 alignment) {
+  mwMemEnumAlign result;
+  switch (alignment) {
+  case 1:
+  case 4: result = mwMemEnumAlign_unk4; break;
+  case 5: result = mwMemEnumAlign_unk5; break;
+  case 6: result = mwMemEnumAlign_unk6; break;
+  case 7: result = mwMemEnumAlign_unk7; break;
+  case 2:
+  case 8: result = mwMemEnumAlign_unk8; break;
+  case 128: result = mwMemEnumAlign_unk0; break;
+  case 0:
+  case 3:
+  case 16:
+  case 32:
+  case 64:
+  case MW_MEM_ALIGN_FORCE_32BIT:
+  default: result = mwMemEnumAlign_unk4; break;
+  }
+  return result;
+}

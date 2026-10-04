@@ -20,7 +20,13 @@ extab means C++ exceptions on. Score: 1
 IF the object has extab/extabindex entries, REQUIRE the ELF SECTION symbols,
 TRY `-Cpp_exceptions on` at lib or object scope.
 
+IF every function and data section is exact but linking fails the hash on
+two bytes inside `.extab` (uninitialized record padding), REQUIRE the retail
+bytes at that offset, and the coordinator sets `extab_padding=[b0, b1]` on the
+Object (dtk extab clean). This is metadata, not source.
+
 - Exemplar: hvqm4player lib applied.
+- Padding: Gecko_ExceptionPPC `[0x12, 0x00]`, movieplayer `[0x02, 0x55]`.
 
 ## U09
 
@@ -83,3 +89,10 @@ Dead ends, do not repeat.
   volatile or opt-level evidence (`lib_link_counter`).
 - Asm stubs for coloring ceilings: rejected by the user and regress callers
   (`MCBlockDecMCNest` stub broke seven functions).
+- Renaming locals: identifier names never change MWCC coloring (retail-named
+  `ms`/`msi` in `mslUpdateThread` gave identical bytes). A "neutral across
+  declaration orders" result is not a name effect.
+- Moving inline helper boundaries around code that already colors right:
+  `privCoalesceFreeBlocksBoundaryTags` merge-case helpers (size + unlink,
+  whole-case helpers with state as parameters) were all byte-identical; only
+  helpers in the block where the mis-colored values are created moved a web.

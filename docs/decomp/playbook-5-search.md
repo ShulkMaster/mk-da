@@ -5,7 +5,7 @@ covers tool access and profiles.
 
 ## S03
 
-Permuter honesty filter. Score: 6
+Permuter honesty filter. Score: 11
 
 IF a candidate scores better, REQUIRE porting it by hand or through its
 `replace` edits and checking it with `try`, TRY keeping only honest C.
@@ -43,7 +43,7 @@ TODO line and note.
 
 ## S02
 
-Neutral seed rotation. Score: 4
+Neutral seed rotation. Score: 7
 
 IF the permuter returns an honest byte-equivalent variant, REQUIRE that the
 honesty filter passes (S03), TRY adopting it in the draft (`try` with

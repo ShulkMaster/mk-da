@@ -69,7 +69,6 @@ See [the setup documentation](docs/getting_started.md) and
 
 ## Attribution
 
-This project builds on work from the
-[Metroid Prime decompilation project](https://github.com/PrimeDecomp/prime).
-Credit and thanks to the PrimeDecomp contributors.
+This project builds on the work of other decompilation projects and
+libraries. See [attribution](docs/attribution.md) for credits.
 

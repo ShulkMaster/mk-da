@@ -11,6 +11,10 @@ typedef int OSHeapHandle;
 
 extern volatile OSHeapHandle __OSCurrHeap;
 
+void* OSInitAlloc(void* arenaLo, void* arenaHi, int maxHeaps);
+OSHeapHandle OSCreateHeap(void* start, void* end);
+OSHeapHandle OSSetCurrentHeap(OSHeapHandle heap);
+s32 OSCheckHeap(OSHeapHandle heap);
 void* OSAllocFromHeap(OSHeapHandle heap, u32 size);
 void OSFreeToHeap(OSHeapHandle heap, void* ptr);
 
